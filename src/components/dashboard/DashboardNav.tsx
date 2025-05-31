@@ -1,18 +1,76 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { createSupabaseClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 
 export default function DashboardNav() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const supabase = createSupabaseClient()
-  const router = useRouter()
+  const { user, userProfile, signOut, signingOut } = useAuth()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 })
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth/login')
+    setIsProfileOpen(false) // Close dropdown immediately
+    await signOut()
+  }
+
+  // Calculate dropdown position
+  useEffect(() => {
+    if (isProfileOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right
+      })
+    }
+  }, [isProfileOpen])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false)
+      }
+    }
+
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isProfileOpen])
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (userProfile?.email) {
+      return userProfile.email.charAt(0).toUpperCase()
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase()
+    }
+    return 'U'
+  }
+
+  // Get display name
+  const getDisplayName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name
+    }
+    if (user?.email) {
+      return user.email.split('@')[0]
+    }
+    return 'Captain'
   }
 
   return (
@@ -55,46 +113,78 @@ export default function DashboardNav() {
           {/* Profile Dropdown */}
           <div className="relative">
             <button
+              ref={buttonRef}
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-secondary-700 transition-colors"
             >
               <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-white">C</span>
+                <span className="text-sm font-semibold text-white">{getUserInitials()}</span>
               </div>
-              <span className="text-white text-sm">Captain</span>
+              <div className="text-left">
+                <span className="text-white text-sm block">{getDisplayName()}</span>
+                {userProfile?.subscription_tier && (
+                  <span className="text-xs text-primary-400 capitalize">
+                    {userProfile.subscription_tier}
+                  </span>
+                )}
+              </div>
               <svg className="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
-            {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-secondary-800 rounded-lg shadow-lg border border-secondary-700 py-1 z-50">
+            {/* Portal-based dropdown for better z-index handling */}
+            {isProfileOpen && mounted && createPortal(
+              <div
+                ref={dropdownRef}
+                className="fixed w-48 bg-secondary-800 rounded-lg shadow-xl border border-secondary-700 py-1"
+                style={{
+                  top: dropdownPosition.top,
+                  right: dropdownPosition.right,
+                  zIndex: 99999
+                }}
+              >
                 <Link
                   href="/dashboard/settings"
-                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white"
+                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white transition-colors"
+                  onClick={() => setIsProfileOpen(false)}
                 >
                   Settings
                 </Link>
                 <Link
                   href="/dashboard/billing"
-                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white"
+                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white transition-colors"
+                  onClick={() => setIsProfileOpen(false)}
                 >
                   Billing
                 </Link>
                 <Link
                   href="/support"
-                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white"
+                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white transition-colors"
+                  onClick={() => setIsProfileOpen(false)}
                 >
                   Support
                 </Link>
                 <hr className="my-1 border-secondary-700" />
                 <button
                   onClick={handleSignOut}
-                  className="block w-full text-left px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white"
+                  disabled={signingOut}
+                  className="block w-full text-left px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Sign Out
+                  {signingOut ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-secondary-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Signing Out...
+                    </span>
+                  ) : (
+                    'Sign Out'
+                  )}
                 </button>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>

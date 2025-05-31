@@ -1,10 +1,55 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Client-side Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Singleton client instance to prevent multiple GoTrueClient instances
+let supabaseInstance: SupabaseClient | null = null
+
+// Client-side Supabase client factory (for use in components)
+export function createSupabaseClient() {
+  // Return existing instance if it exists
+  if (supabaseInstance) {
+    return supabaseInstance
+  }
+
+  // Create new instance only if none exists
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce'
+    }
+  })
+
+  return supabaseInstance
+}
+
+// Client-side Supabase client (using singleton)
+export const supabase = createSupabaseClient()
+
+// Server-side Supabase client factory (for use in API routes and server components)
+export function createSupabaseServerClient() {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false
+    }
+  })
+}
+
+// Admin client for server-side operations (if needed)
+export function createSupabaseAdminClient() {
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+}
 
 // Database types
 export interface Database {

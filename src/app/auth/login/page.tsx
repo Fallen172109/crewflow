@@ -1,39 +1,83 @@
 'use client'
 
-import { useState } from 'react'
-import { createSupabaseClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useAuth, useRedirectIfAuthenticated } from '@/lib/auth-context'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const { signIn, loading } = useAuth()
   const router = useRouter()
-  const supabase = createSupabaseClient()
+  const searchParams = useSearchParams()
+
+  // Redirect if already authenticated
+  useRedirectIfAuthenticated()
+
+  // Check for confirmation success or errors from URL params
+  useEffect(() => {
+    const confirmed = searchParams.get('confirmed')
+    const autoSignin = searchParams.get('auto_signin')
+    const urlError = searchParams.get('error')
+
+    if (confirmed === 'true') {
+      setSuccess('🎉 Email confirmed successfully! You are now signed in.')
+
+      // If auto_signin is true, redirect to dashboard after showing success message
+      if (autoSignin === 'true') {
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 2000) // Give user time to see the success message
+      }
+    } else if (urlError) {
+      setError(decodeURIComponent(urlError))
+    }
+  }, [searchParams, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
 
+    // Basic validation
+    if (!email || !password) {
+      setError('Please fill in all fields')
+      return
+    }
+
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { error } = await signIn(email, password)
 
       if (error) {
-        setError(error.message)
+        // Provide user-friendly error messages
+        switch (error.message) {
+          case 'Invalid login credentials':
+            setError('Invalid email or password. Please check your credentials and try again.')
+            break
+          case 'Email not confirmed':
+            setError('Please check your email and click the confirmation link before signing in.')
+            break
+          case 'Too many requests':
+            setError('Too many login attempts. Please wait a moment before trying again.')
+            break
+          default:
+            setError(error.message)
+        }
       } else {
-        router.push('/dashboard')
+        // Redirect to intended page or dashboard
+        const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+        router.push(redirectTo)
       }
     } catch (err) {
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
+      setError('An unexpected error occurred. Please try again.')
     }
   }
 
@@ -59,7 +103,13 @@ export default function LoginPage() {
         {/* Login Form */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">
           <h2 className="text-2xl font-bold text-white mb-6 text-center">Welcome Back</h2>
-          
+
+          {success && (
+            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-4">
+              <p className="text-green-200 text-sm">{success}</p>
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
               <p className="text-red-200 text-sm">{error}</p>
@@ -97,6 +147,28 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Remember Me */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-primary-500 bg-white/10 border-white/20 rounded focus:ring-primary-500 focus:ring-2"
+                />
+                <label htmlFor="remember-me" className="ml-2 text-sm text-secondary-300">
+                  Remember me
+                </label>
+              </div>
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -125,12 +197,6 @@ export default function LoginPage() {
                 Join the crew
               </Link>
             </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link href="/auth/forgot-password" className="text-sm text-secondary-400 hover:text-secondary-300">
-              Forgot your password?
-            </Link>
           </div>
         </div>
 

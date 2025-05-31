@@ -1,9 +1,11 @@
-import { getUserProfile } from '@/lib/auth'
+'use client'
+
+import { useAuth } from '@/lib/auth-context'
 import { AGENTS, getAgentsForTier } from '@/lib/agents'
 import Link from 'next/link'
 
-export default async function DashboardPage() {
-  const userProfile = await getUserProfile()
+export default function DashboardPage() {
+  const { userProfile } = useAuth()
   const availableAgents = getAgentsForTier(userProfile?.subscription_tier)
 
   return (

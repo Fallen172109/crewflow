@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createSupabaseClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { User } from '@supabase/supabase-js'
 
 export default function TestAuthPage() {
@@ -9,7 +9,6 @@ export default function TestAuthPage() {
   const [userProfile, setUserProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [testResults, setTestResults] = useState<any>({})
-  const supabase = createSupabaseClient()
 
   useEffect(() => {
     checkUser()

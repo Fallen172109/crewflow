@@ -15,46 +15,59 @@ export interface UserProfile {
 
 export async function getUser(): Promise<User | null> {
   const supabase = createSupabaseServerClient()
-  
+
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
-    
+
     if (error) {
-      console.error('Error getting user:', error)
+      // Don't log auth session missing errors as they're expected when not logged in
+      if (error.message !== 'Auth session missing!') {
+        console.error('Error getting user:', error)
+      }
       return null
     }
-    
+
     return user
-  } catch (error) {
-    console.error('Error in getUser:', error)
+  } catch (error: any) {
+    // Don't log auth session missing errors as they're expected when not logged in
+    if (error?.message !== 'Auth session missing!') {
+      console.error('Error in getUser:', error)
+    }
     return null
   }
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
   const supabase = createSupabaseServerClient()
-  
+
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
+
     if (authError || !user) {
+      // Don't log auth session missing errors as they're expected when not logged in
+      if (authError?.message !== 'Auth session missing!') {
+        console.error('Error getting user for profile:', authError)
+      }
       return null
     }
-    
+
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
       .single()
-    
+
     if (profileError) {
       console.error('Error getting user profile:', profileError)
       return null
     }
-    
+
     return profile
-  } catch (error) {
-    console.error('Error in getUserProfile:', error)
+  } catch (error: any) {
+    // Don't log auth session missing errors as they're expected when not logged in
+    if (error?.message !== 'Auth session missing!') {
+      console.error('Error in getUserProfile:', error)
+    }
     return null
   }
 }

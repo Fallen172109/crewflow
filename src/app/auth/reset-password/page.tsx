@@ -1,22 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { useAuth, useRedirectIfAuthenticated } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth-context'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function SignupPage() {
-  const [email, setEmail] = useState('')
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
-  const { signUp, loading } = useAuth()
+  const { updatePassword } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  // Redirect if already authenticated
-  useRedirectIfAuthenticated()
+  // Check if we have the required tokens
+  useEffect(() => {
+    const accessToken = searchParams.get('access_token')
+    const refreshToken = searchParams.get('refresh_token')
+    
+    if (!accessToken || !refreshToken) {
+      setError('Invalid reset link. Please request a new password reset.')
+    }
+  }, [searchParams])
 
   // Password strength checker
   const checkPasswordStrength = (password: string) => {
@@ -50,59 +58,52 @@ export default function SignupPage() {
     }
   }
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     setError('')
 
     // Validation
-    if (!email || !password || !confirmPassword) {
+    if (!password || !confirmPassword) {
       setError('Please fill in all fields')
-      return
-    }
-
-    if (!email.includes('@')) {
-      setError('Please enter a valid email address')
+      setLoading(false)
       return
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
+      setLoading(false)
       return
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long')
+      setLoading(false)
       return
     }
 
     if (passwordStrength < 2) {
       setError('Please choose a stronger password')
+      setLoading(false)
       return
     }
 
     try {
-      const { error } = await signUp(email, password)
+      const { error } = await updatePassword(password)
 
       if (error) {
-        // Provide user-friendly error messages
-        switch (error.message) {
-          case 'User already registered':
-            setError('An account with this email already exists. Please sign in instead.')
-            break
-          case 'Password should be at least 6 characters':
-            setError('Password must be at least 6 characters long.')
-            break
-          case 'Invalid email':
-            setError('Please enter a valid email address.')
-            break
-          default:
-            setError(error.message)
-        }
+        setError(error.message)
       } else {
         setSuccess(true)
+        // Redirect to dashboard after 3 seconds
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 3000)
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -118,38 +119,19 @@ export default function SignupPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Check Your Email</h2>
-            <p className="text-secondary-300 mb-4">
-              We've sent a confirmation email to <strong className="text-white">{email}</strong>
+            <h2 className="text-2xl font-bold text-white mb-4">Password Updated!</h2>
+            <p className="text-secondary-300 mb-6">
+              Your password has been successfully updated. You'll be redirected to your dashboard in a moment.
             </p>
-            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-4 mb-6">
-              <h3 className="text-primary-300 font-semibold mb-2">📧 Next Steps:</h3>
-              <ol className="text-secondary-300 text-sm space-y-1 list-decimal list-inside">
-                <li>Check your email inbox (and spam folder)</li>
-                <li>Click the "Confirm Your Account" link in the email</li>
-                <li>Return here to sign in with your credentials</li>
-              </ol>
-            </div>
-            <div className="space-y-3">
-              <Link
-                href="/auth/login"
-                className="w-full inline-flex items-center justify-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-              >
-                <span>Go to Sign In</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-              <p className="text-center text-xs text-secondary-400">
-                Didn't receive the email? Check your spam folder or{' '}
-                <button
-                  onClick={() => setSuccess(false)}
-                  className="text-primary-400 hover:text-primary-300 underline"
-                >
-                  try again
-                </button>
-              </p>
-            </div>
+            <Link 
+              href="/dashboard"
+              className="inline-flex items-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+            >
+              <span>Go to Dashboard</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
           </div>
         </div>
       </div>
@@ -172,12 +154,12 @@ export default function SignupPage() {
             </div>
             <h1 className="text-3xl font-bold text-white">CrewFlow</h1>
           </div>
-          <p className="text-secondary-300">Join the maritime automation revolution</p>
+          <p className="text-secondary-300">Set your new password</p>
         </div>
 
-        {/* Signup Form */}
+        {/* Reset Password Form */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Join the Crew</h2>
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Reset Password</h2>
           
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
@@ -185,25 +167,10 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-secondary-200 mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="captain@example.com"
-              />
-            </div>
-
+          <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-secondary-200 mb-2">
-                Password
+                New Password
               </label>
               <input
                 id="password"
@@ -247,7 +214,7 @@ export default function SignupPage() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-secondary-200 mb-2">
-                Confirm Password
+                Confirm New Password
               </label>
               <input
                 id="confirmPassword"
@@ -268,59 +235,18 @@ export default function SignupPage() {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Creating Account...</span>
+                  <span>Updating Password...</span>
                 </>
               ) : (
                 <>
-                  <span>Set Sail</span>
+                  <span>Update Password</span>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </>
               )}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-secondary-300">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="text-primary-400 hover:text-primary-300 font-medium">
-                Sign in
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-6 text-xs text-secondary-400 text-center">
-            By creating an account, you agree to our{' '}
-            <Link href="/terms" className="text-primary-400 hover:text-primary-300">Terms of Service</Link>
-            {' '}and{' '}
-            <Link href="/privacy" className="text-primary-400 hover:text-primary-300">Privacy Policy</Link>
-          </div>
-        </div>
-
-        {/* Features Preview */}
-        <div className="mt-8 text-center">
-          <p className="text-secondary-400 text-sm mb-4">Start with 3 powerful AI agents</p>
-          <div className="flex justify-center space-x-6 text-secondary-500">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">C</span>
-              </div>
-              <span className="text-xs">Coral Support</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-maritime-blue rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">M</span>
-              </div>
-              <span className="text-xs">Mariner Marketing</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-maritime-teal rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">P</span>
-              </div>
-              <span className="text-xs">Pearl Content</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
