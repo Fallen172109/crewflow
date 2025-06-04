@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth, useRedirectIfAuthenticated } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import Link from 'next/link'
 
 export default function SignupPage() {
@@ -11,12 +10,13 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
-  const { signUp, loading } = useAuth()
-  const router = useRouter()
+  const [justSignedUp, setJustSignedUp] = useState(false)
+  const { signUp, loading, user } = useAuth()
 
-  // Redirect if already authenticated
-  useRedirectIfAuthenticated()
+  // NO AUTOMATIC REDIRECTS - Let users read the success message
+  // Users will manually navigate using the "Go to Sign In" button
 
   // Password strength checker
   const checkPasswordStrength = (password: string) => {
@@ -53,41 +53,53 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
 
     // Validation
     if (!email || !password || !confirmPassword) {
       setError('Please fill in all fields')
+      setIsSubmitting(false)
       return
     }
 
     if (!email.includes('@')) {
       setError('Please enter a valid email address')
+      setIsSubmitting(false)
       return
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
+      setIsSubmitting(false)
       return
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long')
+      setIsSubmitting(false)
       return
     }
 
     if (passwordStrength < 2) {
       setError('Please choose a stronger password')
+      setIsSubmitting(false)
       return
     }
 
     try {
-      const { error } = await signUp(email, password)
+      const result = await signUp(email, password)
 
-      if (error) {
+      if (result.error) {
+        // Log the actual error message to help debug
+        console.log('Signup error:', result.error.message)
+
         // Provide user-friendly error messages
-        switch (error.message) {
+        switch (result.error.message) {
           case 'User already registered':
             setError('An account with this email already exists. Please sign in instead.')
+            break
+          case 'Email rate limit exceeded':
+            setError('Too many signup attempts. Please wait a moment before trying again.')
             break
           case 'Password should be at least 6 characters':
             setError('Password must be at least 6 characters long.')
@@ -95,59 +107,113 @@ export default function SignupPage() {
           case 'Invalid email':
             setError('Please enter a valid email address.')
             break
+          case 'signup_disabled':
+            setError('Account registration is currently disabled. Please contact support.')
+            break
+          case 'email_address_invalid':
+            setError('Please enter a valid email address.')
+            break
+          case 'password_too_short':
+            setError('Password must be at least 6 characters long.')
+            break
+          case 'weak_password':
+            setError('Please choose a stronger password with uppercase, lowercase, numbers, and symbols.')
+            break
           default:
-            setError(error.message)
+            // Handle other common Supabase auth errors
+            if (result.error.message.toLowerCase().includes('already') ||
+                result.error.message.toLowerCase().includes('exists') ||
+                result.error.message.toLowerCase().includes('registered')) {
+              setError('An account with this email already exists. Please sign in instead.')
+            } else if (result.error.message.toLowerCase().includes('email') &&
+                       result.error.message.toLowerCase().includes('invalid')) {
+              setError('Please enter a valid email address.')
+            } else if (result.error.message.toLowerCase().includes('password')) {
+              setError('There was an issue with your password. Please choose a stronger password.')
+            } else if (result.error.message.toLowerCase().includes('rate limit')) {
+              setError('Too many attempts. Please wait a moment before trying again.')
+            } else {
+              // Show the actual error message for debugging, but make it user-friendly
+              console.error('Unhandled signup error:', result.error.message)
+              setError(`Signup failed: ${result.error.message}`)
+            }
         }
+        setIsSubmitting(false)
       } else {
+        // Success - Show confirmation screen immediately
+        console.log('✅ Signup successful! Showing success screen...')
+        console.log('Signup result:', result)
+
+        // Show success screen immediately - NO REDIRECTS OR SIGN OUTS
+        console.log('Setting success state to true - user should see confirmation screen')
+        setJustSignedUp(true)
         setSuccess(true)
+        setIsSubmitting(false)
+
+        // Log to help debug any redirect issues
+        console.log('Success screen should now be visible. No automatic redirects or sign outs.')
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')
+      setIsSubmitting(false)
     }
   }
 
   if (success) {
+    console.log('🎉 Rendering success screen - this should be visible to the user')
     return (
       <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-primary-900 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
-        
+
         <div className="relative w-full max-w-md">
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl text-center">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Check Your Email</h2>
-            <p className="text-secondary-300 mb-4">
-              We've sent a confirmation email to <strong className="text-white">{email}</strong>
+            <h2 className="text-3xl font-bold text-white mb-6">🎉 Welcome to CrewFlow!</h2>
+            <p className="text-secondary-300 mb-6 text-lg">
+              We've sent a confirmation email to<br />
+              <strong className="text-white text-xl">{email}</strong>
             </p>
-            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-4 mb-6">
-              <h3 className="text-primary-300 font-semibold mb-2">📧 Next Steps:</h3>
-              <ol className="text-secondary-300 text-sm space-y-1 list-decimal list-inside">
+            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-6 mb-6">
+              <p className="text-green-200 text-lg font-medium">✅ Confirmation email sent!</p>
+              <p className="text-green-300 text-sm mt-2">Please check your email and click the confirmation link to activate your account.</p>
+            </div>
+            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-6 mb-8">
+              <h3 className="text-primary-300 font-semibold mb-3 text-lg">📧 Next Steps:</h3>
+              <ol className="text-secondary-300 text-base space-y-2 list-decimal list-inside text-left">
                 <li>Check your email inbox (and spam folder)</li>
                 <li>Click the "Confirm Your Account" link in the email</li>
                 <li>Return here to sign in with your credentials</li>
               </ol>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Link
                 href="/auth/login"
-                className="w-full inline-flex items-center justify-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+                className="w-full inline-flex items-center justify-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg"
               >
-                <span>Go to Sign In</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span>Go to Sign In Page</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
-              <p className="text-center text-xs text-secondary-400">
-                Didn't receive the email? Check your spam folder or{' '}
-                <button
-                  onClick={() => setSuccess(false)}
-                  className="text-primary-400 hover:text-primary-300 underline"
-                >
-                  try again
-                </button>
+              <button
+                onClick={() => {
+                  console.log('User clicked "try again" - resetting form')
+                  setSuccess(false)
+                  setJustSignedUp(false)
+                  setEmail('')
+                  setPassword('')
+                  setConfirmPassword('')
+                }}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+              >
+                Create Another Account
+              </button>
+              <p className="text-center text-sm text-secondary-400">
+                Didn't receive the email? Check your spam folder first.
               </p>
             </div>
           </div>
@@ -177,8 +243,22 @@ export default function SignupPage() {
 
         {/* Signup Form */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Join the Crew</h2>
-          
+          <h2 className="text-2xl font-bold text-white mb-4 text-center">Join the Crew</h2>
+
+
+
+
+
+          {/* Processing indicator */}
+          {isSubmitting && !error && (
+            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-3 mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-4 h-4 border-2 border-primary-300/30 border-t-primary-300 rounded-full animate-spin"></div>
+                <p className="text-primary-200 text-sm font-medium">Creating your account...</p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
               <p className="text-red-200 text-sm">{error}</p>
@@ -262,10 +342,10 @@ export default function SignupPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isSubmitting}
               className="w-full bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
             >
-              {loading ? (
+              {(loading || isSubmitting) ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   <span>Creating Account...</span>

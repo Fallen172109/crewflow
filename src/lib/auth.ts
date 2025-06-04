@@ -74,25 +74,25 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
 export async function requireAuth(): Promise<User> {
   const user = await getUser()
-  
+
   if (!user) {
-    redirect('/auth/login')
+    redirect('/')
   }
-  
+
   return user
 }
 
 export async function requireSubscription(): Promise<UserProfile> {
   const profile = await getUserProfile()
-  
+
   if (!profile) {
-    redirect('/auth/login')
+    redirect('/')
   }
-  
+
   if (!profile.subscription_tier || profile.subscription_status !== 'active') {
     redirect('/pricing')
   }
-  
+
   return profile
 }
 
@@ -128,5 +128,5 @@ export function canAccessAgent(userTier: string | null, agentName: string): bool
 export async function signOut() {
   const supabase = createSupabaseServerClient()
   await supabase.auth.signOut()
-  redirect('/auth/login')
+  redirect('/')
 }

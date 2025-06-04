@@ -11,7 +11,13 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const { signIn, loading } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Debug: Log error state changes
+  useEffect(() => {
+    console.log('Error state changed to:', error)
+  }, [error])
+  const { signIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -21,35 +27,37 @@ export default function LoginPage() {
   // Check for confirmation success or errors from URL params
   useEffect(() => {
     const confirmed = searchParams.get('confirmed')
-    const autoSignin = searchParams.get('auto_signin')
     const urlError = searchParams.get('error')
 
     if (confirmed === 'true') {
-      setSuccess('🎉 Email confirmed successfully! You are now signed in.')
-
-      // If auto_signin is true, redirect to dashboard after showing success message
-      if (autoSignin === 'true') {
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 2000) // Give user time to see the success message
-      }
+      setSuccess('🎉 Email confirmed successfully! You can now sign in with your credentials.')
+      // Clean up URL
+      window.history.replaceState({}, document.title, '/auth/login')
     } else if (urlError) {
       setError(decodeURIComponent(urlError))
     }
-  }, [searchParams, router])
+  }, [searchParams])
+
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Clear previous states
     setError('')
+    setSuccess('')
+    setIsSubmitting(true)
 
     // Basic validation
     if (!email || !password) {
       setError('Please fill in all fields')
+      setIsSubmitting(false)
       return
     }
 
     if (!email.includes('@')) {
       setError('Please enter a valid email address')
+      setIsSubmitting(false)
       return
     }
 
@@ -57,27 +65,41 @@ export default function LoginPage() {
       const { error } = await signIn(email, password)
 
       if (error) {
-        // Provide user-friendly error messages
-        switch (error.message) {
-          case 'Invalid login credentials':
-            setError('Invalid email or password. Please check your credentials and try again.')
-            break
-          case 'Email not confirmed':
-            setError('Please check your email and click the confirmation link before signing in.')
-            break
-          case 'Too many requests':
-            setError('Too many login attempts. Please wait a moment before trying again.')
-            break
-          default:
-            setError(error.message)
+        // Debug: Log the actual error message to console
+        console.log('Login error:', error.message, error)
+
+        // Provide user-friendly error messages based on specific error types
+        let errorMessage = 'Invalid email or password. Please check your credentials and try again.'
+
+        if (error.message.toLowerCase().includes('email') && error.message.toLowerCase().includes('confirm')) {
+          errorMessage = '⚠️ Your email address has not been confirmed yet. Please check your email inbox (and spam folder) for the confirmation link. If you need a new confirmation email, please sign up again with the same email address.'
+        } else if (error.message.toLowerCase().includes('too many')) {
+          errorMessage = 'Too many login attempts. Please wait a moment before trying again.'
+        } else if (error.message.toLowerCase().includes('signup') && error.message.toLowerCase().includes('disabled')) {
+          errorMessage = 'Account registration is currently disabled. Please contact support.'
+        } else if (error.message.toLowerCase().includes('email') && error.message.toLowerCase().includes('invalid')) {
+          errorMessage = 'Please enter a valid email address.'
+        } else if (error.message.toLowerCase().includes('invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.'
         }
+
+        // Log the error for debugging
+        console.log('Processed login error:', error.message)
+        console.log('Setting error state to:', errorMessage)
+
+        // Set error immediately
+        setError(errorMessage)
+        setIsSubmitting(false)
       } else {
-        // Redirect to intended page or dashboard
-        const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-        router.push(redirectTo)
+        // Show success message with manual navigation option
+        setSuccess('🎉 Welcome back! You can now access your dashboard.')
+        setIsSubmitting(false)
+        // NO AUTOMATIC REDIRECT - User will manually navigate
       }
     } catch (err) {
+      console.log('Unexpected error during login:', err)
       setError('An unexpected error occurred. Please try again.')
+      setIsSubmitting(false)
     }
   }
 
@@ -104,11 +126,35 @@ export default function LoginPage() {
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">
           <h2 className="text-2xl font-bold text-white mb-6 text-center">Welcome Back</h2>
 
-          {success && (
-            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-4">
-              <p className="text-green-200 text-sm">{success}</p>
+          {/* Processing indicator */}
+          {isSubmitting && !error && !success && (
+            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-3 mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-4 h-4 border-2 border-primary-300/30 border-t-primary-300 rounded-full animate-spin"></div>
+                <p className="text-primary-200 text-sm font-medium">Signing you in...</p>
+              </div>
             </div>
           )}
+
+          {success && (
+            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-4">
+              <p className="text-green-200 text-sm font-medium mb-3">{success}</p>
+              <button
+                onClick={() => {
+                  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+                  router.push(redirectTo)
+                }}
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+              >
+                <span>Go to Dashboard</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+
 
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
@@ -171,10 +217,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isSubmitting}
               className="w-full bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
             >
-              {loading ? (
+              {isSubmitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   <span>Signing In...</span>

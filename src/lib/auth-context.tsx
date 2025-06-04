@@ -23,7 +23,7 @@ interface AuthContextType {
   loading: boolean
   signingOut: boolean
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null; user?: any; session?: any }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>
@@ -217,28 +217,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(initialSession?.user ?? null)
 
           if (initialSession?.user) {
-            // Check if user email is confirmed
-            if (!initialSession.user.email_confirmed_at) {
-              console.log('User email not confirmed yet')
-              setUserProfile(null)
-            } else {
-              // Fetch user profile for confirmed users (don't await to prevent hanging)
-              fetchUserProfile(initialSession.user.id)
-                .then(profile => {
-                  if (mounted) {
-                    setUserProfile(profile)
-                  }
-                })
-                .catch(profileError => {
-                  // Only log non-timeout errors to reduce console noise
-                  if (profileError?.message !== 'Profile fetch timeout') {
-                    console.error('Error fetching profile:', profileError)
-                  }
-                  if (mounted) {
-                    setUserProfile(null)
-                  }
-                })
-            }
+            // Always try to fetch user profile, regardless of email confirmation
+            // This allows the app to work even if email confirmation is pending
+            fetchUserProfile(initialSession.user.id)
+              .then(profile => {
+                if (mounted) {
+                  setUserProfile(profile)
+                }
+              })
+              .catch(profileError => {
+                console.log('Profile fetch failed (this is normal for new users):', profileError?.message)
+                if (mounted) {
+                  setUserProfile(null)
+                }
+              })
           } else {
             setUserProfile(null)
           }
@@ -256,6 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Initialize immediately
     initializeAuth()
 
     // Listen for auth changes
@@ -331,7 +324,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
-      return { error: result.error }
+
+      return {
+        error: result.error,
+        user: result.data?.user,
+        session: result.data?.session
+      }
+    } catch (error) {
+      return { error: error as any }
     } finally {
       setLoading(false)
     }
@@ -351,8 +351,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Sign out from Supabase
       await supabase.auth.signOut()
 
-      console.log('Sign out successful, redirecting...')
-      router.push('/auth/login')
+      console.log('Sign out successful, redirecting to landing page...')
+      router.push('/')
     } catch (error) {
       console.error('Error signing out:', error)
     } finally {
@@ -389,17 +389,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshProfile,
   }
 
-  // Show loading screen while initializing
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-secondary-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white">Initializing CrewFlow...</p>
-        </div>
-      </div>
-    )
-  }
+  // Don't show loading screen - let pages handle their own loading states
+  // This prevents the auth context from blocking navigation
 
   return (
     <AuthContext.Provider value={value}>
@@ -423,28 +414,35 @@ export function useRequireAuth() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth/login')
+      router.push('/')
     }
   }, [user, loading, router])
 
   return { user, loading }
 }
 
-export function useRedirectIfAuthenticated() {
+export function useRedirectIfAuthenticated(redirectTo: string = '/dashboard') {
   const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    // Be much more conservative about redirects
+    // Only redirect if user is confirmed AND we're on a login page specifically
     if (!loading && user && user.email_confirmed_at) {
-      // Only redirect if user is confirmed and not on a page with special params
-      const currentUrl = new URL(window.location.href)
-      const hasConfirmedParam = currentUrl.searchParams.has('confirmed')
+      const currentPath = window.location.pathname
 
-      if (!hasConfirmedParam) {
-        router.push('/dashboard')
+      // Only redirect from login page, not signup page
+      if (currentPath === '/auth/login') {
+        const currentUrl = new URL(window.location.href)
+        const hasConfirmedParam = currentUrl.searchParams.has('confirmed')
+
+        if (!hasConfirmedParam) {
+          console.log('Redirecting authenticated user from login page to dashboard')
+          router.push(redirectTo)
+        }
       }
     }
-  }, [user, loading, router])
+  }, [user, loading, router, redirectTo])
 
   return { user, loading }
 }

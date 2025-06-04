@@ -1,12 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { createSupabaseServerClient } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
+
+  console.log('Auth callback hit:', { code: !!code, error, errorDescription })
 
   // Handle OAuth errors
   if (error) {
@@ -16,59 +17,57 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // If we have a code, exchange it for a session
   if (code) {
-    const cookieStore = cookies()
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          flowType: 'pkce'
-        }
-      }
-    )
-
     try {
+      const supabase = createSupabaseServerClient()
+
+      // Exchange the code for a session
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
       if (exchangeError) {
-        console.error('Error exchanging code for session:', exchangeError)
+        console.error('Code exchange error:', exchangeError)
         return NextResponse.redirect(
-          `${requestUrl.origin}/auth/login?error=${encodeURIComponent('Failed to confirm email. Please try again.')}`
+          `${requestUrl.origin}/auth/login?error=${encodeURIComponent(exchangeError.message)}`
         )
       }
 
       if (data.session) {
-        // Set the session cookies manually to ensure they're properly set
-        const response = NextResponse.redirect(`${requestUrl.origin}/auth/login?confirmed=true&auto_signin=true`)
+        console.log('Session created successfully for user:', data.session.user.email)
 
-        // Set auth cookies
+        // Create response with redirect
+        const response = NextResponse.redirect(`${requestUrl.origin}/auth/login?confirmed=true`)
+
+        // Set session cookies manually to ensure they're available immediately
         response.cookies.set('sb-access-token', data.session.access_token, {
-          path: '/',
-          httpOnly: true,
+          httpOnly: false,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           maxAge: 60 * 60 * 24 * 7 // 7 days
         })
 
         response.cookies.set('sb-refresh-token', data.session.refresh_token, {
-          path: '/',
-          httpOnly: true,
+          httpOnly: false,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           maxAge: 60 * 60 * 24 * 30 // 30 days
         })
 
         return response
+      } else {
+        return NextResponse.redirect(
+          `${requestUrl.origin}/auth/login?error=${encodeURIComponent('Authentication failed. Please try signing in.')}`
+        )
       }
     } catch (error) {
-      console.error('Error in auth callback:', error)
+      console.error('Unexpected error during code exchange:', error)
       return NextResponse.redirect(
         `${requestUrl.origin}/auth/login?error=${encodeURIComponent('Authentication failed. Please try again.')}`
       )
     }
   }
 
-  // No code provided, redirect to login
-  return NextResponse.redirect(`${requestUrl.origin}/auth/login?error=${encodeURIComponent('Invalid confirmation link.')}`)
+  // No code provided - this might be a direct visit to the callback URL
+  console.log('No code provided to callback route')
+  return NextResponse.redirect(`${requestUrl.origin}/auth/login`)
 }

@@ -3,13 +3,52 @@
 import { useAuth } from '@/lib/auth-context'
 import { AGENTS, getAgentsForTier } from '@/lib/agents'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
   const availableAgents = getAgentsForTier(userProfile?.subscription_tier)
+  const searchParams = useSearchParams()
+  const [showConfirmation, setShowConfirmation] = useState(false)
+
+  // Check for email confirmation success
+  useEffect(() => {
+    const confirmed = searchParams.get('confirmed')
+    if (confirmed === 'true') {
+      setShowConfirmation(true)
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowConfirmation(false), 5000)
+    }
+  }, [searchParams])
 
   return (
     <div className="space-y-8">
+      {/* Email Confirmation Success Message */}
+      {showConfirmation && (
+        <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-green-200 font-semibold">🎉 Welcome aboard, Captain!</p>
+              <p className="text-green-300 text-sm">Your email has been confirmed and your account is now active.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowConfirmation(false)}
+            className="text-green-300 hover:text-green-200 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

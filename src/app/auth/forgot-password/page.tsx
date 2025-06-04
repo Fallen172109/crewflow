@@ -56,10 +56,13 @@ export default function ForgotPasswordPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-white mb-4">Check Your Email</h2>
-            <p className="text-secondary-300 mb-6">
-              We've sent a password reset link to <strong>{email}</strong>. 
+            <p className="text-secondary-300 mb-4">
+              We've sent a password reset link to <strong>{email}</strong>.
               Click the link in the email to reset your password.
             </p>
+            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-6">
+              <p className="text-green-200 text-sm font-medium">✅ Password reset email sent successfully</p>
+            </div>
             <div className="space-y-3">
               <Link 
                 href="/auth/login"

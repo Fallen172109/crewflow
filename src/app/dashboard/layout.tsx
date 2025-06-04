@@ -14,11 +14,11 @@ export default function DashboardLayout({
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  // Redirect to login if not authenticated
+  // Redirect to landing page if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      console.log('Dashboard: No user found, redirecting to login')
-      router.push('/auth/login')
+      console.log('Dashboard: No user found, redirecting to landing page')
+      router.push('/')
     } else if (!loading && user) {
       console.log('Dashboard: User authenticated:', user.email)
     }

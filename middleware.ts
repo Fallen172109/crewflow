@@ -2,35 +2,38 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
   const { pathname } = req.nextUrl
 
-  console.log('Middleware hit:', pathname)
-
-  // Skip middleware for auth callback route to prevent redirect loops
-  if (pathname.startsWith('/auth/callback')) {
-    return res
+  // Skip middleware for auth routes to prevent redirect loops
+  if (pathname.startsWith('/auth/')) {
+    return NextResponse.next()
   }
 
-  // Check for auth tokens in cookies
-  const accessToken = req.cookies.get('sb-access-token')?.value
-  const refreshToken = req.cookies.get('sb-refresh-token')?.value
-
-  // Simple check for authentication based on presence of tokens
-  // We'll let the client-side handle detailed session validation
-  const isAuthenticated = !!(accessToken && refreshToken)
-
-  // Only protect dashboard route for now to avoid redirect loops
-  if (pathname.startsWith('/dashboard') && !isAuthenticated) {
-    const redirectUrl = new URL('/auth/login', req.url)
-    redirectUrl.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(redirectUrl)
+  // Skip middleware for API routes
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next()
   }
 
-  // Don't redirect authenticated users away from auth pages for now
-  // Let the client-side handle this to avoid loops
+  // Skip middleware for static files
+  if (pathname.startsWith('/_next/') || pathname.includes('.')) {
+    return NextResponse.next()
+  }
 
-  return res
+  // Only protect dashboard routes
+  if (pathname.startsWith('/dashboard')) {
+    // Check for auth tokens in cookies
+    const accessToken = req.cookies.get('sb-access-token')?.value
+    const refreshToken = req.cookies.get('sb-refresh-token')?.value
+
+    // If no tokens, redirect to login
+    if (!accessToken && !refreshToken) {
+      const redirectUrl = new URL('/auth/login', req.url)
+      redirectUrl.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {

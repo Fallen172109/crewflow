@@ -3,31 +3,20 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Singleton client instance to prevent multiple GoTrueClient instances
-let supabaseInstance: SupabaseClient | null = null
+// Debug: Log environment variables (remove in production)
+console.log('Supabase URL:', supabaseUrl)
+console.log('Supabase Anon Key:', supabaseAnonKey ? `Present (${supabaseAnonKey.substring(0, 20)}...)` : 'Missing')
 
-// Client-side Supabase client factory (for use in components)
-export function createSupabaseClient() {
-  // Return existing instance if it exists
-  if (supabaseInstance) {
-    return supabaseInstance
-  }
-
-  // Create new instance only if none exists
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce'
-    }
-  })
-
-  return supabaseInstance
+// Validate environment variables
+if (!supabaseUrl) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+}
+if (!supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
 }
 
-// Client-side Supabase client (using singleton)
-export const supabase = createSupabaseClient()
+// Client-side Supabase client (direct instance)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Server-side Supabase client factory (for use in API routes and server components)
 export function createSupabaseServerClient() {
