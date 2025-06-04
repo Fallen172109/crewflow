@@ -1,4 +1,4 @@
-# CrewFlow - Maritime AI Automation Platform
+# CrewFlow 🚢 - Maritime AI Automation Platform
 
 CrewFlow is a cutting-edge maritime-themed multi-agent AI automation platform that brings together 10 specialized AI agents to automate various business operations. Built with Next.js 15, Supabase, and modern AI frameworks including LangChain, AutoGen, and Perplexity AI.
 
