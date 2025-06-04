@@ -1,13 +1,90 @@
-import Link from 'next/link'
-import Image from 'next/image'
+'use client'
 
-export default function Home() {
+import { useState } from 'react'
+
+export default function MaintenancePage() {
+  const [password, setPassword] = useState('')
+  const [showMainSite, setShowMainSite] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === 'CrewFlow2024!') {
+      setShowMainSite(true)
+    } else {
+      setError('Invalid password')
+    }
+  }
+
+  if (showMainSite) {
+    return <OriginalSite />
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-full mb-4">
+            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z"/>
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">CrewFlow</h1>
+          <p className="text-slate-400">Site Under Development</p>
+        </div>
+
+        <div className="text-center mb-8">
+          <h2 className="text-xl font-semibold text-white mb-2">
+            We're Building Something Amazing
+          </h2>
+          <p className="text-slate-300 text-sm leading-relaxed">
+            CrewFlow is currently under development. Our maritime AI automation platform
+            will be launching soon with 10 specialized agents.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+              Developer Access
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Enter access password"
+              required
+            />
+          </div>
+
+          {error && (
+            <div className="text-red-400 text-sm text-center">{error}</div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          >
+            Access Site
+          </button>
+        </form>
+
+        <div className="text-center mt-8 pt-6 border-t border-slate-700">
+          <p className="text-slate-400 text-xs">
+            Expected Launch: Q1 2025 • Maritime AI Automation Platform
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function OriginalSite() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-primary-900">
-      {/* Background Pattern */}
       <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
-
-      {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between p-6 lg:px-8">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
@@ -17,26 +94,10 @@ export default function Home() {
           </div>
           <span className="text-2xl font-bold text-white">CrewFlow</span>
         </div>
-
         <div className="flex items-center space-x-4">
-          <Link
-            href="/pricing"
-            className="text-secondary-300 hover:text-white transition-colors"
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/auth/login"
-            className="text-secondary-300 hover:text-white transition-colors"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/auth/signup"
-            className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Get Started
-          </Link>
+          <a href="/pricing" className="text-secondary-300 hover:text-white transition-colors">Pricing</a>
+          <a href="/auth/login" className="text-secondary-300 hover:text-white transition-colors">Sign In</a>
+          <a href="/auth/signup" className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">Get Started</a>
         </div>
       </nav>
 

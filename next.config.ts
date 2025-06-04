@@ -9,11 +9,18 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000']
+      allowedOrigins: [
+        'localhost:3000',
+        'crewflow.dev',
+        'www.crewflow.dev'
+      ]
     }
   },
   images: {
-    domains: ['localhost'],
+    domains: [
+      'localhost',
+      'crewflow.dev'
+    ],
     remotePatterns: [
       {
         protocol: 'https',
