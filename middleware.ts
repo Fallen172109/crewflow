@@ -19,7 +19,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Only protect dashboard routes
+  // Protect dashboard routes
   if (pathname.startsWith('/dashboard')) {
     // Check for auth tokens in cookies
     const accessToken = req.cookies.get('sb-access-token')?.value
@@ -31,6 +31,24 @@ export async function middleware(req: NextRequest) {
       redirectUrl.searchParams.set('redirectTo', pathname)
       return NextResponse.redirect(redirectUrl)
     }
+  }
+
+  // Protect admin routes - requires both authentication and admin role
+  if (pathname.startsWith('/admin')) {
+    // Check for auth tokens in cookies
+    const accessToken = req.cookies.get('sb-access-token')?.value
+    const refreshToken = req.cookies.get('sb-refresh-token')?.value
+
+    // If no tokens, redirect to login
+    if (!accessToken && !refreshToken) {
+      const redirectUrl = new URL('/auth/login', req.url)
+      redirectUrl.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Note: Admin role verification is handled at the component level
+    // since middleware can't easily access Supabase user data
+    // The admin pages will check the role and redirect if necessary
   }
 
   return NextResponse.next()

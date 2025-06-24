@@ -74,7 +74,7 @@ export default function DashboardNav() {
   }
 
   return (
-    <nav className="bg-secondary-800 border-b border-secondary-700 px-6 py-4">
+    <nav className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
       <div className="flex items-center justify-between">
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center space-x-3">
@@ -83,19 +83,19 @@ export default function DashboardNav() {
               <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z"/>
             </svg>
           </div>
-          <span className="text-xl font-bold text-white">CrewFlow</span>
+          <span className="text-xl font-bold text-gray-900">CrewFlow</span>
         </Link>
 
         {/* Search Bar */}
         <div className="flex-1 max-w-lg mx-8">
           <div className="relative">
-            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               type="text"
               placeholder="Search agents, actions, or chat history..."
-              className="w-full pl-10 pr-4 py-2 bg-secondary-700 border border-secondary-600 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function DashboardNav() {
         {/* Right Side */}
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <button className="relative p-2 text-secondary-400 hover:text-white transition-colors">
+          <button className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM10.5 3.5L6.5 7.5 10.5 11.5" />
             </svg>
@@ -115,20 +115,20 @@ export default function DashboardNav() {
             <button
               ref={buttonRef}
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-secondary-700 transition-colors"
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                 <span className="text-sm font-semibold text-white">{getUserInitials()}</span>
               </div>
               <div className="text-left">
-                <span className="text-white text-sm block">{getDisplayName()}</span>
+                <span className="text-gray-900 text-sm block">{getDisplayName()}</span>
                 {userProfile?.subscription_tier && (
-                  <span className="text-xs text-primary-400 capitalize">
+                  <span className="text-xs text-primary-500 capitalize">
                     {userProfile.subscription_tier}
                   </span>
                 )}
               </div>
-              <svg className="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -137,7 +137,7 @@ export default function DashboardNav() {
             {isProfileOpen && mounted && createPortal(
               <div
                 ref={dropdownRef}
-                className="fixed w-48 bg-secondary-800 rounded-lg shadow-xl border border-secondary-700 py-1"
+                className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1"
                 style={{
                   top: dropdownPosition.top,
                   right: dropdownPosition.right,
@@ -146,34 +146,34 @@ export default function DashboardNav() {
               >
                 <Link
                   href="/dashboard/settings"
-                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white transition-colors"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
                   onClick={() => setIsProfileOpen(false)}
                 >
                   Settings
                 </Link>
                 <Link
                   href="/dashboard/billing"
-                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white transition-colors"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
                   onClick={() => setIsProfileOpen(false)}
                 >
                   Billing
                 </Link>
                 <Link
                   href="/support"
-                  className="block px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white transition-colors"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
                   onClick={() => setIsProfileOpen(false)}
                 >
                   Support
                 </Link>
-                <hr className="my-1 border-secondary-700" />
+                <hr className="my-1 border-gray-200" />
                 <button
                   onClick={handleSignOut}
                   disabled={signingOut}
-                  className="block w-full text-left px-4 py-2 text-sm text-secondary-300 hover:bg-secondary-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {signingOut ? (
                     <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-secondary-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>

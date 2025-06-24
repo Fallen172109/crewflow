@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
 export default function ResetPasswordPage() {
@@ -16,14 +17,30 @@ export default function ResetPasswordPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Check if we have the required tokens
+  // Check if we have the required tokens or if user is authenticated
   useEffect(() => {
-    const accessToken = searchParams.get('access_token')
-    const refreshToken = searchParams.get('refresh_token')
-    
-    if (!accessToken || !refreshToken) {
-      setError('Invalid reset link. Please request a new password reset.')
+    const checkResetValidity = async () => {
+      // Check URL parameters that Supabase might use
+      const accessToken = searchParams.get('access_token')
+      const refreshToken = searchParams.get('refresh_token')
+      const type = searchParams.get('type')
+      const token = searchParams.get('token')
+
+      // Check if user is already authenticated (session exists)
+      const { data: { session } } = await supabase.auth.getSession()
+
+      // If we have a session or the URL contains reset-related parameters, allow access
+      if (session || type === 'recovery' || token || (accessToken && refreshToken)) {
+        // Valid reset context - clear any existing error
+        setError('')
+      } else {
+        // Only show error if we're sure this is an invalid reset attempt
+        console.log('Reset validation failed:', { session, type, token, accessToken, refreshToken })
+        setError('Invalid reset link. Please request a new password reset.')
+      }
     }
+
+    checkResetValidity()
   }, [searchParams])
 
   // Password strength checker
@@ -139,7 +156,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-primary-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
       

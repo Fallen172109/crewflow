@@ -2,12 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 
 interface UserProfile {
   id: string
   email: string
+  role: 'user' | 'admin'
   subscription_tier: 'starter' | 'professional' | 'enterprise' | null
   subscription_status: 'active' | 'inactive' | 'cancelled' | 'past_due' | null
   stripe_customer_id: string | null
@@ -32,6 +33,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Create browser client with SSR support
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
@@ -51,9 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null
       }
 
-      // Prevent too frequent profile fetches (minimum 5 seconds between attempts)
+      // Prevent too frequent profile fetches (minimum 2 seconds between attempts)
       const now = Date.now()
-      if (retryCount === 0 && now - lastProfileFetch.current < 5000) {
+      if (retryCount === 0 && now - lastProfileFetch.current < 2000) {
         console.log('Profile fetch too recent, skipping')
         return null
       }
@@ -141,7 +148,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .insert({
           id: userId,
           email: email,
-          subscription_tier: 'free',
+          role: 'user',
+          subscription_tier: 'starter',
           subscription_status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -155,8 +163,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return {
           id: userId,
           email: email,
-          subscription_tier: 'free',
-          subscription_status: 'active',
+          role: 'user' as const,
+          subscription_tier: 'starter' as const,
+          subscription_status: 'active' as const,
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
@@ -170,8 +181,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return {
         id: userId,
         email: email,
-        subscription_tier: 'free',
-        subscription_status: 'active',
+        role: 'user' as const,
+        subscription_tier: 'starter' as const,
+        subscription_status: 'active' as const,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
@@ -180,11 +194,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Refresh user profile
   const refreshProfile = useCallback(async () => {
+    console.log('refreshProfile called')
     if (user && !signingOut) {
+      console.log('refreshProfile: fetching profile for user:', user.id)
       const profile = await fetchUserProfile(user.id)
-      if (!signingOut) {
+      console.log('refreshProfile: got profile:', profile?.email, 'role:', profile?.role)
+      if (!signingOut && profile !== null) {
+        console.log('refreshProfile: setting profile in state')
         setUserProfile(profile)
+        console.log('refreshProfile: profile should be set now')
+      } else {
+        console.log('refreshProfile: not setting profile - signing out or profile is null')
       }
+    } else {
+      console.log('refreshProfile: not fetching - no user or signing out')
     }
   }, [user, fetchUserProfile, signingOut])
 
@@ -221,8 +244,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // This allows the app to work even if email confirmation is pending
             fetchUserProfile(initialSession.user.id)
               .then(profile => {
+                console.log('Initial profile fetch result:', profile)
                 if (mounted) {
+                  console.log('Setting initial user profile:', profile?.email, 'role:', profile?.role)
                   setUserProfile(profile)
+                  console.log('Profile state should now be set')
+                } else {
+                  console.log('Not setting initial profile - not mounted')
                 }
               })
               .catch(profileError => {
@@ -267,8 +295,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Fetch user profile asynchronously (don't await to prevent hanging)
             fetchUserProfile(session.user.id)
               .then(profile => {
-                if (mounted && !signingOut) {
+                console.log('Profile fetch result:', profile)
+                if (mounted && !signingOut && profile !== null) {
+                  console.log('Setting user profile:', profile?.email, 'role:', profile?.role)
                   setUserProfile(profile)
+                } else {
+                  console.log('Not setting profile - mounted:', mounted, 'signingOut:', signingOut, 'profile:', profile)
                 }
               })
               .catch(profileError => {
@@ -307,6 +339,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
       })
+
+      // If sign in was successful, refresh the session to ensure server-side sync
+      if (!result.error && result.data.session) {
+        // Force a session refresh to sync with server-side cookies
+        await supabase.auth.getSession()
+      }
+
       return { error: result.error }
     } finally {
       setLoading(false)

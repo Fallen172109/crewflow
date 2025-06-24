@@ -1,6 +1,9 @@
+'use client'
+
 import { notFound } from 'next/navigation'
-import { getAgent } from '@/lib/agents'
-import { getUserProfile } from '@/lib/auth'
+import { useEffect, useState } from 'react'
+import { getAgent, canUserAccessAgent } from '@/lib/agents'
+import { supabase } from '@/lib/supabase'
 import AgentInterface from '@/components/agents/AgentInterface'
 
 interface AgentPageProps {
@@ -9,24 +12,84 @@ interface AgentPageProps {
   }
 }
 
-export default async function AgentPage({ params }: AgentPageProps) {
-  const agent = getAgent(params.agentId)
-  const userProfile = await getUserProfile()
+interface UserProfile {
+  id: string
+  email: string
+  role: 'user' | 'admin'
+  subscription_tier: 'starter' | 'professional' | 'enterprise' | null
+  subscription_status: 'active' | 'inactive' | 'cancelled' | 'past_due' | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Client-side admin access check
+function hasAdminAccess(profile: UserProfile | null): boolean {
+  return profile?.role === 'admin'
+}
+
+export default function AgentPage({ params }: AgentPageProps) {
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [agent, setAgent] = useState<any>(null)
+
+  useEffect(() => {
+    const foundAgent = getAgent(params.agentId)
+    if (!foundAgent) {
+      notFound()
+    }
+    setAgent(foundAgent)
+  }, [params.agentId])
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) {
+          setLoading(false)
+          return
+        }
+
+        const { data: profileData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+
+        setProfile(profileData)
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
+
+  console.log('AgentPage: Agent ID:', params.agentId)
+  console.log('AgentPage: User Profile:', profile?.email, 'role:', profile?.role, 'tier:', profile?.subscription_tier)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      </div>
+    )
+  }
 
   if (!agent) {
     notFound()
   }
 
-  // Check if user can access this agent
-  const availableAgents = userProfile?.subscription_tier === 'starter' 
-    ? ['coral', 'mariner', 'pearl']
-    : userProfile?.subscription_tier === 'professional'
-    ? ['coral', 'mariner', 'pearl', 'morgan', 'tide', 'compass']
-    : userProfile?.subscription_tier === 'enterprise'
-    ? Object.keys(require('@/lib/agents').AGENTS)
-    : []
+  // Check if user can access this agent (admin override or subscription check)
+  const isAdmin = hasAdminAccess(profile)
+  const canAccess = isAdmin || canUserAccessAgent(profile?.subscription_tier, agent.id)
 
-  if (!availableAgents.includes(agent.id)) {
+  console.log('AgentPage: isAdmin:', isAdmin, 'canAccess:', canAccess)
+
+  if (!canAccess) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -50,5 +113,5 @@ export default async function AgentPage({ params }: AgentPageProps) {
     )
   }
 
-  return <AgentInterface agent={agent} userProfile={userProfile} />
+  return <AgentInterface agent={agent} userProfile={profile} />
 }

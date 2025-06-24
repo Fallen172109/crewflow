@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
   if (error) {
     console.error('OAuth error:', error, errorDescription)
     return NextResponse.redirect(
-      `${requestUrl.origin}/auth/login?error=${encodeURIComponent(errorDescription || error)}`
+      `${requestUrl.origin}/auth/confirm-success?error=${encodeURIComponent(errorDescription || error)}`
     )
   }
 
   // If we have a code, exchange it for a session
   if (code) {
     try {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
 
       // Exchange the code for a session
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
@@ -28,41 +28,32 @@ export async function GET(request: NextRequest) {
       if (exchangeError) {
         console.error('Code exchange error:', exchangeError)
         return NextResponse.redirect(
-          `${requestUrl.origin}/auth/login?error=${encodeURIComponent(exchangeError.message)}`
+          `${requestUrl.origin}/auth/confirm-success?error=${encodeURIComponent(exchangeError.message)}`
         )
       }
 
       if (data.session) {
         console.log('Session created successfully for user:', data.session.user.email)
 
-        // Create response with redirect
-        const response = NextResponse.redirect(`${requestUrl.origin}/auth/login?confirmed=true`)
+        // Create response with redirect to confirmation success page
+        const response = NextResponse.redirect(`${requestUrl.origin}/auth/confirm-success`)
 
-        // Set session cookies manually to ensure they're available immediately
-        response.cookies.set('sb-access-token', data.session.access_token, {
-          httpOnly: false,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7 // 7 days
-        })
-
-        response.cookies.set('sb-refresh-token', data.session.refresh_token, {
-          httpOnly: false,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 30 // 30 days
+        // Set the session using Supabase's cookie system
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token
         })
 
         return response
       } else {
         return NextResponse.redirect(
-          `${requestUrl.origin}/auth/login?error=${encodeURIComponent('Authentication failed. Please try signing in.')}`
+          `${requestUrl.origin}/auth/confirm-success?error=${encodeURIComponent('Authentication failed. Please try signing in.')}`
         )
       }
     } catch (error) {
       console.error('Unexpected error during code exchange:', error)
       return NextResponse.redirect(
-        `${requestUrl.origin}/auth/login?error=${encodeURIComponent('Authentication failed. Please try again.')}`
+        `${requestUrl.origin}/auth/confirm-success?error=${encodeURIComponent('Authentication failed. Please try again.')}`
       )
     }
   }

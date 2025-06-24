@@ -6,6 +6,22 @@ import { UserProfile } from '@/lib/auth'
 import ChatInterface from './ChatInterface'
 import PresetActions from './PresetActions'
 
+// Helper function to get framework badge styling
+const getFrameworkBadge = (framework: string) => {
+  switch (framework) {
+    case 'langchain':
+      return 'bg-blue-100 text-blue-700 border-blue-200'
+    case 'autogen':
+      return 'bg-purple-100 text-purple-700 border-purple-200'
+    case 'perplexity':
+      return 'bg-green-100 text-green-700 border-green-200'
+    case 'hybrid':
+      return 'bg-orange-100 text-orange-700 border-orange-200'
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200'
+  }
+}
+
 interface AgentInterfaceProps {
   agent: Agent
   userProfile: UserProfile | null
@@ -98,16 +114,47 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <h1 className="text-2xl font-bold text-white">{agent.name}</h1>
-              <span className="text-sm bg-secondary-700 text-secondary-300 px-2 py-1 rounded">
+              <span className={`text-sm px-3 py-1 rounded-full border ${getFrameworkBadge(agent.framework)}`}>
                 {agent.framework}
               </span>
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-xs text-secondary-400">Online</span>
               </div>
+              {agent.requiresApiConnection && (
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  <span className="text-xs text-secondary-400">API Required</span>
+                </div>
+              )}
             </div>
             <p className="text-primary-400 font-medium mb-2">{agent.title}</p>
-            <p className="text-secondary-300">{agent.description}</p>
+            <p className="text-secondary-300 mb-3">{agent.description}</p>
+
+            {/* Integration Status */}
+            {agent.integrations.length > 0 && (
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-xs text-secondary-400">Integrations:</span>
+                <div className="flex items-center space-x-1">
+                  {agent.integrations.slice(0, 3).map((integration, index) => (
+                    <span key={integration} className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                      {integration}
+                    </span>
+                  ))}
+                  {agent.integrations.length > 3 && (
+                    <span className="text-xs text-secondary-400">+{agent.integrations.length - 3} more</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Capabilities */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-secondary-400">Actions:</span>
+              <span className="text-xs text-primary-400">{agent.presetActions.length} available</span>
+              <span className="text-xs text-secondary-400">•</span>
+              <span className="text-xs text-secondary-400">Cost: ${agent.costPerRequest}/request</span>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-sm text-secondary-400">Usage Today</p>
@@ -115,6 +162,7 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
             <div className="w-24 bg-secondary-700 rounded-full h-2 mt-1">
               <div className="bg-primary-500 h-2 rounded-full" style={{ width: '4.6%' }}></div>
             </div>
+            <p className="text-xs text-secondary-400 mt-2">Tier: {agent.tier}</p>
           </div>
         </div>
       </div>

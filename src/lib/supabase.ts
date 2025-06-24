@@ -48,6 +48,7 @@ export interface Database {
         Row: {
           id: string
           email: string
+          role: 'user' | 'admin'
           subscription_tier: 'starter' | 'professional' | 'enterprise' | null
           subscription_status: 'active' | 'inactive' | 'cancelled' | 'past_due' | null
           stripe_customer_id: string | null
@@ -58,6 +59,7 @@ export interface Database {
         Insert: {
           id: string
           email: string
+          role?: 'user' | 'admin'
           subscription_tier?: 'starter' | 'professional' | 'enterprise' | null
           subscription_status?: 'active' | 'inactive' | 'cancelled' | 'past_due' | null
           stripe_customer_id?: string | null
@@ -138,27 +140,63 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          integration_id: string
           service_name: string
-          api_key_encrypted: string
-          connection_status: 'connected' | 'disconnected' | 'error'
+          access_token?: string
+          refresh_token?: string
+          expires_at?: string
+          token_type?: string
+          scope?: string
+          api_key_encrypted?: string
+          status: 'connected' | 'disconnected' | 'error' | 'expired'
+          connected_at?: string
+          last_sync?: string
+          error?: string
+          facebook_user_id?: string
+          facebook_pages?: any[] // JSONB array
+          facebook_business_id?: string
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
+          integration_id: string
           service_name: string
-          api_key_encrypted: string
-          connection_status?: 'connected' | 'disconnected' | 'error'
+          access_token?: string
+          refresh_token?: string
+          expires_at?: string
+          token_type?: string
+          scope?: string
+          api_key_encrypted?: string
+          status?: 'connected' | 'disconnected' | 'error' | 'expired'
+          connected_at?: string
+          last_sync?: string
+          error?: string
+          facebook_user_id?: string
+          facebook_pages?: any[]
+          facebook_business_id?: string
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
+          integration_id?: string
           service_name?: string
+          access_token?: string
+          refresh_token?: string
+          expires_at?: string
+          token_type?: string
+          scope?: string
           api_key_encrypted?: string
-          connection_status?: 'connected' | 'disconnected' | 'error'
+          status?: 'connected' | 'disconnected' | 'error' | 'expired'
+          connected_at?: string
+          last_sync?: string
+          error?: string
+          facebook_user_id?: string
+          facebook_pages?: any[]
+          facebook_business_id?: string
           created_at?: string
           updated_at?: string
         }

@@ -38,13 +38,13 @@ export default function SignupPage() {
     switch (strength) {
       case 0:
       case 1:
-        return { text: 'Weak', color: 'text-red-400' }
+        return { text: 'Weak', color: 'text-red-600' }
       case 2:
       case 3:
-        return { text: 'Medium', color: 'text-yellow-400' }
+        return { text: 'Medium', color: 'text-yellow-600' }
       case 4:
       case 5:
-        return { text: 'Strong', color: 'text-green-400' }
+        return { text: 'Strong', color: 'text-green-600' }
       default:
         return { text: '', color: '' }
     }
@@ -162,28 +162,28 @@ export default function SignupPage() {
   if (success) {
     console.log('🎉 Rendering success screen - this should be visible to the user')
     return (
-      <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-primary-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
 
         <div className="relative w-full max-w-md">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl text-center">
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg text-center">
             <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-white mb-6">🎉 Welcome to CrewFlow!</h2>
-            <p className="text-secondary-300 mb-6 text-lg">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">🎉 Welcome to CrewFlow!</h2>
+            <p className="text-gray-600 mb-6 text-lg">
               We've sent a confirmation email to<br />
-              <strong className="text-white text-xl">{email}</strong>
+              <strong className="text-gray-900 text-xl">{email}</strong>
             </p>
-            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-6 mb-6">
-              <p className="text-green-200 text-lg font-medium">✅ Confirmation email sent!</p>
-              <p className="text-green-300 text-sm mt-2">Please check your email and click the confirmation link to activate your account.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+              <p className="text-green-700 text-lg font-medium">✅ Confirmation email sent!</p>
+              <p className="text-green-600 text-sm mt-2">Please check your email and click the confirmation link to activate your account.</p>
             </div>
-            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-6 mb-8">
-              <h3 className="text-primary-300 font-semibold mb-3 text-lg">📧 Next Steps:</h3>
-              <ol className="text-secondary-300 text-base space-y-2 list-decimal list-inside text-left">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-6 mb-8">
+              <h3 className="text-primary-700 font-semibold mb-3 text-lg">📧 Next Steps:</h3>
+              <ol className="text-gray-600 text-base space-y-2 list-decimal list-inside text-left">
                 <li>Check your email inbox (and spam folder)</li>
                 <li>Click the "Confirm Your Account" link in the email</li>
                 <li>Return here to sign in with your credentials</li>
@@ -208,11 +208,11 @@ export default function SignupPage() {
                   setPassword('')
                   setConfirmPassword('')
                 }}
-                className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200"
               >
                 Create Another Account
               </button>
-              <p className="text-center text-sm text-secondary-400">
+              <p className="text-center text-sm text-gray-500">
                 Didn't receive the email? Check your spam folder first.
               </p>
             </div>
@@ -223,10 +223,10 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-primary-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
-      
+
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -236,14 +236,14 @@ export default function SignupPage() {
                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-white">CrewFlow</h1>
+            <h1 className="text-3xl font-bold text-gray-900">CrewFlow</h1>
           </div>
-          <p className="text-secondary-300">Join the maritime automation revolution</p>
+          <p className="text-gray-600">Join the maritime automation revolution</p>
         </div>
 
         {/* Signup Form */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-4 text-center">Join the Crew</h2>
+        <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Join the Crew</h2>
 
 
 
@@ -251,23 +251,23 @@ export default function SignupPage() {
 
           {/* Processing indicator */}
           {isSubmitting && !error && (
-            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-3 mb-4">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 border-2 border-primary-300/30 border-t-primary-300 rounded-full animate-spin"></div>
-                <p className="text-primary-200 text-sm font-medium">Creating your account...</p>
+                <div className="w-4 h-4 border-2 border-primary-300 border-t-primary-600 rounded-full animate-spin"></div>
+                <p className="text-primary-700 text-sm font-medium">Creating your account...</p>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
-              <p className="text-red-200 text-sm">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-secondary-200 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <input
@@ -276,13 +276,13 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="captain@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-secondary-200 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
@@ -291,13 +291,13 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => handlePasswordChange(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="••••••••"
               />
               {password && (
                 <div className="mt-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-secondary-400">Password strength:</span>
+                    <span className="text-gray-600">Password strength:</span>
                     <span className={getPasswordStrengthText(passwordStrength).color}>
                       {getPasswordStrengthText(passwordStrength).text}
                     </span>
@@ -313,12 +313,12 @@ export default function SignupPage() {
                               : passwordStrength <= 3
                               ? 'bg-yellow-400'
                               : 'bg-green-400'
-                            : 'bg-secondary-600'
+                            : 'bg-gray-200'
                         }`}
                       />
                     ))}
                   </div>
-                  <div className="mt-1 text-xs text-secondary-400">
+                  <div className="mt-1 text-xs text-gray-500">
                     Use 8+ characters with uppercase, lowercase, numbers & symbols
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-secondary-200 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
               <input
@@ -335,7 +335,7 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="••••••••"
               />
             </div>
@@ -362,26 +362,26 @@ export default function SignupPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-secondary-300">
+            <p className="text-gray-600">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-primary-400 hover:text-primary-300 font-medium">
+              <Link href="/auth/login" className="text-primary-500 hover:text-primary-600 font-medium">
                 Sign in
               </Link>
             </p>
           </div>
 
-          <div className="mt-6 text-xs text-secondary-400 text-center">
+          <div className="mt-6 text-xs text-gray-500 text-center">
             By creating an account, you agree to our{' '}
-            <Link href="/terms" className="text-primary-400 hover:text-primary-300">Terms of Service</Link>
+            <Link href="/terms" className="text-primary-500 hover:text-primary-600">Terms of Service</Link>
             {' '}and{' '}
-            <Link href="/privacy" className="text-primary-400 hover:text-primary-300">Privacy Policy</Link>
+            <Link href="/privacy" className="text-primary-500 hover:text-primary-600">Privacy Policy</Link>
           </div>
         </div>
 
         {/* Features Preview */}
         <div className="mt-8 text-center">
-          <p className="text-secondary-400 text-sm mb-4">Start with 3 powerful AI agents</p>
-          <div className="flex justify-center space-x-6 text-secondary-500">
+          <p className="text-gray-500 text-sm mb-4">Start with 3 powerful AI agents</p>
+          <div className="flex justify-center space-x-6 text-gray-500">
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
                 <span className="text-xs font-bold text-white">C</span>
@@ -389,13 +389,13 @@ export default function SignupPage() {
               <span className="text-xs">Coral Support</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-maritime-blue rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-xs font-bold text-white">M</span>
               </div>
               <span className="text-xs">Mariner Marketing</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-maritime-teal rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center">
                 <span className="text-xs font-bold text-white">P</span>
               </div>
               <span className="text-xs">Pearl Content</span>

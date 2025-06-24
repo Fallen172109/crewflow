@@ -24,16 +24,10 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useRedirectIfAuthenticated()
 
-  // Check for confirmation success or errors from URL params
+  // Check for errors from URL params
   useEffect(() => {
-    const confirmed = searchParams.get('confirmed')
     const urlError = searchParams.get('error')
-
-    if (confirmed === 'true') {
-      setSuccess('🎉 Email confirmed successfully! You can now sign in with your credentials.')
-      // Clean up URL
-      window.history.replaceState({}, document.title, '/auth/login')
-    } else if (urlError) {
+    if (urlError) {
       setError(decodeURIComponent(urlError))
     }
   }, [searchParams])
@@ -104,10 +98,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-primary-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
-      
+
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -117,28 +111,28 @@ export default function LoginPage() {
                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-white">CrewFlow</h1>
+            <h1 className="text-3xl font-bold text-gray-900">CrewFlow</h1>
           </div>
-          <p className="text-secondary-300">Navigate your business with AI automation</p>
+          <p className="text-gray-600">Navigate your business with AI automation</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Welcome Back</h2>
+        <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Welcome Back</h2>
 
           {/* Processing indicator */}
           {isSubmitting && !error && !success && (
-            <div className="bg-primary-500/20 border border-primary-500/50 rounded-lg p-3 mb-4">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 border-2 border-primary-300/30 border-t-primary-300 rounded-full animate-spin"></div>
-                <p className="text-primary-200 text-sm font-medium">Signing you in...</p>
+                <div className="w-4 h-4 border-2 border-primary-300 border-t-primary-600 rounded-full animate-spin"></div>
+                <p className="text-primary-700 text-sm font-medium">Signing you in...</p>
               </div>
             </div>
           )}
 
           {success && (
-            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-4">
-              <p className="text-green-200 text-sm font-medium mb-3">{success}</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <p className="text-green-700 text-sm font-medium mb-3">{success}</p>
               <button
                 onClick={() => {
                   const redirectTo = searchParams.get('redirectTo') || '/dashboard'
@@ -157,14 +151,14 @@ export default function LoginPage() {
 
 
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
-              <p className="text-red-200 text-sm">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-secondary-200 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <input
@@ -173,13 +167,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="captain@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-secondary-200 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
@@ -188,7 +182,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="••••••••"
               />
             </div>
@@ -201,15 +195,15 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-primary-500 bg-white/10 border-white/20 rounded focus:ring-primary-500 focus:ring-2"
+                  className="w-4 h-4 text-primary-500 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
                 />
-                <label htmlFor="remember-me" className="ml-2 text-sm text-secondary-300">
+                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
                   Remember me
                 </label>
               </div>
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
+                className="text-sm text-primary-500 hover:text-primary-600 transition-colors"
               >
                 Forgot password?
               </Link>
@@ -237,9 +231,9 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-secondary-300">
+            <p className="text-gray-600">
               New to CrewFlow?{' '}
-              <Link href="/auth/signup" className="text-primary-400 hover:text-primary-300 font-medium">
+              <Link href="/auth/signup" className="text-primary-500 hover:text-primary-600 font-medium">
                 Join the crew
               </Link>
             </p>
@@ -248,8 +242,8 @@ export default function LoginPage() {
 
         {/* Features Preview */}
         <div className="mt-8 text-center">
-          <p className="text-secondary-400 text-sm mb-4">Trusted by maritime businesses worldwide</p>
-          <div className="flex justify-center space-x-6 text-secondary-500">
+          <p className="text-gray-500 text-sm mb-4">Trusted by maritime businesses worldwide</p>
+          <div className="flex justify-center space-x-6 text-gray-500">
             <div className="flex items-center space-x-2">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

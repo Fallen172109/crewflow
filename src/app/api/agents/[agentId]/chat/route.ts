@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { getAgent, canUserAccessAgent } from '@/lib/agents'
-import { createSupabaseServerClient } from '@/lib/supabase'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
@@ -20,8 +20,8 @@ export async function POST(
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
     }
 
-    const supabase = createSupabaseServerClient()
-    
+    const supabase = await createSupabaseServerClient()
+
     // Get user profile to check subscription
     const { data: userProfile, error: profileError } = await supabase
       .from('users')

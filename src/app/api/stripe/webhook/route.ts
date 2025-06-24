@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { constructWebhookEvent, getTierFromPriceId } from '@/lib/stripe'
-import { createSupabaseServerClient } from '@/lib/supabase'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
 export async function POST(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const event = constructWebhookEvent(body, signature)
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     switch (event.type) {
       case 'customer.subscription.created':

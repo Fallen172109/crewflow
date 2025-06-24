@@ -4,8 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AGENTS } from '@/lib/agents'
+import { useAdmin } from '@/hooks/useAdmin'
 
-const navigation = [
+const baseNavigation = [
   {
     name: 'Command Center',
     href: '/dashboard',
@@ -45,12 +46,47 @@ const navigation = [
   }
 ]
 
+const adminNavigation = {
+  name: 'Admin',
+  href: '/dashboard/admin',
+  icon: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  )
+}
+
+// Helper function to get framework badge styling
+const getFrameworkBadge = (framework: string) => {
+  switch (framework) {
+    case 'langchain':
+      return 'bg-blue-100 text-blue-700 border border-blue-200'
+    case 'autogen':
+      return 'bg-purple-100 text-purple-700 border border-purple-200'
+    case 'perplexity':
+      return 'bg-green-100 text-green-700 border border-green-200'
+    case 'hybrid':
+      return 'bg-orange-100 text-orange-700 border border-orange-200'
+    default:
+      return 'bg-gray-100 text-gray-700 border border-gray-200'
+  }
+}
+
 export default function DashboardSidebar() {
   const pathname = usePathname()
   const [isAgentsExpanded, setIsAgentsExpanded] = useState(true)
+  const { isAdmin } = useAdmin()
+
+  // Debug log to see admin status in sidebar
+  console.log('DashboardSidebar: isAdmin =', isAdmin)
+
+  // Build navigation array based on admin status
+  const navigation = isAdmin
+    ? [...baseNavigation.slice(0, -1), adminNavigation, baseNavigation[baseNavigation.length - 1]]
+    : baseNavigation
 
   return (
-    <div className="w-64 bg-secondary-800 border-r border-secondary-700 h-screen overflow-y-auto">
+    <div className="w-64 bg-white border-r border-gray-200 h-screen overflow-y-auto shadow-sm">
       <div className="p-6">
         {/* Main Navigation */}
         <nav className="space-y-2 mb-8">
@@ -63,7 +99,7 @@ export default function DashboardSidebar() {
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary-500 text-white'
-                    : 'text-secondary-300 hover:bg-secondary-700 hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
                 {item.icon}
@@ -77,7 +113,7 @@ export default function DashboardSidebar() {
         <div>
           <button
             onClick={() => setIsAgentsExpanded(!isAgentsExpanded)}
-            className="flex items-center justify-between w-full px-3 py-2 text-secondary-300 hover:text-white transition-colors"
+            className="flex items-center justify-between w-full px-3 py-2 text-gray-700 hover:text-gray-900 transition-colors"
           >
             <span className="font-semibold text-sm uppercase tracking-wider">AI Crew</span>
             <svg
@@ -100,8 +136,8 @@ export default function DashboardSidebar() {
                     href={`/dashboard/agents/${agent.id}`}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group ${
                       isActive
-                        ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                        : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
+                        ? 'bg-primary-500/20 text-primary-600 border border-primary-500/30'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
                     <div 
@@ -111,11 +147,28 @@ export default function DashboardSidebar() {
                       {agent.name[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{agent.name}</p>
-                      <p className="text-xs text-secondary-500 truncate">{agent.title}</p>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium truncate">{agent.name}</p>
+                        {/* Integration Status Indicators */}
+                        <div className="flex items-center space-x-1">
+                          {agent.integrations.length > 0 && (
+                            <div className="w-2 h-2 bg-green-400 rounded-full" title={`${agent.integrations.length} integrations connected`}></div>
+                          )}
+                          {agent.requiresApiConnection && (
+                            <div className="w-2 h-2 bg-yellow-400 rounded-full" title="API connection required"></div>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{agent.title}</p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <span className={`px-1.5 py-0.5 text-xs rounded ${getFrameworkBadge(agent.framework)}`}>
+                          {agent.framework}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {agent.presetActions.length} actions
+                        </span>
+                      </div>
                     </div>
-                    {/* Status indicator */}
-                    <div className="w-2 h-2 bg-green-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </Link>
                 )
               })}
@@ -123,34 +176,52 @@ export default function DashboardSidebar() {
           )}
         </div>
 
-        {/* Usage Summary */}
-        <div className="mt-8 p-4 bg-secondary-700 rounded-lg">
-          <h3 className="text-sm font-semibold text-white mb-2">Monthly Usage</h3>
-          <div className="space-y-2">
+        {/* Enhanced Usage Summary */}
+        <div className="mt-8 p-4 bg-gray-100 rounded-lg border border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Monthly Usage</h3>
+          <div className="space-y-3">
             <div className="flex justify-between text-xs">
-              <span className="text-secondary-300">Requests Used</span>
-              <span className="text-white">1,247 / 1,500</span>
+              <span className="text-gray-600">Requests Used</span>
+              <span className="text-gray-900">1,247 / 1,500</span>
             </div>
-            <div className="w-full bg-secondary-600 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-2">
               <div className="bg-primary-500 h-2 rounded-full" style={{ width: '83%' }}></div>
             </div>
-            <p className="text-xs text-secondary-400">Resets in 12 days</p>
+            <div className="flex justify-between text-xs">
+              <span className="text-gray-600">Cost This Month</span>
+              <span className="text-gray-900">$24.94</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-gray-600">Most Used Agent</span>
+              <span className="text-gray-900">Coral</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-gray-600">Avg Response Time</span>
+              <span className="text-gray-900">1.2s</span>
+            </div>
+            <p className="text-xs text-gray-500">Resets in 12 days</p>
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Enhanced Quick Actions */}
         <div className="mt-6">
-          <h3 className="text-sm font-semibold text-secondary-300 mb-3 uppercase tracking-wider">Quick Actions</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
           <div className="space-y-2">
-            <button className="w-full text-left px-3 py-2 text-sm text-secondary-400 hover:bg-secondary-700 hover:text-white rounded-lg transition-colors">
-              View All Chats
+            <Link href="/dashboard/analytics" className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors block">
+              📊 View Analytics
+            </Link>
+            <button className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors">
+              💬 View All Chats
             </button>
-            <button className="w-full text-left px-3 py-2 text-sm text-secondary-400 hover:bg-secondary-700 hover:text-white rounded-lg transition-colors">
-              Export Data
+            <Link href="/dashboard/integrations" className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors block">
+              🔗 Manage Integrations
+            </Link>
+            <button className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors">
+              📈 Export Usage Data
             </button>
-            <button className="w-full text-left px-3 py-2 text-sm text-secondary-400 hover:bg-secondary-700 hover:text-white rounded-lg transition-colors">
-              Upgrade Plan
-            </button>
+            <Link href="/dashboard/settings" className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors block">
+              ⚙️ Settings
+            </Link>
           </div>
         </div>
       </div>

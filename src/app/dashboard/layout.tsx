@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
+import { useAdmin } from '@/hooks/useAdmin'
 
 export default function DashboardLayout({
   children,
@@ -12,6 +13,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { user, loading } = useAuth()
+  const { isAdmin } = useAdmin()
   const router = useRouter()
 
   // Redirect to landing page if not authenticated
@@ -27,10 +29,10 @@ export default function DashboardLayout({
   // Show loading while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-secondary-300">Initializing CrewFlow...</p>
+          <p className="text-gray-600">Initializing CrewFlow...</p>
         </div>
       </div>
     )
@@ -39,22 +41,22 @@ export default function DashboardLayout({
   // Don't render dashboard if user is not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-secondary-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-secondary-300">Redirecting to login...</p>
+          <p className="text-gray-600">Redirecting to login...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-secondary-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <DashboardNav />
 
       <div className="flex">
-        {/* Sidebar */}
-        <DashboardSidebar />
+        {/* Sidebar - key forces re-render when admin status changes */}
+        <DashboardSidebar key={`sidebar-${isAdmin}`} />
 
         {/* Main Content */}
         <main className="flex-1 p-6">

@@ -1,10 +1,11 @@
-import { createSupabaseServerClient } from './supabase'
+import { createSupabaseServerClient } from './supabase/server'
 import { redirect } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 
 export interface UserProfile {
   id: string
   email: string
+  role: 'user' | 'admin'
   subscription_tier: 'starter' | 'professional' | 'enterprise' | null
   subscription_status: 'active' | 'inactive' | 'cancelled' | 'past_due' | null
   stripe_customer_id: string | null
@@ -14,7 +15,7 @@ export interface UserProfile {
 }
 
 export async function getUser(): Promise<User | null> {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
@@ -38,7 +39,7 @@ export async function getUser(): Promise<User | null> {
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -121,8 +122,46 @@ export function getSubscriptionLimits(tier: string | null) {
 export function canAccessAgent(userTier: string | null, agentName: string): boolean {
   const limits = getSubscriptionLimits(userTier)
   if (!limits) return false
-  
+
   return limits.agents.includes(agentName.toLowerCase())
+}
+
+// Admin-specific functions
+export async function requireAdmin(): Promise<UserProfile> {
+  const profile = await getUserProfile()
+
+  if (!profile) {
+    redirect('/')
+  }
+
+  if (profile.role !== 'admin') {
+    redirect('/dashboard')
+  }
+
+  return profile
+}
+
+export async function isAdmin(): Promise<boolean> {
+  const profile = await getUserProfile()
+  return profile?.role === 'admin' || false
+}
+
+export async function getAdminProfile(): Promise<UserProfile | null> {
+  const profile = await getUserProfile()
+  return profile?.role === 'admin' ? profile : null
+}
+
+// Admin utility functions
+export function hasAdminAccess(userProfile: UserProfile | null): boolean {
+  return userProfile?.role === 'admin' || false
+}
+
+export function canAccessAdminFeature(userProfile: UserProfile | null, feature: string): boolean {
+  if (!hasAdminAccess(userProfile)) return false
+
+  // All admin features are available to admin users
+  // You can add feature-specific restrictions here if needed
+  return true
 }
 
 export async function signOut() {

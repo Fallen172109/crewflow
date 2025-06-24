@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import MaintenanceMode from './MaintenanceMode'
 
 interface MaintenanceWrapperProps {
@@ -11,6 +12,21 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false)
   const [hasAccess, setHasAccess] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const pathname = usePathname()
+
+  // Routes that should bypass maintenance mode
+  const bypassRoutes = [
+    '/auth/login',
+    '/auth/signup',
+    '/auth/callback',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+    '/api/',
+    '/admin',
+    '/admin-setup'
+  ]
+
+  const shouldBypassMaintenance = bypassRoutes.some(route => pathname.startsWith(route))
 
   useEffect(() => {
     // Check maintenance mode status from API
@@ -47,6 +63,11 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
         <div className="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
       </div>
     )
+  }
+
+  // Allow auth routes to bypass maintenance mode
+  if (shouldBypassMaintenance) {
+    return <>{children}</>
   }
 
   if (isMaintenanceMode && !hasAccess) {
