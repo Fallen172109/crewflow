@@ -154,26 +154,3 @@ export async function POST(request: NextRequest) {
     }
   )
 }
-    } else if (integration.authType === 'api_key') {
-      // For API key integrations, return the required fields
-      return NextResponse.json({
-        requiresManualSetup: true,
-        integration: {
-          id: integration.id,
-          name: integration.name,
-          authType: integration.authType,
-          requiredFields: integration.requiredFields
-        }
-      })
-    } else {
-      return NextResponse.json({ error: 'Unsupported authentication type' }, { status: 400 })
-    }
-
-  } catch (error) {
-    console.error('Integration connect error:', error)
-    return NextResponse.json(
-      { error: 'Failed to initiate connection' },
-      { status: 500 }
-    )
-  }
-}
