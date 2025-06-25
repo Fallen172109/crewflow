@@ -11,9 +11,9 @@ export default function PrivacyPolicyPage() {
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="prose prose-lg max-w-none">
           <h1 className="text-4xl font-bold text-gray-900 mb-8">Privacy Policy</h1>
-          
+
           <p className="text-gray-600 mb-8">
-            <strong>Effective Date:</strong> {new Date().toLocaleDateString()}
+            <strong>Effective Date:</strong> December 25, 2024
           </p>
 
           <section className="mb-8">
@@ -89,8 +89,8 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Data Retention</h2>
             <p className="text-gray-700 mb-4">
               We retain your information only as long as necessary to provide our services and fulfill 
-              the purposes outlined in this policy. You may request deletion of your data at any time 
-              through your CrewFlow dashboard.
+              the purposes outlined in this policy. You may request deletion of your data at any time
+              through your CrewFlow dashboard or by contacting us at crewflow.ai@gmail.com.
             </p>
           </section>
 
@@ -119,7 +119,7 @@ export default function PrivacyPolicyPage() {
               If you have questions about this Privacy Policy, please contact us at:
             </p>
             <p className="text-gray-700">
-              <strong>Email:</strong> privacy@crewflow.dev<br />
+              <strong>Email:</strong> crewflow.ai@gmail.com<br />
               <strong>Website:</strong> https://crewflow.dev
             </p>
           </section>

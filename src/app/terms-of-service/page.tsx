@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-8">Terms of Service</h1>
           
           <p className="text-gray-600 mb-8">
-            <strong>Effective Date:</strong> {new Date().toLocaleDateString()}
+            <strong>Effective Date:</strong> December 25, 2024
           </p>
 
           <section className="mb-8">
@@ -141,7 +141,7 @@ export default function TermsOfServicePage() {
               If you have any questions about these Terms, please contact us at:
             </p>
             <p className="text-gray-700">
-              <strong>Email:</strong> legal@crewflow.dev<br />
+              <strong>Email:</strong> crewflow.ai@gmail.com<br />
               <strong>Website:</strong> https://crewflow.dev
             </p>
           </section>
