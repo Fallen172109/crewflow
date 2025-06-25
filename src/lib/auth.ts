@@ -120,6 +120,9 @@ export function getSubscriptionLimits(tier: string | null) {
 }
 
 export function canAccessAgent(userTier: string | null, agentName: string): boolean {
+  // Enterprise tier gets access to all agents
+  if (userTier === 'enterprise') return true
+
   const limits = getSubscriptionLimits(userTier)
   if (!limits) return false
 

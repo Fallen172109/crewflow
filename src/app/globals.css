@@ -21,6 +21,13 @@
   --input: #ffffff;
   --ring: #f97316;
   --radius: 0.5rem;
+
+  /* Chart colors for maritime theme */
+  --chart-1: #f97316;
+  --chart-2: #0ea5e9;
+  --chart-3: #14b8a6;
+  --chart-4: #1e40af;
+  --chart-5: #374151;
 }
 
 @theme inline {

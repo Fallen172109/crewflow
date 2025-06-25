@@ -229,63 +229,45 @@ export const INTEGRATIONS: Record<string, IntegrationConfig> = {
     authType: 'oauth2',
     productionReady: true,
 
-    // OAuth configuration with MAXIMUM permissions for autonomous AI agent operations
-    // These scopes enable full background management without user intervention
-    scopes: [
-      // Basic profile and authentication
+    // OAuth configuration - Starting with basic permissions that work without app review
+    // These are the only permissions available for new Facebook apps without review
+    defaultScopes: [
       'public_profile',
-      'email',
+      'email'
+    ],
 
-      // Page management (full autonomous control)
+    // Advanced permissions (require Facebook app review and approval)
+    optionalScopes: [
+      // Page Management (requires app review)
       'pages_show_list',
       'pages_read_engagement',
+      'manage_pages',
+      'publish_pages',
       'pages_manage_posts',
       'pages_manage_metadata',
       'pages_read_user_content',
-      'pages_messaging',
-      'pages_messaging_subscriptions',
 
-      // Business and advertising (autonomous campaign management)
+      // Business & Analytics (requires app review)
       'business_management',
+      'read_insights',
       'ads_management',
       'ads_read',
       'pages_manage_ads',
 
-      // Analytics and insights (performance monitoring)
-      'read_insights',
-      'pages_read_user_content',
-
-      // Advanced permissions for comprehensive management
-      'manage_pages',
-      'publish_pages',
+      // Messaging (requires app review)
+      'pages_messaging',
+      'pages_messaging_subscriptions',
       'read_page_mailboxes',
+
+      // Advanced Page Features (requires app review)
       'pages_manage_cta',
       'pages_manage_instant_articles'
     ],
+
+    // Current working scopes (only basic permissions for development)
     scopes: [
-      // Page management
-      'pages_manage_posts',
-      'pages_read_engagement',
-      'pages_manage_metadata',
-      'pages_read_user_content',
-      'pages_manage_ads',
-      'pages_show_list',
-
-      // Business management
-      'business_management',
-      'read_insights',
-
-      // Advertising
-      'ads_management',
-      'ads_read',
-
-      // User data
-      'email',
       'public_profile',
-
-      // Messaging (for customer service)
-      'pages_messaging',
-      'pages_messaging_subscriptions'
+      'email'
     ],
 
     oauthConfig: {

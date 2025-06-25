@@ -33,8 +33,12 @@ export async function POST(
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Check if user can access this agent
-    if (!canUserAccessAgent(userProfile.subscription_tier, params.agentId)) {
+    // Check if user can access this agent (admin override or subscription check)
+    const isAdmin = userProfile.role === 'admin'
+    const hasEnterpriseAccess = userProfile.subscription_tier === 'enterprise'
+    const canAccess = isAdmin || hasEnterpriseAccess || canUserAccessAgent(userProfile.subscription_tier, params.agentId)
+
+    if (!canAccess) {
       return NextResponse.json({ error: 'Agent not available in your plan' }, { status: 403 })
     }
 

@@ -790,7 +790,10 @@ export function getAgent(id: string): Agent | null {
 export function canUserAccessAgent(userTier: string | null, agentId: string): boolean {
   const agent = getAgent(agentId)
   if (!agent) return false
-  
+
+  // Enterprise tier should have access to all agents
+  if (userTier === 'enterprise') return true
+
   const availableAgents = getAgentsForTier(userTier)
   return availableAgents.some(a => a.id === agentId)
 }

@@ -106,13 +106,13 @@ export function PlanChangeModal({ isOpen, onClose, user, adminUserId, onSuccess 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-secondary-800 rounded-xl border border-secondary-700 p-6 w-full max-w-md mx-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-6 w-full max-w-md mx-4 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Change User Plan</h2>
+          <h2 className="text-xl font-bold text-gray-900">Change User Plan</h2>
           <button
             onClick={onClose}
-            className="text-secondary-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -121,16 +121,16 @@ export function PlanChangeModal({ isOpen, onClose, user, adminUserId, onSuccess 
         </div>
 
         {/* User Info */}
-        <div className="mb-6 p-4 bg-secondary-700 rounded-lg border border-secondary-600">
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center">
-              <span className="text-primary-400 font-semibold">
+            <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-semibold">
                 {user.email.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <p className="text-white font-medium">{user.email}</p>
-              <p className="text-secondary-400 text-sm">ID: {user.id.slice(0, 8)}...</p>
+              <p className="text-gray-900 font-medium">{user.email}</p>
+              <p className="text-gray-500 text-sm">ID: {user.id.slice(0, 8)}...</p>
             </div>
           </div>
         </div>
@@ -139,13 +139,13 @@ export function PlanChangeModal({ isOpen, onClose, user, adminUserId, onSuccess 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Subscription Tier */}
           <div>
-            <label className="block text-sm font-medium text-secondary-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Subscription Tier
             </label>
             <select
               value={selectedTier}
               onChange={(e) => setSelectedTier(e.target.value)}
-              className="w-full px-3 py-2 bg-secondary-700 border border-secondary-600 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               required
             >
               {SUBSCRIPTION_TIERS.map((tier) => (
@@ -158,13 +158,13 @@ export function PlanChangeModal({ isOpen, onClose, user, adminUserId, onSuccess 
 
           {/* Subscription Status */}
           <div>
-            <label className="block text-sm font-medium text-secondary-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Subscription Status
             </label>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-3 py-2 bg-secondary-700 border border-secondary-600 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               required
             >
               {SUBSCRIPTION_STATUSES.map((status) => (
@@ -177,8 +177,8 @@ export function PlanChangeModal({ isOpen, onClose, user, adminUserId, onSuccess 
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-900/20 border border-red-900/30 rounded-lg">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
 
@@ -187,7 +187,7 @@ export function PlanChangeModal({ isOpen, onClose, user, adminUserId, onSuccess 
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-secondary-700 hover:bg-secondary-600 text-white rounded-lg transition-colors border border-secondary-600"
+              className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors border border-gray-300"
               disabled={loading}
             >
               Cancel

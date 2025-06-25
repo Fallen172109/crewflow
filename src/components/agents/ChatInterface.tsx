@@ -50,26 +50,26 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
   }
 
   return (
-    <div className="bg-secondary-800 rounded-xl border border-secondary-700 h-full flex flex-col">
+    <div className="bg-white rounded-xl border border-gray-200 h-full flex flex-col shadow-sm">
       {/* Chat Header */}
-      <div className="p-4 border-b border-secondary-700">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div 
+            <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
               style={{ backgroundColor: agent.color }}
             >
               {agent.name[0]}
             </div>
             <div>
-              <h3 className="text-white font-medium">{agent.name}</h3>
-              <p className="text-xs text-secondary-400">
+              <h3 className="text-gray-900 font-medium">{agent.name}</h3>
+              <p className="text-xs text-gray-500">
                 {isLoading ? 'Typing...' : 'Online'}
               </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <button className="p-2 text-secondary-400 hover:text-white transition-colors">
+            <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
@@ -97,13 +97,13 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
               <div className={`rounded-lg p-3 ${
                 message.type === 'user'
                   ? 'bg-primary-500 text-white'
-                  : 'bg-secondary-700 text-secondary-100'
+                  : 'bg-gray-50 text-gray-900 border border-gray-200'
               }`}>
                 <div className="whitespace-pre-wrap text-sm">
                   {message.content}
                 </div>
                 <div className={`text-xs mt-1 ${
-                  message.type === 'user' ? 'text-primary-100' : 'text-secondary-400'
+                  message.type === 'user' ? 'text-primary-100' : 'text-gray-500'
                 }`}>
                   {formatTimestamp(message.timestamp)}
                 </div>
@@ -116,17 +116,17 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
         {isLoading && (
           <div className="flex justify-start">
             <div className="flex space-x-3 max-w-[80%]">
-              <div 
+              <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                 style={{ backgroundColor: agent.color }}
               >
                 {agent.name[0]}
               </div>
-              <div className="bg-secondary-700 rounded-lg p-3">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-secondary-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-secondary-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-secondary-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-secondary-700">
+      <div className="p-4 border-t border-gray-200">
         <form onSubmit={handleSubmit} className="flex space-x-3">
           <div className="flex-1 relative">
             <textarea
@@ -146,7 +146,7 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={`Ask ${agent.name} anything...`}
-              className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
               rows={1}
               style={{ minHeight: '44px', maxHeight: '120px' }}
               disabled={isLoading}
@@ -174,7 +174,7 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
               key={action.id}
               onClick={() => onSendMessage(`Help me with: ${action.label}`)}
               disabled={isLoading}
-              className="text-xs bg-secondary-700 hover:bg-secondary-600 text-secondary-300 hover:text-white px-3 py-1 rounded-full transition-colors disabled:opacity-50"
+              className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 px-3 py-1 rounded-full transition-colors disabled:opacity-50"
             >
               {action.label}
             </button>

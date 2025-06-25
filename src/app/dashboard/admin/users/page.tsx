@@ -165,7 +165,8 @@ export default function AdminUsersPage() {
           </button>
           <button
             onClick={fetchUserStats}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors shadow-sm"
+            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors shadow-sm border border-orange-600"
+            style={{ backgroundColor: '#f97316', color: '#ffffff' }}
           >
             🔄 Refresh
           </button>

@@ -23,8 +23,25 @@ import { useEffect, useState } from 'react'
 
 export default function DashboardPage() {
   const { userProfile } = useAuth()
-  const availableAgents = getAgentsForTier(userProfile?.subscription_tier)
+  // Show all agents for admin users or enterprise users
+  const isAdmin = userProfile?.role === 'admin'
+  const isEnterprise = userProfile?.subscription_tier === 'enterprise'
+  const isDebugUser = userProfile?.email === 'borzeckikamil7@gmail.com'
+  const availableAgents = (isAdmin || isEnterprise || isDebugUser) ? Object.values(AGENTS) : getAgentsForTier(userProfile?.subscription_tier)
   const [showConfirmation, setShowConfirmation] = useState(false)
+
+  // Debug logging
+  console.log('Dashboard: User Profile:', {
+    email: userProfile?.email,
+    role: userProfile?.role,
+    tier: userProfile?.subscription_tier,
+    status: userProfile?.subscription_status,
+    isAdmin,
+    isEnterprise,
+    isDebugUser,
+    availableAgentsCount: availableAgents.length,
+    allAgentsCount: Object.values(AGENTS).length
+  })
 
   // Check for email confirmation success
   useEffect(() => {

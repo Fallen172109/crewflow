@@ -28,6 +28,14 @@ interface AgentInterfaceProps {
 }
 
 export default function AgentInterface({ agent, userProfile }: AgentInterfaceProps) {
+  // Debug logging
+  console.log('AgentInterface rendered:', {
+    agentId: agent.id,
+    userProfile: userProfile ? 'loaded' : 'null',
+    userRole: userProfile?.role,
+    userTier: userProfile?.subscription_tier
+  })
+
   const [activeTab, setActiveTab] = useState<'chat' | 'actions'>('chat')
   const [messages, setMessages] = useState<Array<{
     id: string

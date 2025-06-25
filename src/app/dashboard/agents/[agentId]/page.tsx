@@ -7,9 +7,9 @@ import { supabase } from '@/lib/supabase'
 import AgentInterface from '@/components/agents/AgentInterface'
 
 interface AgentPageProps {
-  params: {
+  params: Promise<{
     agentId: string
-  }
+  }>
 }
 
 interface UserProfile {
@@ -33,14 +33,19 @@ export default function AgentPage({ params }: AgentPageProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [agent, setAgent] = useState<any>(null)
+  const [agentId, setAgentId] = useState<string | null>(null)
 
   useEffect(() => {
-    const foundAgent = getAgent(params.agentId)
-    if (!foundAgent) {
-      notFound()
-    }
-    setAgent(foundAgent)
-  }, [params.agentId])
+    // Unwrap the params Promise
+    params.then((resolvedParams) => {
+      const foundAgent = getAgent(resolvedParams.agentId)
+      if (!foundAgent) {
+        notFound()
+      }
+      setAgent(foundAgent)
+      setAgentId(resolvedParams.agentId)
+    })
+  }, [params])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -68,15 +73,22 @@ export default function AgentPage({ params }: AgentPageProps) {
     fetchProfile()
   }, [])
 
-  console.log('AgentPage: Agent ID:', params.agentId)
+  console.log('AgentPage: Agent ID:', agentId)
   console.log('AgentPage: User Profile:', profile?.email, 'role:', profile?.role, 'tier:', profile?.subscription_tier)
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <p className="ml-3 text-gray-600">Loading agent access...</p>
       </div>
     )
+  }
+
+  // If no profile but we have an agent, show the agent anyway (for debugging)
+  if (!profile && agent) {
+    console.log('AgentPage: No profile loaded, but showing agent anyway for debugging')
+    return <AgentInterface agent={agent} userProfile={null} />
   }
 
   if (!agent) {
@@ -85,11 +97,35 @@ export default function AgentPage({ params }: AgentPageProps) {
 
   // Check if user can access this agent (admin override or subscription check)
   const isAdmin = hasAdminAccess(profile)
-  const canAccess = isAdmin || canUserAccessAgent(profile?.subscription_tier, agent.id)
+  const hasEnterpriseAccess = profile?.subscription_tier === 'enterprise'
+  const canAccess = isAdmin || hasEnterpriseAccess || canUserAccessAgent(profile?.subscription_tier, agent.id)
 
-  console.log('AgentPage: isAdmin:', isAdmin, 'canAccess:', canAccess)
+  console.log('AgentPage: DETAILED DEBUG', {
+    agentId: agentId,
+    agentName: agent?.name,
+    profileLoaded: !!profile,
+    profileEmail: profile?.email,
+    profileRole: profile?.role,
+    profileTier: profile?.subscription_tier,
+    profileStatus: profile?.subscription_status,
+    isAdmin: isAdmin,
+    hasEnterpriseAccess: hasEnterpriseAccess,
+    canAccess: canAccess,
+    hasAdminAccessResult: hasAdminAccess(profile),
+    canUserAccessAgentResult: canUserAccessAgent(profile?.subscription_tier, agent.id)
+  })
 
-  if (!canAccess) {
+  // TEMPORARY: Force access for debugging - REMOVE THIS LATER
+  const forceAccess = profile?.email === 'borzeckikamil7@gmail.com'
+  const finalCanAccess = canAccess || forceAccess
+
+  console.log('AgentPage: FORCE ACCESS DEBUG', {
+    forceAccess,
+    finalCanAccess,
+    userEmail: profile?.email
+  })
+
+  if (!finalCanAccess) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">

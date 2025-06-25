@@ -260,20 +260,20 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
 
   const getSubscriptionBadge = (tier: string | null, status: string | null) => {
     if (!tier || !status) {
-      return <span className="px-2 py-1 text-xs font-medium bg-secondary-700 text-secondary-300 rounded border border-secondary-600">⚓ Free</span>
+      return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded border border-gray-300">⚓ Free</span>
     }
 
     const tierColors = {
-      starter: 'bg-blue-900/20 text-blue-400 border-blue-900/30',
-      professional: 'bg-purple-900/20 text-purple-400 border-purple-900/30',
-      enterprise: 'bg-primary-900/20 text-primary-400 border-primary-900/30'
+      starter: 'bg-blue-50 text-blue-700 border-blue-200',
+      professional: 'bg-purple-50 text-purple-700 border-purple-200',
+      enterprise: 'bg-orange-50 text-orange-700 border-orange-200'
     }
 
     const statusColors = {
-      active: 'bg-green-900/20 text-green-400 border-green-900/30',
-      inactive: 'bg-secondary-700 text-secondary-400 border-secondary-600',
-      cancelled: 'bg-red-900/20 text-red-400 border-red-900/30',
-      past_due: 'bg-yellow-900/20 text-yellow-400 border-yellow-900/30'
+      active: 'bg-green-50 text-green-700 border-green-200',
+      inactive: 'bg-gray-100 text-gray-600 border-gray-300',
+      cancelled: 'bg-red-50 text-red-700 border-red-200',
+      past_due: 'bg-yellow-50 text-yellow-700 border-yellow-200'
     }
 
     const tierIcons = {
@@ -291,10 +291,10 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
 
     return (
       <div className="flex flex-col space-y-1">
-        <span className={`px-2 py-1 text-xs font-medium rounded border ${tierColors[tier as keyof typeof tierColors] || 'bg-secondary-700 text-secondary-300 border-secondary-600'}`}>
+        <span className={`px-2 py-1 text-xs font-medium rounded border ${tierColors[tier as keyof typeof tierColors] || 'bg-gray-100 text-gray-700 border-gray-300'}`}>
           {tierIcons[tier as keyof typeof tierIcons] || '⚓'} {tier}
         </span>
-        <span className={`px-2 py-1 text-xs font-medium rounded border ${statusColors[status as keyof typeof statusColors] || 'bg-secondary-700 text-secondary-300 border-secondary-600'}`}>
+        <span className={`px-2 py-1 text-xs font-medium rounded border ${statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-700 border-gray-300'}`}>
           {statusIcons[status as keyof typeof statusIcons] || '❓'} {status}
         </span>
       </div>
@@ -303,11 +303,11 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
 
   const getRoleBadge = (role: string) => {
     return role === 'admin' ? (
-      <span className="px-2 py-1 text-xs font-medium bg-red-900/20 text-red-400 rounded border border-red-900/30">
+      <span className="px-2 py-1 text-xs font-medium bg-red-50 text-red-700 rounded border border-red-200">
         🛡️ Admin
       </span>
     ) : (
-      <span className="px-2 py-1 text-xs font-medium bg-secondary-700 text-secondary-300 rounded border border-secondary-600">
+      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded border border-gray-300">
         👤 User
       </span>
     )
@@ -315,11 +315,11 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
 
   const getSuspensionBadge = (suspended: boolean) => {
     return suspended ? (
-      <span className="px-2 py-1 text-xs font-medium bg-red-900/20 text-red-400 rounded border border-red-900/30">
+      <span className="px-2 py-1 text-xs font-medium bg-red-50 text-red-700 rounded border border-red-200">
         🚫 Suspended
       </span>
     ) : (
-      <span className="px-2 py-1 text-xs font-medium bg-green-900/20 text-green-400 rounded border border-green-900/30">
+      <span className="px-2 py-1 text-xs font-medium bg-green-50 text-green-700 rounded border border-green-200">
         ✅ Active
       </span>
     )
@@ -346,7 +346,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-secondary-300">Loading users...</p>
+          <p className="text-gray-600">Loading users...</p>
         </div>
       </div>
     )
@@ -375,22 +375,22 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
   }
 
   return (
-    <div className="bg-secondary-800 rounded-xl border border-secondary-700">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
       {/* Table Header Actions */}
-      <div className="p-4 border-b border-secondary-700">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <span className="text-sm text-secondary-300">
+            <span className="text-sm text-gray-600">
               {selectedUsers.length > 0 ? `${selectedUsers.length} selected` : `${sortedUsers.length} users`}
             </span>
             {selectedUsers.length > 0 && (
               <div className="flex space-x-2">
-                <button className="px-3 py-1 text-xs font-medium text-secondary-300 bg-secondary-700 rounded hover:bg-secondary-600">
+                <button className="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200">
                   Send Email
                 </button>
                 <button
                   onClick={() => setBulkPlanChangeModal(true)}
-                  className="px-3 py-1 text-xs font-medium text-blue-300 bg-blue-900/20 rounded hover:bg-blue-900/30"
+                  className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100"
                 >
                   Change Plans
                 </button>
@@ -401,7 +401,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                       setSelectedUsers([])
                     }
                   }}
-                  className="px-3 py-1 text-xs font-medium text-red-300 bg-red-900/20 rounded hover:bg-red-900/30"
+                  className="px-3 py-1 text-xs font-medium text-red-700 bg-red-50 rounded hover:bg-red-100"
                 >
                   Suspend
                 </button>
@@ -412,7 +412,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as 'all' | 'user' | 'admin')}
-              className="px-3 py-2 text-sm bg-secondary-700 border border-secondary-600 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="all">All Roles</option>
               <option value="user">Users</option>
@@ -423,7 +423,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-3 py-2 text-sm bg-secondary-700 border border-secondary-600 rounded-lg text-white placeholder-secondary-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
         </div>
@@ -432,66 +432,66 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-secondary-700">
+          <thead className="bg-gray-50">
             <tr>
               <th className="w-4 p-4">
                 <input
                   type="checkbox"
                   checked={selectedUsers.length === sortedUsers.length && sortedUsers.length > 0}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-secondary-600 text-primary-500 focus:ring-primary-500 bg-secondary-600"
+                  className="rounded border-gray-300 text-primary-500 focus:ring-primary-500 bg-white"
                 />
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-secondary-300 uppercase tracking-wider cursor-pointer hover:bg-secondary-600"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('email')}
               >
                 User
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-secondary-300 uppercase tracking-wider cursor-pointer hover:bg-secondary-600"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('role')}
               >
                 Role
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                 Subscription
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                 Status
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-secondary-300 uppercase tracking-wider cursor-pointer hover:bg-secondary-600"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('created_at')}
               >
                 Joined
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-secondary-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-secondary-800 divide-y divide-secondary-700">
+          <tbody className="bg-white divide-y divide-gray-200">
             {sortedUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-secondary-700">
+              <tr key={user.id} className="hover:bg-gray-50">
                 <td className="w-4 p-4">
                   <input
                     type="checkbox"
                     checked={selectedUsers.includes(user.id)}
                     onChange={(e) => handleSelectUser(user.id, e.target.checked)}
-                    className="rounded border-secondary-600 text-primary-500 focus:ring-primary-500 bg-secondary-600"
+                    className="rounded border-gray-300 text-primary-500 focus:ring-primary-500 bg-white"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-primary-500/20 rounded-full flex items-center justify-center">
-                      <span className="text-primary-400 text-sm font-semibold">
+                    <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-semibold">
                         {user.email.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="ml-3">
-                      <div className="text-sm font-medium text-white">{user.email}</div>
-                      <div className="text-sm text-secondary-400">ID: {user.id.slice(0, 8)}...</div>
+                      <div className="text-sm font-medium text-gray-900">{user.email}</div>
+                      <div className="text-sm text-gray-500">ID: {user.id.slice(0, 8)}...</div>
                     </div>
                   </div>
                 </td>
@@ -505,7 +505,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                             updateUserRole(user.id, 'admin')
                           }
                         }}
-                        className="text-xs text-primary-400 hover:text-primary-300"
+                        className="text-xs text-orange-600 hover:text-orange-700"
                       >
                         Promote
                       </button>
@@ -517,7 +517,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                             updateUserRole(user.id, 'user')
                           }
                         }}
-                        className="text-xs text-yellow-400 hover:text-yellow-300"
+                        className="text-xs text-yellow-600 hover:text-yellow-700"
                       >
                         Demote
                       </button>
@@ -530,34 +530,34 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                 <td className="px-6 py-4 whitespace-nowrap">
                   {getSuspensionBadge(user.suspended)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                   {formatDate(user.created_at)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end space-x-2">
                     <Link
                       href={`/admin/users/${user.id}`}
-                      className="text-primary-400 hover:text-primary-300"
+                      className="text-orange-600 hover:text-orange-700"
                     >
                       View
                     </Link>
                     <button
                       onClick={() => openPlanChangeModal(user)}
-                      className="text-blue-400 hover:text-blue-300"
+                      className="text-blue-600 hover:text-blue-700"
                     >
                       Plan
                     </button>
                     {user.suspended ? (
                       <button
                         onClick={() => unsuspendUser(user.id)}
-                        className="text-green-400 hover:text-green-300"
+                        className="text-green-600 hover:text-green-700"
                       >
                         Unsuspend
                       </button>
                     ) : (
                       <button
                         onClick={() => suspendUser(user.id)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-red-600 hover:text-red-700"
                       >
                         Suspend
                       </button>
@@ -572,10 +572,10 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
 
       {sortedUsers.length === 0 && (
         <div className="p-8 text-center">
-          <div className="w-12 h-12 bg-secondary-700 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <span className="text-secondary-400 text-xl">👥</span>
+          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <span className="text-gray-500 text-xl">👥</span>
           </div>
-          <p className="text-sm text-secondary-400">
+          <p className="text-sm text-gray-600">
             {searchTerm || roleFilter !== 'all' ? 'No users match your filters' : 'No users found'}
           </p>
           {(searchTerm || roleFilter !== 'all') && (
@@ -584,7 +584,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                 setSearchTerm('')
                 setRoleFilter('all')
               }}
-              className="mt-2 text-sm text-primary-400 hover:text-primary-300"
+              className="mt-2 text-sm text-orange-600 hover:text-orange-700"
             >
               Clear filters
             </button>

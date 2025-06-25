@@ -11,13 +11,15 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0",
     "@langchain/openai": "^0.0.14",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
     "@stripe/stripe-js": "^2.4.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.10.0",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "framer-motion": "^12.16.0",
     "langchain": "^0.1.25",
@@ -27,7 +29,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "stripe": "^14.15.0",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
