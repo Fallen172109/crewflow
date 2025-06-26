@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
-import { getAgent, canUserAccessAgent } from '@/lib/agents'
+import { getAgent, canUserAccessAgent, type Agent } from '@/lib/agents'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { agentId: string } }
+  { params }: { params: Promise<{ agentId: string }> }
 ) {
   try {
     const user = await requireAuth()
-    const { message } = await request.json()
+    const { message, taskType, userId } = await request.json()
+    const resolvedParams = await params
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
-    const agent = getAgent(params.agentId)
+    const agent = getAgent(resolvedParams.agentId)
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
     }
@@ -36,7 +37,7 @@ export async function POST(
     // Check if user can access this agent (admin override or subscription check)
     const isAdmin = userProfile.role === 'admin'
     const hasEnterpriseAccess = userProfile.subscription_tier === 'enterprise'
-    const canAccess = isAdmin || hasEnterpriseAccess || canUserAccessAgent(userProfile.subscription_tier, params.agentId)
+    const canAccess = isAdmin || hasEnterpriseAccess || canUserAccessAgent(userProfile.subscription_tier, resolvedParams.agentId)
 
     if (!canAccess) {
       return NextResponse.json({ error: 'Agent not available in your plan' }, { status: 403 })
@@ -78,28 +79,51 @@ export async function POST(
         user_id: user.id,
         agent_name: agent.id,
         message_type: 'user',
-        content: message
+        content: message,
+        task_type: taskType || 'general'
       })
 
-    // TODO: Implement actual AI agent processing based on framework
-    // For now, return a simulated response
+    // Generate real AI response based on agent framework
     let response = ''
-    
-    switch (agent.framework) {
-      case 'langchain':
-        response = `[LangChain] I'm ${agent.name}, processing your request: "${message}". This is a simulated response using LangChain framework.`
-        break
-      case 'perplexity':
-        response = `[Perplexity AI] I'm ${agent.name}, researching your query: "${message}". This is a simulated response using Perplexity AI for real-time information.`
-        break
-      case 'autogen':
-        response = `[AutoGen] I'm ${agent.name}, coordinating multiple agents for: "${message}". This is a simulated response using AutoGen framework.`
-        break
-      case 'hybrid':
-        response = `[Hybrid] I'm ${agent.name}, using multiple AI frameworks for: "${message}". This is a simulated response combining different AI capabilities.`
-        break
-      default:
-        response = `I'm ${agent.name}, processing your request: "${message}". This is a simulated response.`
+    let aiResponse: any
+
+    try {
+      // Import the appropriate AI framework
+      switch (agent.framework) {
+        case 'langchain':
+          const { createLangChainAgent } = await import('@/lib/ai/langchain-working')
+          const langchainAgent = createLangChainAgent(agent, buildSystemPrompt(agent))
+          aiResponse = await langchainAgent.processMessage(message)
+          response = aiResponse.response
+          break
+
+        case 'perplexity':
+          const { createPerplexityAgent } = await import('@/lib/ai/perplexity')
+          const perplexityAgent = createPerplexityAgent(agent, buildSystemPrompt(agent))
+          aiResponse = await perplexityAgent.processMessage(message)
+          response = aiResponse.response
+          break
+
+        case 'autogen':
+          const { createAutoGenAgent } = await import('@/lib/ai/autogen')
+          const autogenAgent = createAutoGenAgent(agent, buildSystemPrompt(agent))
+          aiResponse = await autogenAgent.processMessage(message)
+          response = aiResponse.response
+          break
+
+        case 'hybrid':
+          // For hybrid agents, use intelligent framework selection
+          const { processAgentMessage } = await import('@/lib/ai')
+          aiResponse = await processAgentMessage(agent, message, undefined, buildSystemPrompt(agent))
+          response = aiResponse.response
+          break
+
+        default:
+          response = `I apologize, but there was an issue with my AI framework (${agent.framework}). Please try again or contact support.`
+      }
+    } catch (error) {
+      console.error('AI processing error:', error)
+      response = `I apologize, but I encountered an error while processing your request. Please try again. If the issue persists, please contact support.`
     }
 
     // Store agent response in chat history
@@ -109,10 +133,47 @@ export async function POST(
         user_id: user.id,
         agent_name: agent.id,
         message_type: 'agent',
-        content: response
+        content: response,
+        task_type: taskType || 'general'
       })
 
-    // Increment usage counter
+    // Track real AI usage if we have AI response data
+    if (aiResponse) {
+      try {
+        const { trackRealUsage } = await import('@/lib/ai-usage-tracker')
+
+        // Determine provider based on framework
+        const provider = agent.framework === 'langchain' ? 'openai' :
+                        agent.framework === 'perplexity' ? 'perplexity' :
+                        agent.framework === 'autogen' ? 'openai' :
+                        'openai' // default for hybrid
+
+        await trackRealUsage(
+          user.id,
+          agent.id,
+          agent.name,
+          agent.framework,
+          provider,
+          'chat',
+          aiResponse.apiResponse || aiResponse, // Pass the actual API response
+          aiResponse.latency || 0,
+          aiResponse.success !== false,
+          aiResponse.error,
+          {
+            task_type: taskType || 'general',
+            message_length: message.length,
+            response_length: response.length,
+            framework: agent.framework,
+            agent_category: agent.category
+          }
+        )
+      } catch (error) {
+        console.error('Error tracking real usage:', error)
+        // Don't fail the request if usage tracking fails
+      }
+    }
+
+    // Increment usage counter (legacy system)
     await supabase.rpc('increment_agent_usage', {
       p_user_id: user.id,
       p_agent_name: agent.id
@@ -136,4 +197,25 @@ export async function POST(
       { status: 500 }
     )
   }
+}
+
+// Build system prompt for agents
+function buildSystemPrompt(agent: Agent): string {
+  return `You are ${agent.name}, a ${agent.title} specialist in the CrewFlow maritime AI automation platform.
+
+${agent.description}
+
+Your role and capabilities:
+- Framework: ${agent.framework}
+- Specialization: ${agent.category}
+- Available integrations: ${agent.integrations.join(', ')}
+
+Key Guidelines:
+- Provide expert-level assistance in ${agent.category}
+- Use your specialized knowledge and integrations
+- Maintain a professional, helpful tone with maritime theming
+- Focus on practical, actionable solutions
+- Use maritime terminology naturally (navigate, chart course, anchor, set sail, etc.)
+
+Always provide detailed, helpful responses that demonstrate your expertise in ${agent.category}.`
 }

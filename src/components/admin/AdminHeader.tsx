@@ -14,11 +14,20 @@ export function AdminHeader({ adminUser }: AdminHeaderProps) {
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Left side - Breadcrumb could go here */}
-          <div className="flex items-center">
+          {/* Left side - Title and Navigation */}
+          <div className="flex items-center space-x-4">
             <h1 className="text-xl font-semibold text-gray-900">
               Admin Dashboard
             </h1>
+            <a
+              href="/dashboard"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              ⚓ Return to Main Site
+            </a>
           </div>
 
           {/* Right side - Actions and notifications */}
@@ -29,17 +38,15 @@ export function AdminHeader({ adminUser }: AdminHeaderProps) {
               <span className="text-sm text-gray-600">System Healthy</span>
             </div>
 
-            {/* Notifications */}
+            {/* Notifications - Disabled until real notification system is implemented */}
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="p-2 text-gray-400 hover:text-gray-600 relative"
+                title="Notifications (Coming Soon)"
               >
                 <span className="text-lg">🔔</span>
-                {/* Notification badge */}
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  3
-                </span>
+                {/* No notification badge - no fake notifications */}
               </button>
 
               {/* Notifications dropdown */}
@@ -49,23 +56,18 @@ export function AdminHeader({ adminUser }: AdminHeaderProps) {
                     <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
                   </div>
                   <div className="max-h-64 overflow-y-auto">
-                    <div className="p-3 border-b border-gray-100 hover:bg-gray-50">
-                      <p className="text-sm text-gray-900">New user registration</p>
-                      <p className="text-xs text-gray-500">2 minutes ago</p>
-                    </div>
-                    <div className="p-3 border-b border-gray-100 hover:bg-gray-50">
-                      <p className="text-sm text-gray-900">High API usage detected</p>
-                      <p className="text-xs text-gray-500">15 minutes ago</p>
-                    </div>
-                    <div className="p-3 hover:bg-gray-50">
-                      <p className="text-sm text-gray-900">System backup completed</p>
-                      <p className="text-xs text-gray-500">1 hour ago</p>
+                    <div className="p-8 text-center text-gray-500">
+                      <span className="text-4xl mb-2 block">🔔</span>
+                      <p className="text-sm">No notifications yet</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Real notifications will appear here when the system generates them
+                      </p>
                     </div>
                   </div>
                   <div className="p-3 border-t border-gray-200">
-                    <button className="text-sm text-orange-600 hover:text-orange-700 font-medium">
-                      View all notifications
-                    </button>
+                    <p className="text-xs text-gray-500 text-center">
+                      Real notification system coming soon
+                    </p>
                   </div>
                 </div>
               )}

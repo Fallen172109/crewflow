@@ -202,6 +202,10 @@ Analyze and provide recommendations for:
 Include specific, prioritized action items with expected impact.`
         break
 
+      case 'visual_content_creator':
+        // Handle image generation through Perplexity agent's built-in handler
+        return await perplexityAgent.handlePresetAction(actionId, params)
+
       default:
         prompt = `Execute content and SEO action "${actionId}": ${JSON.stringify(params)}`
     }

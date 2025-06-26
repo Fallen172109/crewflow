@@ -80,6 +80,30 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'BookOpen',
         category: 'knowledge',
         estimatedTime: '45 seconds'
+      },
+      {
+        id: 'crew_fitness_planner',
+        label: 'Crew Fitness Planner',
+        description: 'Design workout routines and fitness plans for the crew',
+        icon: 'Dumbbell',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'image_generator',
+        label: 'Visual Content Creator',
+        description: 'Generate images and visual content for support materials',
+        icon: 'Image',
+        category: 'daily_tools',
+        estimatedTime: '90 seconds'
+      },
+      {
+        id: 'productivity_compass',
+        label: 'Productivity Compass',
+        description: 'Organize daily tasks and boost personal productivity',
+        icon: 'Compass',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
       }
     ],
     integrations: ['zendesk', 'intercom', 'salesforce', 'hubspot', 'slack']
@@ -194,6 +218,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'BarChart',
         category: 'analysis',
         estimatedTime: '2 minutes'
+      },
+      {
+        id: 'pearl_meal_planner',
+        label: 'Pearl\'s Galley Planner',
+        description: 'Research and plan healthy meals with current nutritional trends',
+        icon: 'ChefHat',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'fitness_research',
+        label: 'Fitness Trend Navigator',
+        description: 'Research latest fitness trends and create personalized workout plans',
+        icon: 'Activity',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'visual_content_creator',
+        label: 'Visual Content Creator',
+        description: 'Generate SEO-optimized images and visual content',
+        icon: 'Camera',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'productivity_optimizer',
+        label: 'Productivity Optimizer',
+        description: 'Research productivity techniques and optimize daily workflows',
+        icon: 'Zap',
+        category: 'daily_tools',
+        estimatedTime: '90 seconds'
       }
     ],
     integrations: ['wordpress', 'ghost', 'semrush', 'ahrefs', 'google-search-console']
@@ -365,6 +421,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'Users',
         category: 'research',
         estimatedTime: '3 minutes'
+      },
+      {
+        id: 'creative_meal_showcase',
+        label: 'Creative Meal Showcase',
+        description: 'Create visually appealing meal content for social sharing',
+        icon: 'Camera',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'fitness_content_creator',
+        label: 'Fitness Content Creator',
+        description: 'Generate engaging fitness and wellness content for social media',
+        icon: 'Dumbbell',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'visual_story_maker',
+        label: 'Visual Story Maker',
+        description: 'Create compelling visual stories and image content',
+        icon: 'ImageIcon',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'personal_brand_builder',
+        label: 'Personal Brand Builder',
+        description: 'Build and optimize personal brand presence across platforms',
+        icon: 'Star',
+        category: 'daily_tools',
+        estimatedTime: '5 minutes'
       }
     ],
     integrations: ['facebook', 'instagram', 'twitter', 'linkedin', 'tiktok', 'youtube']
@@ -414,6 +502,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'Activity',
         category: 'monitoring',
         estimatedTime: '60 seconds'
+      },
+      {
+        id: 'daily_routine_automation',
+        label: 'Daily Routine Automation',
+        description: 'Automate personal daily routines and habits',
+        icon: 'RefreshCw',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'meal_prep_workflow',
+        label: 'Meal Prep Workflow',
+        description: 'Create automated meal planning and prep workflows',
+        icon: 'ChefHat',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'fitness_automation',
+        label: 'Fitness Automation',
+        description: 'Automate fitness tracking and workout scheduling',
+        icon: 'Target',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'productivity_orchestrator',
+        label: 'Productivity Orchestrator',
+        description: 'Orchestrate complex productivity workflows and systems',
+        icon: 'Layers',
+        category: 'daily_tools',
+        estimatedTime: '5 minutes'
       }
     ],
     integrations: ['zapier', 'microsoft-power-automate', 'ifttt', 'integromat', 'n8n']
@@ -463,6 +583,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'FileText',
         category: 'proposals',
         estimatedTime: '3 minutes'
+      },
+      {
+        id: 'networking_navigator',
+        label: 'Networking Navigator',
+        description: 'Plan and optimize personal networking and relationship building',
+        icon: 'Users',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'career_opportunity_scout',
+        label: 'Career Opportunity Scout',
+        description: 'Research career opportunities and professional development paths',
+        icon: 'Briefcase',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'personal_pitch_creator',
+        label: 'Personal Pitch Creator',
+        description: 'Create compelling personal pitches and elevator speeches',
+        icon: 'MessageSquare',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'goal_achievement_strategist',
+        label: 'Goal Achievement Strategist',
+        description: 'Develop strategies for achieving personal and professional goals',
+        icon: 'Trophy',
+        category: 'daily_tools',
+        estimatedTime: '5 minutes'
       }
     ],
     integrations: ['salesforce', 'hubspot', 'pipedrive', 'linkedin-sales', 'apollo']
@@ -512,6 +664,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'HelpCircle',
         category: 'qa',
         estimatedTime: '45 seconds'
+      },
+      {
+        id: 'sage_meal_wisdom',
+        label: 'Sage\'s Meal Wisdom',
+        description: 'Create knowledge-based meal plans with nutritional insights',
+        icon: 'BookOpen',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'fitness_knowledge_base',
+        label: 'Fitness Knowledge Base',
+        description: 'Build comprehensive fitness and wellness knowledge systems',
+        icon: 'Brain',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'learning_path_creator',
+        label: 'Learning Path Creator',
+        description: 'Design personalized learning and skill development paths',
+        icon: 'GraduationCap',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'knowledge_organizer',
+        label: 'Knowledge Organizer',
+        description: 'Organize personal knowledge and create learning systems',
+        icon: 'FolderTree',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
       }
     ],
     integrations: ['notion', 'confluence', 'sharepoint', 'google-drive', 'dropbox']
@@ -519,48 +703,96 @@ export const AGENTS: Record<string, Agent> = {
   anchor: {
     id: 'anchor',
     name: 'Anchor',
-    title: 'Supply Chain/Inventory',
-    description: 'Tracks inventory, predicts shortages, and monitors suppliers in real-time',
+    title: 'Supply Chain Admiral',
+    description: 'The steadfast quartermaster who ensures the ship never runs out of supplies. Anchor has connections in every port and can predict supply storms before they disrupt the voyage.',
     avatar: '/agents/anchor.png',
     color: '#059669',
     framework: 'hybrid',
     tier: 'enterprise',
     category: 'supply',
     costPerRequest: 0.04,
-    requiresApiConnection: true,
-    optimalAiModules: ['LangChain Decision-Making', 'Perplexity AI Default Model for market intelligence'],
+    requiresApiConnection: false,
+    optimalAiModules: ['LangChain Decision-Making', 'Perplexity AI Market Intelligence', 'Hybrid Supply Chain Orchestration'],
     presetActions: [
       {
-        id: 'track_inventory',
-        label: 'Track Inventory Levels',
-        description: 'Monitor stock levels across all locations',
+        id: 'supply_navigator',
+        label: 'Supply Navigator',
+        description: 'Track inventory levels across all locations with predictive analytics',
         icon: 'Package',
         category: 'tracking',
         estimatedTime: '60 seconds'
       },
       {
-        id: 'predict_shortages',
-        label: 'Predict Stock Shortages',
-        description: 'Forecast inventory needs and shortages',
+        id: 'shortage_predictor',
+        label: 'Shortage Predictor',
+        description: 'Forecast supply needs and potential shortages using AI analysis',
         icon: 'AlertTriangle',
         category: 'forecasting',
         estimatedTime: '2 minutes'
       },
       {
-        id: 'monitor_suppliers',
-        label: 'Monitor Supplier Performance',
-        description: 'Track supplier reliability and performance',
+        id: 'supplier_admiral',
+        label: 'Supplier Admiral',
+        description: 'Manage vendor relationships and performance monitoring',
         icon: 'Truck',
         category: 'monitoring',
         estimatedTime: '90 seconds'
       },
       {
-        id: 'optimize_orders',
-        label: 'Optimize Purchase Orders',
-        description: 'Optimize ordering quantities and timing',
+        id: 'order_optimizer',
+        label: 'Order Optimizer',
+        description: 'Optimize purchase orders and inventory levels',
         icon: 'ShoppingCart',
         category: 'optimization',
         estimatedTime: '3 minutes'
+      },
+      {
+        id: 'cost_navigator',
+        label: 'Cost Navigator',
+        description: 'Find cost-saving opportunities in supply chain',
+        icon: 'DollarSign',
+        category: 'cost_analysis',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'quality_sentinel',
+        label: 'Quality Sentinel',
+        description: 'Monitor supplier quality and compliance',
+        icon: 'Shield',
+        category: 'quality',
+        estimatedTime: '90 seconds'
+      },
+      {
+        id: 'logistics_captain',
+        label: 'Logistics Captain',
+        description: 'Manage shipping and distribution efficiency',
+        icon: 'MapPin',
+        category: 'logistics',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'crew_meal_planner',
+        label: 'Crew Meal Planner',
+        description: 'Plan nutritious meals and manage food supplies for the crew',
+        icon: 'ChefHat',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'budget_navigator',
+        label: 'Budget Navigator',
+        description: 'Track personal or business expenses and optimize spending',
+        icon: 'Calculator',
+        category: 'daily_tools',
+        estimatedTime: '90 seconds'
+      },
+      {
+        id: 'home_quartermaster',
+        label: 'Home Quartermaster',
+        description: 'Organize household supplies and maintenance schedules',
+        icon: 'Home',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
       }
     ],
     integrations: ['sap', 'oracle-scm', 'netsuite', 'fishbowl', 'cin7']
@@ -610,6 +842,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'FileText',
         category: 'reporting',
         estimatedTime: '2 minutes'
+      },
+      {
+        id: 'personal_project_beacon',
+        label: 'Personal Project Beacon',
+        description: 'Manage personal goals and life projects with project management principles',
+        icon: 'Target',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'health_project_manager',
+        label: 'Health Project Manager',
+        description: 'Plan and track fitness goals and health improvement projects',
+        icon: 'Heart',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'learning_project_coordinator',
+        label: 'Learning Project Coordinator',
+        description: 'Coordinate learning projects and skill development initiatives',
+        icon: 'BookOpen',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'life_milestone_tracker',
+        label: 'Life Milestone Tracker',
+        description: 'Track and celebrate personal life milestones and achievements',
+        icon: 'Award',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
       }
     ],
     integrations: ['jira', 'asana', 'monday', 'trello', 'microsoft-project']
@@ -659,6 +923,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'Heart',
         category: 'benefits',
         estimatedTime: '90 seconds'
+      },
+      {
+        id: 'crew_wellness_navigator',
+        label: 'Crew Wellness Navigator',
+        description: 'Design employee wellness programs and healthy meal initiatives',
+        icon: 'Heart',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'team_fitness_coordinator',
+        label: 'Team Fitness Coordinator',
+        description: 'Organize team fitness challenges and wellness activities',
+        icon: 'Users',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'career_compass',
+        label: 'Career Compass',
+        description: 'Guide personal career development and skill building',
+        icon: 'TrendingUp',
+        category: 'daily_tools',
+        estimatedTime: '5 minutes'
+      },
+      {
+        id: 'work_life_balance',
+        label: 'Work-Life Balance Helm',
+        description: 'Optimize personal productivity and work-life balance',
+        icon: 'Scale',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
       }
     ],
     integrations: ['workday', 'bamboohr', 'greenhouse', 'lever', 'adp']
@@ -708,6 +1004,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'FileBarChart',
         category: 'reporting',
         estimatedTime: '4 minutes'
+      },
+      {
+        id: 'personal_budget_ledger',
+        label: 'Personal Budget Ledger',
+        description: 'Track personal finances and optimize household spending',
+        icon: 'PiggyBank',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'meal_cost_optimizer',
+        label: 'Meal Cost Optimizer',
+        description: 'Plan cost-effective meals and track food expenses',
+        icon: 'Calculator',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'investment_compass',
+        label: 'Investment Compass',
+        description: 'Guide personal investment decisions and financial planning',
+        icon: 'TrendingUp',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'expense_tracker',
+        label: 'Daily Expense Tracker',
+        description: 'Monitor and categorize daily personal expenses',
+        icon: 'Receipt',
+        category: 'daily_tools',
+        estimatedTime: '90 seconds'
       }
     ],
     integrations: ['quickbooks', 'xero', 'sage', 'netsuite', 'freshbooks']
@@ -757,6 +1085,38 @@ export const AGENTS: Record<string, Agent> = {
         icon: 'Activity',
         category: 'monitoring',
         estimatedTime: '60 seconds'
+      },
+      {
+        id: 'tech_wellness_patch',
+        label: 'Tech Wellness Patch',
+        description: 'Optimize digital wellness and screen time management',
+        icon: 'Shield',
+        category: 'daily_tools',
+        estimatedTime: '2 minutes'
+      },
+      {
+        id: 'productivity_automation',
+        label: 'Productivity Automation',
+        description: 'Automate daily tasks and optimize personal workflows',
+        icon: 'Cog',
+        category: 'daily_tools',
+        estimatedTime: '3 minutes'
+      },
+      {
+        id: 'digital_organizer',
+        label: 'Digital Organizer',
+        description: 'Organize digital files, photos, and personal data',
+        icon: 'FolderOpen',
+        category: 'daily_tools',
+        estimatedTime: '4 minutes'
+      },
+      {
+        id: 'smart_home_optimizer',
+        label: 'Smart Home Optimizer',
+        description: 'Optimize home technology and IoT device management',
+        icon: 'Home',
+        category: 'daily_tools',
+        estimatedTime: '5 minutes'
       }
     ],
     integrations: ['servicenow', 'jira-service-desk', 'freshservice', 'zendesk', 'remedy']

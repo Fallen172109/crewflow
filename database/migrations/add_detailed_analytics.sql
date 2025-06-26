@@ -1,33 +1,44 @@
--- Add detailed analytics tables for comprehensive usage tracking
+-- Add detailed analytics tables for comprehensive AI usage tracking
 -- This extends the existing agent_usage table with more granular data
 
--- Create detailed usage tracking table
+-- Create detailed usage tracking table with enhanced fields for AI analytics
 CREATE TABLE IF NOT EXISTS public.agent_usage_detailed (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
     agent_id TEXT NOT NULL,
-    message_type TEXT NOT NULL CHECK (message_type IN ('chat', 'preset_action')),
-    tokens_used INTEGER DEFAULT 0,
-    cost DECIMAL(10,4) DEFAULT 0,
-    response_time DECIMAL(8,3) DEFAULT 0, -- in seconds
+    agent_name TEXT NOT NULL,
+    framework TEXT NOT NULL CHECK (framework IN ('langchain', 'perplexity', 'autogen', 'hybrid')),
+    provider TEXT NOT NULL CHECK (provider IN ('openai', 'perplexity', 'anthropic', 'google', 'other')),
+    message_type TEXT NOT NULL CHECK (message_type IN ('chat', 'preset_action', 'tool_execution')),
+    input_tokens INTEGER DEFAULT 0,
+    output_tokens INTEGER DEFAULT 0,
+    total_tokens INTEGER GENERATED ALWAYS AS (input_tokens + output_tokens) STORED,
+    cost_usd DECIMAL(10,6) DEFAULT 0,
+    response_time_ms INTEGER DEFAULT 0,
     success BOOLEAN DEFAULT true,
-    metadata JSONB DEFAULT '{}',
+    error_message TEXT DEFAULT NULL,
+    request_metadata JSONB DEFAULT '{}',
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create performance metrics summary table
+-- Create performance metrics summary table for daily aggregations
 CREATE TABLE IF NOT EXISTS public.agent_performance_metrics (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
     agent_id TEXT NOT NULL,
+    agent_name TEXT NOT NULL,
+    framework TEXT NOT NULL,
+    provider TEXT NOT NULL,
     date DATE NOT NULL,
     total_requests INTEGER DEFAULT 0,
     successful_requests INTEGER DEFAULT 0,
     failed_requests INTEGER DEFAULT 0,
+    total_input_tokens INTEGER DEFAULT 0,
+    total_output_tokens INTEGER DEFAULT 0,
     total_tokens INTEGER DEFAULT 0,
-    total_cost DECIMAL(10,4) DEFAULT 0,
-    avg_response_time DECIMAL(8,3) DEFAULT 0,
+    total_cost_usd DECIMAL(10,6) DEFAULT 0,
+    avg_response_time_ms INTEGER DEFAULT 0,
     popular_actions JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -40,12 +51,21 @@ CREATE TABLE IF NOT EXISTS public.system_analytics (
     date DATE NOT NULL UNIQUE,
     total_users INTEGER DEFAULT 0,
     active_users INTEGER DEFAULT 0,
+    new_users INTEGER DEFAULT 0,
     total_requests INTEGER DEFAULT 0,
-    total_cost DECIMAL(12,4) DEFAULT 0,
-    avg_response_time DECIMAL(8,3) DEFAULT 0,
+    successful_requests INTEGER DEFAULT 0,
+    failed_requests INTEGER DEFAULT 0,
+    total_input_tokens INTEGER DEFAULT 0,
+    total_output_tokens INTEGER DEFAULT 0,
+    total_tokens INTEGER DEFAULT 0,
+    total_cost_usd DECIMAL(12,6) DEFAULT 0,
+    cost_by_provider JSONB DEFAULT '{}',
+    avg_response_time_ms INTEGER DEFAULT 0,
     success_rate DECIMAL(5,2) DEFAULT 0,
     popular_agents JSONB DEFAULT '[]',
     framework_usage JSONB DEFAULT '{}',
+    provider_usage JSONB DEFAULT '{}',
+    top_users_by_usage JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -57,16 +77,37 @@ ON public.agent_usage_detailed(user_id, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_agent_timestamp 
 ON public.agent_usage_detailed(agent_id, timestamp DESC);
 
-CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_success 
+CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_success
 ON public.agent_usage_detailed(success, timestamp DESC);
 
-CREATE INDEX IF NOT EXISTS idx_agent_performance_metrics_user_date 
+CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_framework
+ON public.agent_usage_detailed(framework);
+
+CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_provider
+ON public.agent_usage_detailed(provider);
+
+CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_message_type
+ON public.agent_usage_detailed(message_type);
+
+CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_cost
+ON public.agent_usage_detailed(cost_usd DESC);
+
+CREATE INDEX IF NOT EXISTS idx_agent_usage_detailed_tokens
+ON public.agent_usage_detailed(total_tokens DESC);
+
+CREATE INDEX IF NOT EXISTS idx_agent_performance_metrics_user_date
 ON public.agent_performance_metrics(user_id, date DESC);
 
-CREATE INDEX IF NOT EXISTS idx_agent_performance_metrics_agent_date 
+CREATE INDEX IF NOT EXISTS idx_agent_performance_metrics_agent_date
 ON public.agent_performance_metrics(agent_id, date DESC);
 
-CREATE INDEX IF NOT EXISTS idx_system_analytics_date 
+CREATE INDEX IF NOT EXISTS idx_agent_performance_metrics_framework
+ON public.agent_performance_metrics(framework);
+
+CREATE INDEX IF NOT EXISTS idx_agent_performance_metrics_provider
+ON public.agent_performance_metrics(provider);
+
+CREATE INDEX IF NOT EXISTS idx_system_analytics_date
 ON public.system_analytics(date DESC);
 
 -- Create updated_at trigger for performance metrics
@@ -80,6 +121,32 @@ CREATE TRIGGER update_system_analytics_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Enable Row Level Security
+ALTER TABLE public.agent_usage_detailed ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agent_performance_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_analytics ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for agent_usage_detailed
+CREATE POLICY "Users can view their own detailed usage" ON public.agent_usage_detailed
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own detailed usage" ON public.agent_usage_detailed
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all detailed usage" ON public.agent_usage_detailed
+    FOR ALL USING (public.is_admin());
+
+-- RLS Policies for agent_performance_metrics
+CREATE POLICY "Users can view their own performance metrics" ON public.agent_performance_metrics
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all performance metrics" ON public.agent_performance_metrics
+    FOR ALL USING (public.is_admin());
+
+-- RLS Policies for system_analytics (admin only)
+CREATE POLICY "Admins can view system analytics" ON public.system_analytics
+    FOR ALL USING (public.is_admin());
+
 -- Function to aggregate daily performance metrics
 CREATE OR REPLACE FUNCTION public.aggregate_daily_performance_metrics(
     p_date DATE DEFAULT CURRENT_DATE - INTERVAL '1 day'
@@ -90,42 +157,54 @@ BEGIN
     INSERT INTO public.agent_performance_metrics (
         user_id,
         agent_id,
+        agent_name,
+        framework,
+        provider,
         date,
         total_requests,
         successful_requests,
         failed_requests,
+        total_input_tokens,
+        total_output_tokens,
         total_tokens,
-        total_cost,
-        avg_response_time,
+        total_cost_usd,
+        avg_response_time_ms,
         popular_actions
     )
-    SELECT 
+    SELECT
         user_id,
         agent_id,
+        agent_name,
+        framework,
+        provider,
         p_date,
         COUNT(*) as total_requests,
         COUNT(*) FILTER (WHERE success = true) as successful_requests,
         COUNT(*) FILTER (WHERE success = false) as failed_requests,
-        SUM(tokens_used) as total_tokens,
-        SUM(cost) as total_cost,
-        AVG(response_time) as avg_response_time,
+        SUM(input_tokens) as total_input_tokens,
+        SUM(output_tokens) as total_output_tokens,
+        SUM(total_tokens) as total_tokens,
+        SUM(cost_usd) as total_cost_usd,
+        AVG(response_time_ms) as avg_response_time_ms,
         COALESCE(
             jsonb_agg(
-                DISTINCT (metadata->>'action')
-            ) FILTER (WHERE metadata->>'action' IS NOT NULL),
+                DISTINCT (request_metadata->>'action')
+            ) FILTER (WHERE request_metadata->>'action' IS NOT NULL),
             '[]'::jsonb
         ) as popular_actions
     FROM public.agent_usage_detailed
     WHERE DATE(timestamp) = p_date
-    GROUP BY user_id, agent_id
+    GROUP BY user_id, agent_id, agent_name, framework, provider
     ON CONFLICT (user_id, agent_id, date)
     DO UPDATE SET
         total_requests = EXCLUDED.total_requests,
         successful_requests = EXCLUDED.successful_requests,
         failed_requests = EXCLUDED.failed_requests,
+        total_input_tokens = EXCLUDED.total_input_tokens,
+        total_output_tokens = EXCLUDED.total_output_tokens,
         total_tokens = EXCLUDED.total_tokens,
-        total_cost = EXCLUDED.total_cost,
-        avg_response_time = EXCLUDED.avg_response_time,
+        total_cost_usd = EXCLUDED.total_cost_usd,
+        avg_response_time_ms = EXCLUDED.avg_response_time_ms,
         popular_actions = EXCLUDED.popular_actions,
         updated_at = NOW();
 
@@ -134,20 +213,36 @@ BEGIN
         date,
         total_users,
         active_users,
+        new_users,
         total_requests,
-        total_cost,
-        avg_response_time,
+        successful_requests,
+        failed_requests,
+        total_input_tokens,
+        total_output_tokens,
+        total_tokens,
+        total_cost_usd,
+        cost_by_provider,
+        avg_response_time_ms,
         success_rate,
         popular_agents,
-        framework_usage
+        framework_usage,
+        provider_usage,
+        top_users_by_usage
     )
-    SELECT 
+    SELECT
         p_date,
         (SELECT COUNT(DISTINCT id) FROM public.users WHERE DATE(created_at) <= p_date) as total_users,
         COUNT(DISTINCT user_id) as active_users,
+        (SELECT COUNT(DISTINCT id) FROM public.users WHERE DATE(created_at) = p_date) as new_users,
         COUNT(*) as total_requests,
-        SUM(cost) as total_cost,
-        AVG(response_time) as avg_response_time,
+        COUNT(*) FILTER (WHERE success = true) as successful_requests,
+        COUNT(*) FILTER (WHERE success = false) as failed_requests,
+        SUM(input_tokens) as total_input_tokens,
+        SUM(output_tokens) as total_output_tokens,
+        SUM(total_tokens) as total_tokens,
+        SUM(cost_usd) as total_cost_usd,
+        jsonb_object_agg(provider, provider_cost) as cost_by_provider,
+        AVG(response_time_ms) as avg_response_time_ms,
         (COUNT(*) FILTER (WHERE success = true) * 100.0 / COUNT(*)) as success_rate,
         jsonb_build_object(
             'agents',

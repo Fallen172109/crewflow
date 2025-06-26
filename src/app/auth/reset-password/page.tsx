@@ -217,12 +217,12 @@ function ResetPasswordForm() {
                               : passwordStrength <= 3
                               ? 'bg-yellow-400'
                               : 'bg-green-400'
-                            : 'bg-secondary-600'
+                            : 'bg-gray-300'
                         }`}
                       />
                     ))}
                   </div>
-                  <div className="mt-1 text-xs text-secondary-400">
+                  <div className="mt-1 text-xs text-gray-600">
                     Use 8+ characters with uppercase, lowercase, numbers & symbols
                   </div>
                 </div>

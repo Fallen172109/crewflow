@@ -10,10 +10,10 @@ interface AdminSidebarProps {
 
 const navigation = [
   {
-    name: 'Dashboard',
-    href: '/admin',
-    icon: '🏠',
-    description: 'Overview and quick stats'
+    name: 'Usage Analytics',
+    href: '/admin/usage-analytics',
+    icon: '📊',
+    description: 'AI usage and cost tracking'
   },
   {
     name: 'Users',
@@ -22,16 +22,16 @@ const navigation = [
     description: 'Manage user accounts'
   },
   {
-    name: 'Analytics',
-    href: '/admin/analytics',
-    icon: '📊',
-    description: 'Platform analytics'
-  },
-  {
     name: 'Agents',
     href: '/admin/agents',
     icon: '🤖',
     description: 'AI agent monitoring'
+  },
+  {
+    name: 'Cost Verification',
+    href: '/admin/cost-verification-simple',
+    icon: '🔍',
+    description: 'Verify AI cost calculations'
   },
   {
     name: 'Subscriptions',
@@ -74,9 +74,10 @@ export function AdminSidebar({ adminUser }: AdminSidebarProps) {
       {/* Navigation */}
       <nav className="p-4 space-y-2">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || 
-                          (item.href !== '/admin' && pathname.startsWith(item.href))
-          
+          const isActive = pathname === item.href ||
+                          pathname.startsWith(item.href) ||
+                          (item.href === '/admin/usage-analytics' && pathname === '/admin')
+
           return (
             <Link
               key={item.name}

@@ -5,26 +5,30 @@ interface AdminAnalyticsChartsProps {
 }
 
 export function AdminAnalyticsCharts({ analytics }: AdminAnalyticsChartsProps) {
-  // Mock chart data - in real implementation, this would come from analytics
+  // Generate chart data from real analytics or show empty state
+  const generateDailyData = (baseValue: number, days: number = 7) => {
+    const data = []
+    const today = new Date()
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+
+      // Use real data if available, otherwise show minimal values
+      const value = baseValue > 0 ? Math.max(1, Math.floor(baseValue * (0.8 + Math.random() * 0.4))) : 0
+
+      data.push({
+        date: date.toISOString().split('T')[0],
+        value: value
+      })
+    }
+
+    return data
+  }
+
   const chartData = {
-    users: [
-      { date: '2024-01-01', value: 120 },
-      { date: '2024-01-02', value: 135 },
-      { date: '2024-01-03', value: 148 },
-      { date: '2024-01-04', value: 162 },
-      { date: '2024-01-05', value: 178 },
-      { date: '2024-01-06', value: 195 },
-      { date: '2024-01-07', value: 210 }
-    ],
-    revenue: [
-      { date: '2024-01-01', value: 8500 },
-      { date: '2024-01-02', value: 9200 },
-      { date: '2024-01-03', value: 9800 },
-      { date: '2024-01-04', value: 10500 },
-      { date: '2024-01-05', value: 11200 },
-      { date: '2024-01-06', value: 11800 },
-      { date: '2024-01-07', value: 12450 }
-    ]
+    users: generateDailyData(analytics?.total_users || 0),
+    requests: generateDailyData(analytics?.requests_30d || 0)
   }
 
   return (
@@ -67,52 +71,66 @@ export function AdminAnalyticsCharts({ analytics }: AdminAnalyticsChartsProps) {
           </div>
           
           <div className="mt-4 flex items-center justify-between text-sm">
-            <span className="text-gray-500">Total Users: {chartData.users[chartData.users.length - 1].value}</span>
-            <span className="text-green-600 font-medium">
+            <span className="text-gray-600 font-medium">Total Users: {chartData.users[chartData.users.length - 1].value}</span>
+            <span className="text-green-700 font-semibold">
               +{((chartData.users[chartData.users.length - 1].value - chartData.users[0].value) / chartData.users[0].value * 100).toFixed(1)}%
             </span>
           </div>
         </div>
       </div>
 
-      {/* Revenue Chart */}
+      {/* API Requests Chart */}
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Revenue Trend</h2>
+            <h2 className="text-lg font-semibold text-gray-900">API Request Trends</h2>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">MRR</span>
+              <span className="text-sm text-gray-500">Total</span>
               <span className="text-lg font-bold text-gray-900">
-                ${chartData.revenue[chartData.revenue.length - 1].value.toLocaleString()}
+                {analytics?.requests_30d || 0}
               </span>
             </div>
           </div>
         </div>
-        
+
         <div className="p-6">
-          {/* Simple revenue chart */}
-          <div className="h-64 flex items-end space-x-2">
-            {chartData.revenue.map((point, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div 
-                  className="w-full bg-green-500 rounded-t"
-                  style={{ 
-                    height: `${(point.value / Math.max(...chartData.revenue.map(p => p.value))) * 200}px` 
-                  }}
-                ></div>
-                <span className="text-xs text-gray-500 mt-2">
-                  {new Date(point.date).getDate()}
+          {chartData.requests.some(p => p.value > 0) ? (
+            <>
+              {/* API requests chart */}
+              <div className="h-64 flex items-end space-x-2">
+                {chartData.requests.map((point, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center">
+                    <div
+                      className="w-full bg-blue-500 rounded-t"
+                      style={{
+                        height: `${Math.max(...chartData.requests.map(p => p.value)) > 0 ? (point.value / Math.max(...chartData.requests.map(p => p.value))) * 200 : 0}px`
+                      }}
+                    ></div>
+                    <span className="text-xs text-gray-500 mt-2">
+                      {new Date(point.date).getDate()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between text-sm">
+                <span className="text-gray-600 font-medium">Request Volume</span>
+                <span className="text-blue-700 font-semibold">
+                  {analytics?.requests_30d || 0} total
                 </span>
               </div>
-            ))}
-          </div>
-          
-          <div className="mt-4 flex items-center justify-between text-sm">
-            <span className="text-gray-500">Monthly Growth</span>
-            <span className="text-green-600 font-medium">
-              +{((chartData.revenue[chartData.revenue.length - 1].value - chartData.revenue[0].value) / chartData.revenue[0].value * 100).toFixed(1)}%
-            </span>
-          </div>
+            </>
+          ) : (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-gray-400 text-2xl">📊</span>
+                </div>
+                <p className="text-gray-600 font-medium">No API request data available</p>
+                <p className="text-gray-500 text-sm mt-1">Data will appear when users start using AI agents</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -69,18 +69,18 @@ export default function DebugAdminPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Authentication Status */}
-          <div className="bg-secondary-800 rounded-xl border border-secondary-700 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">🔐 Authentication Status</h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">🔐 Authentication Status</h2>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-secondary-300">Auth Loading:</span>
-                <span className={authLoading ? "text-yellow-400" : "text-green-400"}>
+                <span className="text-gray-600">Auth Loading:</span>
+                <span className={authLoading ? "text-yellow-600" : "text-green-600"}>
                   {authLoading ? "Loading..." : "Complete"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-secondary-300">User Signed In:</span>
-                <span className={user ? "text-green-400" : "text-red-400"}>
+                <span className="text-gray-600">User Signed In:</span>
+                <span className={user ? "text-green-600" : "text-red-600"}>
                   {user ? "Yes" : "No"}
                 </span>
               </div>
@@ -102,18 +102,18 @@ export default function DebugAdminPage() {
           </div>
 
           {/* Admin Status */}
-          <div className="bg-secondary-800 rounded-xl border border-secondary-700 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">🛡️ Admin Status</h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">🛡️ Admin Status</h2>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-secondary-300">Admin Loading:</span>
-                <span className={adminLoading ? "text-yellow-400" : "text-green-400"}>
+                <span className="text-gray-600">Admin Loading:</span>
+                <span className={adminLoading ? "text-yellow-600" : "text-green-600"}>
                   {adminLoading ? "Loading..." : "Complete"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-secondary-300">Is Admin:</span>
-                <span className={isAdmin ? "text-green-400" : "text-red-400"}>
+                <span className="text-gray-600">Is Admin:</span>
+                <span className={isAdmin ? "text-green-600" : "text-red-600"}>
                   {isAdmin ? "Yes" : "No"}
                 </span>
               </div>
@@ -131,26 +131,26 @@ export default function DebugAdminPage() {
           </div>
 
           {/* Database Status */}
-          <div className="bg-secondary-800 rounded-xl border border-secondary-700 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">🗄️ Database Status</h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">🗄️ Database Status</h2>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-secondary-300">Connection:</span>
-                <span className={dbTest ? "text-green-400" : "text-red-400"}>
+                <span className="text-gray-600">Connection:</span>
+                <span className={dbTest ? "text-green-600" : "text-red-600"}>
                   {dbTest || "Failed"}
                 </span>
               </div>
               {dbError && (
-                <div className="mt-2 p-3 bg-red-900/20 border border-red-900/30 rounded-lg">
-                  <p className="text-red-400 text-sm">{dbError}</p>
+                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm">{dbError}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-secondary-800 rounded-xl border border-secondary-700 p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">⚡ Quick Actions</h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">⚡ Quick Actions</h2>
             <div className="space-y-3">
               <button
                 onClick={() => window.location.href = '/dashboard'}
@@ -166,7 +166,7 @@ export default function DebugAdminPage() {
               </button>
               <button
                 onClick={forceRefresh}
-                className="w-full px-4 py-2 bg-secondary-600 hover:bg-secondary-500 text-white rounded-lg transition-colors"
+                className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
               >
                 🔄 Force Refresh
               </button>

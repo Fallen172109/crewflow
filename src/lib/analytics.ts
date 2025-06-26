@@ -149,7 +149,23 @@ export async function getUserAnalytics(
     return processUsageData(detailedUsage || [], monthlyUsage || [], timeRange)
   } catch (error) {
     console.error('Error in getUserAnalytics:', error)
-    return null
+    // Return empty metrics instead of null
+    return {
+      totalRequests: 0,
+      totalCost: 0,
+      averageResponseTime: 0,
+      successRate: 0,
+      mostUsedAgent: 'None',
+      agentBreakdown: [],
+      frameworkPerformance: [],
+      dailyUsage: [],
+      trends: {
+        requestsChange: 0,
+        costChange: 0,
+        responseTimeChange: 0,
+        successRateChange: 0
+      }
+    }
   }
 }
 

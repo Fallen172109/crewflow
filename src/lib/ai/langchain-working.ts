@@ -1,6 +1,10 @@
 // Working LangChain Implementation
 import { ChatOpenAI } from '@langchain/openai'
 import { getAIConfig } from './config'
+import { createImageGenerationService, type ImageGenerationRequest, type ImageGenerationResponse } from './image-generation'
+import { createMealPlanningService, type MealPlanRequest } from './meal-planning'
+import { createFitnessPlanningService, type FitnessPlanRequest } from './fitness-planning'
+import { createProductivityPlanningService, type ProductivityPlanRequest } from './productivity-planning'
 import type { Agent } from '../agents'
 
 export interface LangChainResponse {
@@ -55,9 +59,13 @@ export class LangChainAgent {
     try {
       const systemMessage = this.buildSystemPrompt()
       const contextStr = this.formatContext(context)
-      const fullPrompt = `${systemMessage}\n\n${contextStr}User Message: ${message}\n\nProvide a helpful response and analyze the message for sentiment, urgency, and escalation needs:`
 
-      const response = await this.llm.invoke([{ role: 'user', content: fullPrompt }])
+      // Use the correct format for ChatOpenAI - it expects a string input
+      const fullPrompt = `${systemMessage}\n\nUser: ${contextStr}${message}\n\nAssistant:`
+
+      console.log('Sending prompt to LangChain:', fullPrompt)
+      const response = await this.llm.invoke(fullPrompt)
+      console.log('LangChain response:', response)
       const responseText = response.content as string
 
       // Enhanced response processing for customer support
@@ -69,7 +77,8 @@ export class LangChainAgent {
         latency: Date.now() - startTime,
         model: this.llm.model,
         success: true,
-        metadata
+        metadata,
+        apiResponse: response // Include the full API response for real usage tracking
       }
     } catch (error) {
       console.error('LangChain error:', error)
@@ -244,6 +253,36 @@ Remember: Your goal is not just to solve problems, but to create positive custom
     const startTime = Date.now()
 
     try {
+      // Handle image generation separately
+      if (actionId === 'image_generator') {
+        return this.handleImageGeneration(params, startTime)
+      }
+
+      // Handle meal planning separately
+      if (actionId === 'pearl_meal_planner' || actionId === 'sage_meal_wisdom' ||
+          actionId === 'crew_meal_planner' || actionId === 'meal_prep_workflow' ||
+          actionId === 'meal_cost_optimizer') {
+        return this.handleMealPlanning(params, startTime)
+      }
+
+      // Handle fitness planning separately
+      if (actionId === 'crew_fitness_planner' || actionId === 'fitness_research' ||
+          actionId === 'fitness_content_creator' || actionId === 'fitness_automation' ||
+          actionId === 'health_project_manager' || actionId === 'team_fitness_coordinator' ||
+          actionId === 'fitness_knowledge_base') {
+        return this.handleFitnessPlanning(params, startTime)
+      }
+
+      // Handle productivity planning separately
+      if (actionId === 'productivity_compass' || actionId === 'productivity_optimizer' ||
+          actionId === 'daily_routine_automation' || actionId === 'productivity_orchestrator' ||
+          actionId === 'learning_path_creator' || actionId === 'knowledge_organizer' ||
+          actionId === 'personal_project_beacon' || actionId === 'career_compass' ||
+          actionId === 'work_life_balance' || actionId === 'productivity_automation' ||
+          actionId === 'goal_achievement_strategist') {
+        return this.handleProductivityPlanning(params, startTime)
+      }
+
       let prompt = ''
 
       switch (actionId) {
@@ -350,6 +389,373 @@ Generate a knowledge base article that includes:
         tokensUsed: 0,
         latency: Date.now() - startTime,
         model: this.llm.model,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  private async handleMealPlanning(params: any, startTime: number): Promise<LangChainResponse> {
+    try {
+      const mealPlanningService = createMealPlanningService()
+
+      // Extract parameters from the request
+      const mealPlanRequest: MealPlanRequest = {
+        dietaryPreferences: params.dietary_preferences || params.dietaryPreferences || [],
+        allergies: params.allergies || [],
+        cuisinePreferences: params.cuisine_preferences || params.cuisinePreferences || [],
+        mealCount: parseInt(params.meal_count || params.mealCount || '3'),
+        days: parseInt(params.days || '7'),
+        budgetRange: params.budget_range || params.budgetRange || 'moderate',
+        cookingTime: params.cooking_time || params.cookingTime || 'varied',
+        servingSize: parseInt(params.serving_size || params.servingSize || '2'),
+        healthGoals: params.health_goals || params.healthGoals || [],
+        excludeIngredients: params.exclude_ingredients || params.excludeIngredients || []
+      }
+
+      console.log('Generating meal plan with request:', mealPlanRequest)
+      const mealPlanResult = await mealPlanningService.generateMealPlan(mealPlanRequest)
+
+      if (mealPlanResult.success && mealPlanResult.mealPlan) {
+        const plan = mealPlanResult.mealPlan
+
+        let response = `🍽️ **Personalized Meal Plan Generated Successfully!**
+
+**Plan Overview:** ${plan.overview}
+
+**Daily Plans:**
+${plan.dailyPlans.map((day, index) => `
+**${day.day}:**
+- **Breakfast:** ${day.meals.breakfast.name} (${day.meals.breakfast.nutrition.calories} cal)
+- **Lunch:** ${day.meals.lunch.name} (${day.meals.lunch.nutrition.calories} cal)
+- **Dinner:** ${day.meals.dinner.name} (${day.meals.dinner.nutrition.calories} cal)
+- **Daily Total:** ${day.dailyNutrition.calories} calories`).join('\n')}
+
+**Shopping List:**
+${Object.entries(plan.shoppingList.categories).map(([category, items]) =>
+  `**${category}:** ${Array.isArray(items) ? items.join(', ') : items}`
+).join('\n')}
+
+**Estimated Cost:** ${plan.shoppingList.estimatedCost}
+
+**Nutritional Summary:**
+- **Daily Average:** ${plan.nutritionalSummary.dailyAverages.calories} calories, ${plan.nutritionalSummary.dailyAverages.protein} protein, ${plan.nutritionalSummary.dailyAverages.carbs} carbs, ${plan.nutritionalSummary.dailyAverages.fat} fat
+
+**Health Insights:**
+${plan.nutritionalSummary.healthInsights.map(insight => `- ${insight}`).join('\n')}
+
+**Cooking Tips:**
+${plan.cookingTips.map(tip => `- ${tip}`).join('\n')}
+
+This meal plan has been customized based on your preferences and nutritional needs. Each meal includes detailed ingredients and cooking instructions for easy preparation.`
+
+        return {
+          response,
+          tokensUsed: mealPlanResult.tokensUsed,
+          latency: Date.now() - startTime,
+          model: mealPlanResult.model,
+          success: true,
+          metadata: {
+            mealPlanning: true,
+            mealPlan: plan,
+            dailyCalories: plan.nutritionalSummary.dailyAverages.calories,
+            planDays: plan.dailyPlans.length
+          }
+        }
+      } else {
+        return {
+          response: `I apologize, but I encountered an error while generating your meal plan: ${mealPlanResult.error || 'Unknown error'}. Please try again with different preferences or contact support if the issue persists.`,
+          tokensUsed: 0,
+          latency: Date.now() - startTime,
+          model: 'gpt-4-turbo-preview',
+          success: false,
+          error: mealPlanResult.error
+        }
+      }
+    } catch (error) {
+      console.error('Meal planning error:', error)
+      return {
+        response: 'I apologize, but I encountered an error while generating your meal plan. Please try again.',
+        tokensUsed: 0,
+        latency: Date.now() - startTime,
+        model: 'gpt-4-turbo-preview',
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  private async handleFitnessPlanning(params: any, startTime: number): Promise<LangChainResponse> {
+    try {
+      const fitnessService = createFitnessPlanningService()
+
+      // Extract parameters from the request
+      const fitnessRequest: FitnessPlanRequest = {
+        fitnessLevel: params.fitness_level || params.fitnessLevel || 'beginner',
+        goals: params.goals || params.fitness_goals || ['general fitness'],
+        availableTime: params.available_time || params.availableTime || '30-45 minutes',
+        daysPerWeek: parseInt(params.days_per_week || params.daysPerWeek || '3'),
+        equipment: params.equipment || [],
+        injuries: params.injuries || [],
+        preferredActivities: params.preferred_activities || params.preferredActivities || [],
+        age: params.age ? parseInt(params.age) : undefined,
+        weight: params.weight ? parseInt(params.weight) : undefined,
+        height: params.height,
+        targetWeight: params.target_weight ? parseInt(params.target_weight) : undefined,
+        medicalConditions: params.medical_conditions || params.medicalConditions || []
+      }
+
+      console.log('Generating fitness plan with request:', fitnessRequest)
+      const fitnessResult = await fitnessService.generateFitnessPlan(fitnessRequest)
+
+      if (fitnessResult.success && fitnessResult.fitnessPlan) {
+        const plan = fitnessResult.fitnessPlan
+
+        let response = `💪 **Personalized Fitness Plan Generated Successfully!**
+
+**Plan Overview:** ${plan.overview}
+
+**Weekly Schedule:**
+${plan.weeklySchedule.map(day => {
+  if (day.restDay) {
+    return `**${day.day}:** Rest Day - ${day.activeRecovery}`
+  } else if (day.workout) {
+    return `**${day.day}:** ${day.workout.name} (${day.workout.duration})
+- Type: ${day.workout.type}
+- Target: ${day.workout.targetMuscles.join(', ')}
+- Calories: ${day.workout.caloriesBurned}
+- Difficulty: ${day.workout.difficulty}`
+  }
+  return `**${day.day}:** No workout scheduled`
+}).join('\n\n')}
+
+**Progress Tracking:**
+**Weekly Goals:**
+${plan.progressTracking.weeklyGoals.map(goal => `- ${goal}`).join('\n')}
+
+**Measurements to Track:**
+${plan.progressTracking.measurements.map(measurement => `- ${measurement}`).join('\n')}
+
+**Milestones:**
+${plan.progressTracking.milestones.map(milestone =>
+  `- Week ${milestone.week}: ${milestone.goal} (${milestone.measurement}) - Reward: ${milestone.reward}`
+).join('\n')}
+
+**Nutrition Guidance:**
+${plan.nutritionGuidance.map(tip => `- ${tip}`).join('\n')}
+
+**Safety Tips:**
+${plan.safetyTips.map(tip => `- ${tip}`).join('\n')}
+
+**Motivational Tips:**
+${plan.motivationalTips.map(tip => `- ${tip}`).join('\n')}
+
+This fitness plan has been customized based on your fitness level, goals, and available time. Each workout includes detailed exercises with proper form instructions and modifications for different fitness levels.`
+
+        return {
+          response,
+          tokensUsed: fitnessResult.tokensUsed,
+          latency: Date.now() - startTime,
+          model: fitnessResult.model,
+          success: true,
+          metadata: {
+            fitnessPlanning: true,
+            fitnessPlan: plan,
+            workoutDays: plan.weeklySchedule.filter(day => !day.restDay).length,
+            fitnessLevel: fitnessRequest.fitnessLevel
+          }
+        }
+      } else {
+        return {
+          response: `I apologize, but I encountered an error while generating your fitness plan: ${fitnessResult.error || 'Unknown error'}. Please try again with different preferences or contact support if the issue persists.`,
+          tokensUsed: 0,
+          latency: Date.now() - startTime,
+          model: 'gpt-4-turbo-preview',
+          success: false,
+          error: fitnessResult.error
+        }
+      }
+    } catch (error) {
+      console.error('Fitness planning error:', error)
+      return {
+        response: 'I apologize, but I encountered an error while generating your fitness plan. Please try again.',
+        tokensUsed: 0,
+        latency: Date.now() - startTime,
+        model: 'gpt-4-turbo-preview',
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  private async handleProductivityPlanning(params: any, startTime: number): Promise<LangChainResponse> {
+    try {
+      const productivityService = createProductivityPlanningService()
+
+      // Extract parameters from the request
+      const productivityRequest: ProductivityPlanRequest = {
+        goals: params.goals || params.productivity_goals || ['improve productivity'],
+        timeframe: params.timeframe || '4 weeks',
+        availableHours: params.available_hours ? parseInt(params.available_hours) : 8,
+        priorities: params.priorities || [],
+        challenges: params.challenges || [],
+        workStyle: params.work_style || params.workStyle || 'balanced',
+        tools: params.tools || [],
+        learningGoals: params.learning_goals || params.learningGoals || [],
+        skillLevel: params.skill_level || params.skillLevel || 'intermediate',
+        focusAreas: params.focus_areas || params.focusAreas || ['time management']
+      }
+
+      console.log('Generating productivity plan with request:', productivityRequest)
+      const productivityResult = await productivityService.generateProductivityPlan(productivityRequest)
+
+      if (productivityResult.success && productivityResult.productivityPlan) {
+        const plan = productivityResult.productivityPlan
+
+        let response = `⚡ **Personalized Productivity Plan Generated Successfully!**
+
+**Plan Overview:** ${plan.overview}
+
+**Daily Schedule Framework:**
+${plan.dailySchedule.map(day => `
+**${day.day}:**
+${day.timeBlocks.map(block =>
+  `- ${block.time}: ${block.activity} (${block.type}) - ${block.duration}`
+).join('\n')}
+**Priorities:** ${day.priorities.join(', ')}
+**Energy Optimization:** ${day.energyOptimization}`).join('\n')}
+
+**Weekly Goals:**
+${plan.weeklyGoals.map(week => `
+**Week ${week.week}:** ${week.primaryGoal}
+- Sub-goals: ${week.subGoals.join(', ')}
+- Metrics: ${week.metrics.join(', ')}
+- Reward: ${week.rewards}`).join('\n')}
+
+**Learning Path:**
+${plan.learningPath.map(module => `
+**${module.topic}** (${module.duration})
+- ${module.description}
+- Resources: ${module.resources.join(', ')}
+- Exercises: ${module.exercises.join(', ')}`).join('\n')}
+
+**Organization System:**
+- **Framework:** ${plan.organizationSystem.system}
+- **Tools:** ${plan.organizationSystem.tools.join(', ')}
+- **Key Workflows:** ${plan.organizationSystem.workflows.map(w => w.name).join(', ')}
+
+**Habit Tracking:**
+**Daily Habits:**
+${plan.habitTracking.dailyHabits.map(habit =>
+  `- ${habit.name}: ${habit.description} (${habit.timeOfDay}, ${habit.duration})`
+).join('\n')}
+
+**Weekly Habits:**
+${plan.habitTracking.weeklyHabits.map(habit =>
+  `- ${habit.name}: ${habit.description} (${habit.timeOfDay})`
+).join('\n')}
+
+**Motivation Strategies:**
+${plan.motivationStrategies.map(strategy => `- ${strategy}`).join('\n')}
+
+This productivity plan has been customized to your work style and goals. It includes specific time blocks, habit formation strategies, and progress tracking mechanisms to help you achieve sustained productivity improvement.`
+
+        return {
+          response,
+          tokensUsed: productivityResult.tokensUsed,
+          latency: Date.now() - startTime,
+          model: productivityResult.model,
+          success: true,
+          metadata: {
+            productivityPlanning: true,
+            productivityPlan: plan,
+            timeframe: productivityRequest.timeframe,
+            workStyle: productivityRequest.workStyle
+          }
+        }
+      } else {
+        return {
+          response: `I apologize, but I encountered an error while generating your productivity plan: ${productivityResult.error || 'Unknown error'}. Please try again with different preferences or contact support if the issue persists.`,
+          tokensUsed: 0,
+          latency: Date.now() - startTime,
+          model: 'gpt-4-turbo-preview',
+          success: false,
+          error: productivityResult.error
+        }
+      }
+    } catch (error) {
+      console.error('Productivity planning error:', error)
+      return {
+        response: 'I apologize, but I encountered an error while generating your productivity plan. Please try again.',
+        tokensUsed: 0,
+        latency: Date.now() - startTime,
+        model: 'gpt-4-turbo-preview',
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  private async handleImageGeneration(params: any, startTime: number): Promise<LangChainResponse> {
+    try {
+      const imageService = createImageGenerationService()
+
+      // Extract parameters from the request
+      const imageRequest: ImageGenerationRequest = {
+        prompt: params.prompt || params.description || 'A professional image',
+        style: params.style,
+        aspectRatio: params.aspect_ratio || params.aspectRatio,
+        quality: params.quality === 'high' ? 'hd' : 'standard'
+      }
+
+      console.log('Generating image with request:', imageRequest)
+      const imageResult = await imageService.generateImage(imageRequest)
+
+      if (imageResult.success && imageResult.imageUrl) {
+        const response = `🎨 **Image Generated Successfully!**
+
+**Original Prompt:** ${imageResult.metadata?.originalPrompt}
+**Enhanced Prompt:** ${imageResult.metadata?.enhancedPrompt}
+**Style:** ${imageResult.metadata?.style}
+**Aspect Ratio:** ${imageResult.metadata?.aspectRatio}
+
+**Image URL:** ${imageResult.imageUrl}
+
+${imageResult.revisedPrompt ? `**DALL-E Revised Prompt:** ${imageResult.revisedPrompt}` : ''}
+
+The image has been generated using OpenAI's DALL-E 3 model. You can view and download the image using the URL above. The image will be available for a limited time.`
+
+        return {
+          response,
+          tokensUsed: imageResult.tokensUsed,
+          latency: Date.now() - startTime,
+          model: imageResult.model,
+          success: true,
+          metadata: {
+            imageGeneration: true,
+            imageUrl: imageResult.imageUrl,
+            originalPrompt: imageResult.metadata?.originalPrompt,
+            enhancedPrompt: imageResult.metadata?.enhancedPrompt,
+            revisedPrompt: imageResult.revisedPrompt
+          }
+        }
+      } else {
+        return {
+          response: `I apologize, but I encountered an error while generating the image: ${imageResult.error || 'Unknown error'}. Please try again with a different prompt or contact support if the issue persists.`,
+          tokensUsed: 0,
+          latency: Date.now() - startTime,
+          model: 'dall-e-3',
+          success: false,
+          error: imageResult.error
+        }
+      }
+    } catch (error) {
+      console.error('Image generation error:', error)
+      return {
+        response: 'I apologize, but I encountered an error while generating the image. Please try again.',
+        tokensUsed: 0,
+        latency: Date.now() - startTime,
+        model: 'dall-e-3',
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       }

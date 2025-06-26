@@ -116,6 +116,7 @@ export interface Database {
           content: string
           timestamp: string
           archived: boolean
+          task_type: string
         }
         Insert: {
           id?: string
@@ -125,6 +126,7 @@ export interface Database {
           content: string
           timestamp?: string
           archived?: boolean
+          task_type?: string
         }
         Update: {
           id?: string
@@ -134,6 +136,7 @@ export interface Database {
           content?: string
           timestamp?: string
           archived?: boolean
+          task_type?: string
         }
       }
       api_connections: {

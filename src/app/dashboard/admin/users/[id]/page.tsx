@@ -323,17 +323,17 @@ export default function AdminUserDetailPage() {
       </div>
 
       {/* User Profile Card */}
-      <div className="bg-secondary-800 rounded-xl border border-secondary-700 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center">
-              <span className="text-primary-400 text-2xl font-bold">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+              <span className="text-orange-600 text-2xl font-bold">
                 {user.email.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">{user.email}</h2>
-              <p className="text-secondary-400">ID: {user.id}</p>
+              <h2 className="text-2xl font-bold text-gray-900">{user.email}</h2>
+              <p className="text-gray-600">ID: {user.id}</p>
               <div className="flex items-center space-x-3 mt-2">
                 {getRoleBadge(user.role)}
                 {getSubscriptionBadge(user.subscription_tier, user.subscription_status)}
@@ -502,20 +502,20 @@ export default function AdminUserDetailPage() {
 
           {activeTab === 'activity' && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">📊 Recent Activity</h3>
+              <h3 className="text-lg font-semibold text-gray-900">📊 Recent Activity</h3>
               {userActivity.length > 0 ? (
                 <div className="space-y-3">
                   {userActivity.map((activity) => (
-                    <div key={activity.id} className="bg-secondary-700 rounded-lg p-4 border border-secondary-600">
+                    <div key={activity.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-white font-medium">🤖 {activity.agent_name}</p>
-                          <p className="text-secondary-400 text-sm">{activity.action_type}</p>
+                          <p className="text-gray-900 font-medium">🤖 {activity.agent_name}</p>
+                          <p className="text-gray-600 text-sm">{activity.action_type}</p>
                         </div>
-                        <p className="text-secondary-400 text-sm">{formatDate(activity.created_at)}</p>
+                        <p className="text-gray-600 text-sm">{formatDate(activity.created_at)}</p>
                       </div>
                       {activity.details && (
-                        <div className="mt-2 p-2 bg-secondary-600 rounded text-xs text-secondary-300">
+                        <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700">
                           <pre>{JSON.stringify(activity.details, null, 2)}</pre>
                         </div>
                       )}
@@ -535,22 +535,22 @@ export default function AdminUserDetailPage() {
 
           {activeTab === 'audit' && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">📋 Admin Actions</h3>
+              <h3 className="text-lg font-semibold text-gray-900">📋 Admin Actions</h3>
               {auditLogs.length > 0 ? (
                 <div className="space-y-3">
                   {auditLogs.map((log) => (
-                    <div key={log.id} className="bg-secondary-700 rounded-lg p-4 border border-secondary-600">
+                    <div key={log.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-white font-medium">{log.action.replace(/_/g, ' ')}</p>
-                          <p className="text-secondary-400 text-sm">
+                          <p className="text-gray-900 font-medium">{log.action.replace(/_/g, ' ')}</p>
+                          <p className="text-gray-600 text-sm">
                             By: {log.admin_email || 'Unknown Admin'}
                           </p>
                         </div>
-                        <p className="text-secondary-400 text-sm">{formatDate(log.created_at)}</p>
+                        <p className="text-gray-600 text-sm">{formatDate(log.created_at)}</p>
                       </div>
                       {log.details && Object.keys(log.details).length > 0 && (
-                        <div className="mt-2 p-2 bg-secondary-600 rounded text-xs text-secondary-300">
+                        <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700">
                           <pre>{JSON.stringify(log.details, null, 2)}</pre>
                         </div>
                       )}

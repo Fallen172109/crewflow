@@ -55,6 +55,23 @@ This document provides a comprehensive accessibility audit of the CrewFlow appli
 - **After**: White backgrounds with gray borders and dark text
 - **Improvement**: Consistent with light theme, excellent contrast
 
+### Admin Analytics Components (Latest Fixes)
+- **AdminOverviewCards**: Converted from dark theme (`bg-secondary-800`, `text-white`) to light theme (`bg-white`, `text-gray-900`)
+- **UsageAnalyticsSummary**: Enhanced text contrast from `text-gray-600` to `text-gray-700` and `text-gray-800`
+- **AdminAnalyticsMetrics**: Improved text colors and added hover effects with better contrast
+- **AdminAnalyticsCharts**: Enhanced chart text visibility and contrast ratios
+
+### Agent Interface Components (Latest Fixes)
+- **AgentInterface**: Converted header from dark theme to white background with proper text contrast
+- **PresetActions**: Complete conversion from dark theme to light theme with maritime orange accents
+- **AdminSystemHealth**: Fixed all dark theme elements to use light backgrounds with dark text
+
+### Text Contrast Improvements
+- **All gray text**: Upgraded from `text-gray-500` to `text-gray-600` or `text-gray-700` for better readability
+- **Change indicators**: Enhanced from `text-green-600` to `text-green-700` and `text-red-600` to `text-red-700`
+- **Icon backgrounds**: Improved from `text-orange-500` to `text-orange-600` for better contrast
+- **Progress bars**: Increased height from `h-2` to `h-3` and enhanced colors for better visibility
+
 ## 🎨 Maritime Theme Preservation
 
 ### Color Palette Maintained

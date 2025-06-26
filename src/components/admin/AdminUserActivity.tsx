@@ -22,32 +22,9 @@ interface AdminUserActivityProps {
 }
 
 export function AdminUserActivity({ user, adminUser }: AdminUserActivityProps) {
-  // Mock activity data - in real implementation, fetch from database
-  const activities = [
-    {
-      id: '1',
-      type: 'agent_usage',
-      agent: 'coral',
-      action: 'Chat interaction',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      details: 'Customer support query'
-    },
-    {
-      id: '2',
-      type: 'login',
-      action: 'User login',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-      details: 'Successful login from Chrome'
-    },
-    {
-      id: '3',
-      type: 'agent_usage',
-      agent: 'mariner',
-      action: 'Preset action',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-      details: 'Campaign analysis'
-    }
-  ]
+  // Real activity data - currently empty until real usage is generated
+  const activities: any[] = []
+  // TODO: Fetch real user activity from agent_usage_detailed table
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -137,7 +114,8 @@ export function AdminUserActivity({ user, adminUser }: AdminUserActivityProps) {
             <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
               <span className="text-gray-400 text-xl">📊</span>
             </div>
-            <p className="text-sm text-gray-500">No recent activity found</p>
+            <p className="text-sm text-gray-500">No real activity data yet</p>
+            <p className="text-xs text-gray-400 mt-1">Activity will appear when users interact with AI agents</p>
           </div>
         )}
       </div>

@@ -50,22 +50,29 @@ export async function POST(request: NextRequest) {
       response = await processAgentMessage(coral, message, context, systemPrompt)
     }
 
-    // Log detailed usage analytics if user is authenticated
+    // Log detailed usage analytics with REAL API response data if user is authenticated
     if (userId && userProfile) {
-      await trackAgentUsage(
+      // Import the real usage tracker
+      const { trackRealUsage } = await import('@/lib/ai-usage-tracker')
+
+      await trackRealUsage(
         userId,
         'coral',
+        'Coral',
+        'langchain',
+        'openai', // Coral uses OpenAI
         action ? 'preset_action' : 'chat',
-        response.tokensUsed || 0,
-        coral.costPerRequest,
+        response.apiResponse, // Pass the actual API response with real token counts
         response.latency || 0,
-        response.success !== false, // Default to true unless explicitly false
+        response.success !== false,
+        response.error || undefined,
         {
           action: action || null,
           sentiment: response.metadata?.sentiment || null,
           urgency: response.metadata?.urgency || null,
           escalation_required: response.metadata?.escalationRequired || false,
-          framework: 'langchain'
+          framework: 'langchain',
+          agent_type: 'customer_support'
         }
       )
     }

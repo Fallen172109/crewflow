@@ -67,8 +67,8 @@ export default function AuthTestPage() {
           </div>
 
           {/* Test Actions */}
-          <div className="bg-secondary-800 rounded-lg p-6 border border-secondary-700">
-            <h2 className="text-xl font-semibold text-white mb-4">Test Actions</h2>
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Test Actions</h2>
             <div className="space-y-4">
               <button
                 onClick={testAuth}

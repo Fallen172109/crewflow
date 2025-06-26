@@ -54,19 +54,19 @@ export default function PresetActions({ agent, onExecuteAction, isLoading }: Pre
   }
 
   return (
-    <div className="bg-secondary-800 rounded-xl border border-secondary-700 h-full flex flex-col">
+    <div className="bg-white rounded-xl border border-gray-200 h-full flex flex-col shadow-sm">
       {/* Header */}
-      <div className="p-6 border-b border-secondary-700">
+      <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-bold text-white">Preset Actions</h3>
-            <p className="text-secondary-400 text-sm">
+            <h3 className="text-xl font-bold text-gray-900">Preset Actions</h3>
+            <p className="text-gray-600 text-sm">
               One-click automation for common {agent.title.toLowerCase()} tasks
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-secondary-400">Available Actions</p>
-            <p className="text-2xl font-bold text-white">{agent.presetActions.length}</p>
+            <p className="text-sm text-gray-600">Available Actions</p>
+            <p className="text-2xl font-bold text-gray-900">{agent.presetActions.length}</p>
           </div>
         </div>
 
@@ -78,8 +78,8 @@ export default function PresetActions({ agent, onExecuteAction, isLoading }: Pre
               onClick={() => setSelectedCategory(category)}
               className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === category
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-secondary-700 text-secondary-300 hover:bg-secondary-600 hover:text-white'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               {category === 'all' ? 'All' : category.charAt(0).toUpperCase() + category.slice(1)}
@@ -94,36 +94,36 @@ export default function PresetActions({ agent, onExecuteAction, isLoading }: Pre
           {filteredActions.map((action) => (
             <div
               key={action.id}
-              className="bg-secondary-700 rounded-lg p-4 border border-secondary-600 hover:border-primary-500/50 transition-all duration-200 group"
+              className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 group"
             >
               <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-primary-500/20 rounded-lg flex items-center justify-center text-primary-400 group-hover:bg-primary-500/30 transition-colors">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 group-hover:bg-orange-200 transition-colors">
                   {getIcon(action.icon)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-medium mb-1 group-hover:text-primary-400 transition-colors">
+                  <h4 className="text-gray-900 font-medium mb-1 group-hover:text-orange-700 transition-colors">
                     {action.label}
                   </h4>
-                  <p className="text-secondary-300 text-sm mb-3 line-clamp-2">
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                     {action.description}
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs bg-secondary-600 text-secondary-300 px-2 py-1 rounded">
+                      <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
                         {action.category}
                       </span>
-                      <span className="text-xs text-secondary-400">
+                      <span className="text-xs text-gray-500">
                         ⏱️ {action.estimatedTime}
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <button
                 onClick={() => onExecuteAction(action.id)}
                 disabled={isLoading}
-                className="w-full mt-4 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                className="w-full mt-4 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 {isLoading ? (
                   <>
@@ -145,13 +145,13 @@ export default function PresetActions({ agent, onExecuteAction, isLoading }: Pre
 
         {filteredActions.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-secondary-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.239 0-4.236-.18-5.536-.437C7.061 14.754 8 14.139 8 13.407V6.593c0-.732-.939-1.347-2.464-1.156C4.236 5.18 2.239 5 0 5v8c2.239 0 4.236.18 5.536.437C6.939 13.246 8 13.861 8 14.593v.814A7.962 7.962 0 0112 15z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">No actions found</h3>
-            <p className="text-secondary-400">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No actions found</h3>
+            <p className="text-gray-600">
               No preset actions available for the selected category.
             </p>
           </div>
@@ -159,15 +159,15 @@ export default function PresetActions({ agent, onExecuteAction, isLoading }: Pre
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-secondary-700 bg-secondary-700/50">
+      <div className="p-4 border-t border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center space-x-2 text-secondary-400">
+          <div className="flex items-center space-x-2 text-gray-600">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>Actions are executed using {agent.framework} framework</span>
           </div>
-          <div className="text-secondary-400">
+          <div className="text-gray-600">
             {filteredActions.length} of {agent.presetActions.length} actions
           </div>
         </div>

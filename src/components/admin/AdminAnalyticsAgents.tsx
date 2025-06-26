@@ -5,54 +5,25 @@ interface AdminAnalyticsAgentsProps {
 }
 
 export function AdminAnalyticsAgents({ analytics }: AdminAnalyticsAgentsProps) {
-  // Mock agent usage data
+  // Real agent data - currently no agents have real usage data
   const agentData = [
     {
       name: 'Coral',
       description: 'Customer Support',
-      usage: 1250,
-      growth: '+15.2%',
-      status: 'healthy',
+      usage: 0, // Will show real usage when data is available
+      growth: '0%',
+      status: 'ready', // Ready for real tracking
       framework: 'LangChain'
-    },
-    {
-      name: 'Mariner',
-      description: 'Marketing Automation',
-      usage: 980,
-      growth: '+22.8%',
-      status: 'healthy',
-      framework: 'Hybrid'
-    },
-    {
-      name: 'Pearl',
-      description: 'Content & SEO',
-      usage: 750,
-      growth: '+8.5%',
-      status: 'healthy',
-      framework: 'Perplexity'
-    },
-    {
-      name: 'Morgan',
-      description: 'E-commerce',
-      usage: 620,
-      growth: '+12.3%',
-      status: 'warning',
-      framework: 'LangChain'
-    },
-    {
-      name: 'Tide',
-      description: 'Data Analysis',
-      usage: 540,
-      growth: '+18.7%',
-      status: 'healthy',
-      framework: 'AutoGen'
     }
+    // Other agents will appear here when they have real usage data
   ]
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
         return 'bg-green-100 text-green-800'
+      case 'ready':
+        return 'bg-blue-100 text-blue-800'
       case 'warning':
         return 'bg-yellow-100 text-yellow-800'
       case 'error':
@@ -151,10 +122,10 @@ export function AdminAnalyticsAgents({ analytics }: AdminAnalyticsAgentsProps) {
               <div className="text-xs text-gray-500">Active Agents</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-green-600">
-                {agentData.filter(a => a.status === 'healthy').length}
+              <div className="text-lg font-bold text-blue-600">
+                {agentData.filter(a => a.status === 'ready' || a.status === 'healthy').length}
               </div>
-              <div className="text-xs text-gray-500">Healthy</div>
+              <div className="text-xs text-gray-500">Ready/Healthy</div>
             </div>
             <div>
               <div className="text-lg font-bold text-orange-600">

@@ -17,11 +17,29 @@ const baseNavigation = [
     )
   },
   {
+    name: 'Crew Abilities',
+    href: '/dashboard/crew',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    )
+  },
+  {
     name: 'Analytics',
     href: '/dashboard/analytics',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    )
+  },
+  {
+    name: 'My Usage',
+    href: '/dashboard/my-usage',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     )
   },
@@ -98,7 +116,7 @@ export default function DashboardSidebar() {
                 href={item.href}
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-primary-500 text-white'
+                    ? 'bg-orange-500 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
@@ -136,7 +154,7 @@ export default function DashboardSidebar() {
                     href={`/dashboard/agents/${agent.id}`}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group ${
                       isActive
-                        ? 'bg-primary-500/20 text-primary-600 border border-primary-500/30'
+                        ? 'bg-orange-50 text-orange-700 border border-orange-200'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
@@ -185,7 +203,7 @@ export default function DashboardSidebar() {
               <span className="text-gray-900">1,247 / 1,500</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-primary-500 h-2 rounded-full" style={{ width: '83%' }}></div>
+              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '83%' }}></div>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-gray-600">Cost This Month</span>
@@ -209,6 +227,9 @@ export default function DashboardSidebar() {
           <div className="space-y-2">
             <Link href="/dashboard/analytics" className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors block">
               📊 View Analytics
+            </Link>
+            <Link href="/dashboard/my-usage" className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors block">
+              💰 My AI Usage
             </Link>
             <button className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors">
               💬 View All Chats

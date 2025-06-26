@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Agent } from '@/lib/agents'
 import { UserProfile } from '@/lib/auth'
-import ChatInterface from './ChatInterface'
+import TabbedChatInterface, { TabbedChatInterfaceRef } from './TabbedChatInterface'
 import PresetActions from './PresetActions'
 
 // Helper function to get framework badge styling
@@ -37,47 +37,102 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
   })
 
   const [activeTab, setActiveTab] = useState<'chat' | 'actions'>('chat')
-  const [messages, setMessages] = useState<Array<{
-    id: string
-    type: 'user' | 'agent'
-    content: string
-    timestamp: Date
-  }>>([
-    {
-      id: '1',
-      type: 'agent',
-      content: `Ahoy! I'm ${agent.name}, your ${agent.title} specialist. I'm here to help you with ${agent.description.toLowerCase()}. How can I assist you today?`,
-      timestamp: new Date()
-    }
-  ])
   const [isLoading, setIsLoading] = useState(false)
+  const chatInterfaceRef = useRef<TabbedChatInterfaceRef>(null)
 
-  const handleSendMessage = async (content: string) => {
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user' as const,
-      content,
-      timestamp: new Date()
+  // Clear URL parameters when navigating to a different agent to prevent message re-sending
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const hasParams = url.searchParams.has('taskType') || url.searchParams.has('message') || url.searchParams.has('task')
+
+    if (hasParams) {
+      // Only clear if we're navigating to a different agent (not the initial load)
+      const currentPath = window.location.pathname
+      const agentIdFromPath = currentPath.split('/').pop()
+
+      if (agentIdFromPath === agent.id) {
+        // This is the target agent, let the TabbedChatInterface handle the parameters
+        return
+      } else {
+        // This is a different agent, clear the parameters
+        url.searchParams.delete('taskType')
+        url.searchParams.delete('message')
+        url.searchParams.delete('task')
+        window.history.replaceState({}, '', url.toString())
+      }
     }
+  }, [agent.id])
 
-    setMessages(prev => [...prev, userMessage])
+  const handleSendMessage = async (content: string, taskType: string = 'general') => {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual AI agent API call
-      // For now, simulate a response
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const agentResponse = {
-        id: (Date.now() + 1).toString(),
-        type: 'agent' as const,
-        content: `I understand you're asking about "${content}". As your ${agent.title} specialist, I'm processing this request using ${agent.framework} framework. This is a simulated response - the actual AI integration will be implemented next.`,
-        timestamp: new Date()
+      // Parse the message to detect if it's a Crew Ability action
+      const isCrewAbilityAction = taskType === 'crew_ability' && content.includes('Action:')
+      let apiUrl = `/api/agents/${agent.id}/chat`
+      let requestBody: any = {
+        message: content,
+        taskType: taskType,
+        userId: userProfile?.id
       }
 
-      setMessages(prev => [...prev, agentResponse])
+      // If it's a crew ability action, parse the action and params
+      if (isCrewAbilityAction) {
+        const actionMatch = content.match(/Action:\s*([^\n]+)/)
+        const paramsMatch = content.match(/Parameters:\s*({[^}]+})/)
+
+        if (actionMatch) {
+          const actionId = actionMatch[1].trim()
+          let params = {}
+
+          if (paramsMatch) {
+            try {
+              params = JSON.parse(paramsMatch[1])
+            } catch (e) {
+              console.warn('Failed to parse parameters:', paramsMatch[1])
+            }
+          }
+
+          // Use the specific agent route for actions
+          apiUrl = `/api/agents/${agent.id}`
+          requestBody = {
+            action: actionId,
+            params: params,
+            message: content,
+            userId: userProfile?.id
+          }
+        }
+      }
+
+      // Call the appropriate API endpoint
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Add agent response to the appropriate tab via the ref
+        if (chatInterfaceRef.current) {
+          chatInterfaceRef.current.addAgentResponse(data.response, taskType)
+        }
+      } else {
+        console.error('Error from agent API:', data.error)
+        // Add error message to chat
+        if (chatInterfaceRef.current) {
+          chatInterfaceRef.current.addAgentResponse('Sorry, I encountered an error processing your request. Please try again.', taskType)
+        }
+      }
     } catch (error) {
       console.error('Error sending message:', error)
+      // Add error message to chat
+      if (chatInterfaceRef.current) {
+        chatInterfaceRef.current.addAgentResponse('Sorry, I encountered a connection error. Please try again.', taskType)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -111,9 +166,9 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
   return (
     <div className="h-full flex flex-col">
       {/* Agent Header */}
-      <div className="bg-secondary-800 rounded-xl p-6 border border-secondary-700 mb-6">
+      <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
         <div className="flex items-start space-x-4">
-          <div 
+          <div
             className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
             style={{ backgroundColor: agent.color }}
           >
@@ -121,36 +176,36 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
           </div>
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
-              <h1 className="text-2xl font-bold text-white">{agent.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{agent.name}</h1>
               <span className={`text-sm px-3 py-1 rounded-full border ${getFrameworkBadge(agent.framework)}`}>
                 {agent.framework}
               </span>
               <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-xs text-secondary-400">Online</span>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-gray-600">Online</span>
               </div>
               {agent.requiresApiConnection && (
                 <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                  <span className="text-xs text-secondary-400">API Required</span>
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <span className="text-xs text-gray-600">API Required</span>
                 </div>
               )}
             </div>
-            <p className="text-primary-400 font-medium mb-2">{agent.title}</p>
-            <p className="text-secondary-300 mb-3">{agent.description}</p>
+            <p className="text-orange-600 font-medium mb-2">{agent.title}</p>
+            <p className="text-gray-700 mb-3">{agent.description}</p>
 
             {/* Integration Status */}
             {agent.integrations.length > 0 && (
               <div className="flex items-center space-x-2 mb-2">
-                <span className="text-xs text-secondary-400">Integrations:</span>
+                <span className="text-xs text-gray-600">Integrations:</span>
                 <div className="flex items-center space-x-1">
                   {agent.integrations.slice(0, 3).map((integration, index) => (
-                    <span key={integration} className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                    <span key={integration} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
                       {integration}
                     </span>
                   ))}
                   {agent.integrations.length > 3 && (
-                    <span className="text-xs text-secondary-400">+{agent.integrations.length - 3} more</span>
+                    <span className="text-xs text-gray-600">+{agent.integrations.length - 3} more</span>
                   )}
                 </div>
               </div>
@@ -158,19 +213,19 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
 
             {/* Capabilities */}
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-secondary-400">Actions:</span>
-              <span className="text-xs text-primary-400">{agent.presetActions.length} available</span>
-              <span className="text-xs text-secondary-400">•</span>
-              <span className="text-xs text-secondary-400">Cost: ${agent.costPerRequest}/request</span>
+              <span className="text-xs text-gray-600">Actions:</span>
+              <span className="text-xs text-orange-600 font-medium">{agent.presetActions.length} available</span>
+              <span className="text-xs text-gray-600">•</span>
+              <span className="text-xs text-gray-600">Cost: ${agent.costPerRequest}/request</span>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm text-secondary-400">Usage Today</p>
-            <p className="text-xl font-bold text-white">23 / 500</p>
-            <div className="w-24 bg-secondary-700 rounded-full h-2 mt-1">
-              <div className="bg-primary-500 h-2 rounded-full" style={{ width: '4.6%' }}></div>
+            <p className="text-sm text-gray-600">Usage Today</p>
+            <p className="text-xl font-bold text-gray-900">23 / 500</p>
+            <div className="w-24 bg-gray-200 rounded-full h-2 mt-1">
+              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '4.6%' }}></div>
             </div>
-            <p className="text-xs text-secondary-400 mt-2">Tier: {agent.tier}</p>
+            <p className="text-xs text-gray-600 mt-2">Tier: {agent.tier}</p>
           </div>
         </div>
       </div>
@@ -181,8 +236,8 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
           onClick={() => setActiveTab('chat')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === 'chat'
-              ? 'bg-primary-500 text-white'
-              : 'bg-secondary-800 text-secondary-300 hover:text-white'
+              ? 'bg-orange-500 text-white'
+              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
           }`}
         >
           💬 Chat Interface
@@ -191,8 +246,8 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
           onClick={() => setActiveTab('actions')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === 'actions'
-              ? 'bg-primary-500 text-white'
-              : 'bg-secondary-800 text-secondary-300 hover:text-white'
+              ? 'bg-orange-500 text-white'
+              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
           }`}
         >
           ⚡ Preset Actions
@@ -202,11 +257,12 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
       {/* Content Area */}
       <div className="flex-1 min-h-0">
         {activeTab === 'chat' ? (
-          <ChatInterface
+          <TabbedChatInterface
+            ref={chatInterfaceRef}
             agent={agent}
-            messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
+            userProfile={userProfile}
           />
         ) : (
           <PresetActions

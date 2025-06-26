@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { getUser } from '@/lib/auth'
+import { getUser, getUserProfile } from '@/lib/auth'
 import { getUserAnalytics } from '@/lib/analytics'
 
 export async function GET(request: NextRequest) {
   try {
-    const { user, userProfile } = await getUser()
-    
+    const user = await getUser()
+    const userProfile = await getUserProfile()
+
     if (!user || !userProfile) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -17,8 +18,32 @@ export async function GET(request: NextRequest) {
     // Use the new analytics utility
     const analytics = await getUserAnalytics(user.id, timeRange)
 
+    // Analytics should never be null now, but handle it just in case
     if (!analytics) {
-      return NextResponse.json({ error: 'Failed to fetch analytics data' }, { status: 500 })
+      // Return empty analytics data instead of error
+      const emptyAnalytics = {
+        totalRequests: 0,
+        totalCost: 0,
+        averageResponseTime: 0,
+        successRate: 0,
+        mostUsedAgent: 'None',
+        agentBreakdown: [],
+        frameworkPerformance: [],
+        dailyUsage: [],
+        trends: {
+          requestsChange: 0,
+          costChange: 0,
+          responseTimeChange: 0,
+          successRateChange: 0
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: emptyAnalytics,
+        timeRange,
+        generatedAt: new Date().toISOString()
+      })
     }
 
     return NextResponse.json({

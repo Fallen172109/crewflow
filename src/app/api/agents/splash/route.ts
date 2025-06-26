@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getAgent } from '@/lib/agents'
 import { createLangChainAgent } from '@/lib/ai/langchain-working'
 import { createPerplexityAgent } from '@/lib/ai/perplexity'
+import { createImageGenerationService, type ImageGenerationRequest } from '@/lib/ai/image-generation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -230,6 +231,11 @@ Research and analyze:
 Provide actionable insights for competitive advantage.`
         break
 
+      case 'visual_content_creator':
+      case 'image_generator':
+        // Handle image generation requests
+        return await handleImageGeneration(params, message)
+
       default:
         prompt = `Execute social media action "${actionId}": ${JSON.stringify(params)}`
     }
@@ -430,4 +436,78 @@ export async function GET() {
       perplexity: 'Trend research, competitor analysis, real-time monitoring'
     }
   })
+}
+
+// Handle image generation for visual content creation
+async function handleImageGeneration(params: any, message?: string) {
+  const startTime = Date.now()
+
+  try {
+    const imageService = createImageGenerationService()
+
+    // Extract parameters from the request
+    const imageRequest: ImageGenerationRequest = {
+      prompt: params.prompt || params.description || message || 'A professional fitness-related image',
+      style: params.style || 'Digital Art',
+      aspectRatio: params.aspect_ratio || params.aspectRatio || 'Square (1:1)',
+      quality: params.quality === 'high' ? 'hd' : 'standard'
+    }
+
+    console.log('Splash generating image with request:', imageRequest)
+    const imageResult = await imageService.generateImage(imageRequest)
+
+    if (imageResult.success && imageResult.imageUrl) {
+      const response = `🎨 **Visual Content Created Successfully!**
+
+![Generated Image](${imageResult.imageUrl})
+
+**Image Details:**
+- **Original Prompt:** ${imageResult.metadata?.originalPrompt}
+- **Enhanced Prompt:** ${imageResult.metadata?.enhancedPrompt}
+- **Style:** ${imageResult.metadata?.style}
+- **Aspect Ratio:** ${imageResult.metadata?.aspectRatio}
+
+**Maritime Mission Complete!** Your visual content has been generated and is ready for use in your fitness content, social media posts, or any other creative projects. The image has been optimized for digital use and follows current design trends.
+
+*This image was created using advanced AI technology and is ready for immediate use in your content strategy.*`
+
+      return {
+        response,
+        tokensUsed: imageResult.tokensUsed,
+        latency: Date.now() - startTime,
+        model: imageResult.model,
+        success: true,
+        framework: 'hybrid',
+        imageUrl: imageResult.imageUrl,
+        metadata: {
+          imageGeneration: true,
+          originalPrompt: imageRequest.prompt,
+          style: imageRequest.style,
+          aspectRatio: imageRequest.aspectRatio,
+          imageUrl: imageResult.imageUrl
+        }
+      }
+    } else {
+      return {
+        response: `I apologize, but I encountered an issue while generating your visual content. ${imageResult.error || 'Please try again with a different prompt or contact support if the issue persists.'}`,
+        tokensUsed: imageResult.tokensUsed || 0,
+        latency: Date.now() - startTime,
+        model: imageResult.model || 'dall-e-3',
+        success: false,
+        framework: 'hybrid',
+        error: imageResult.error
+      }
+    }
+  } catch (error) {
+    console.error('Image generation error in Splash agent:', error)
+    return {
+      response: 'I apologize, but I encountered an error while generating your visual content. Please try again or contact support if the issue persists.',
+      tokensUsed: 0,
+      latency: Date.now() - startTime,
+      model: 'dall-e-3',
+      success: false,
+      framework: 'hybrid',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
 }

@@ -12,22 +12,37 @@ CrewFlow is a cutting-edge maritime-themed multi-agent AI automation platform th
 - **Real-time Usage Tracking** and billing
 - **Secure Authentication** with Supabase Auth
 
-### AI Agents
-1. **Coral** - Customer Support (LangChain)
-2. **Mariner** - Marketing Automation (Hybrid)
-3. **Pearl** - Content & SEO (Perplexity AI)
-4. **Morgan** - E-commerce Management (LangChain)
-5. **Tide** - Data Analysis (AutoGen)
-6. **Compass** - Social Media (Hybrid)
-7. **Flint** - Workflow Automation (AutoGen)
-8. **Drake** - Business Development (AutoGen + Perplexity)
-9. **Sage** - Knowledge Management (LangChain)
-10. **Anchor** - Supply Chain/Inventory (LangChain + Perplexity)
+### 🚢 AI Agent Fleet (Maritime-Themed)
 
-### Subscription Tiers
-- **Starter ($29/month)**: 3 agents, 500 requests each
-- **Professional ($59/month)**: 6 agents, 750 requests each
-- **Enterprise ($89/month)**: 10 agents, 1,000 requests each
+#### **LangChain Framework Agents**
+1. **Sage** - Knowledge & Research Specialist (LangChain) ✅
+2. **Helm** - Navigation & Strategy Specialist (LangChain) ✅
+3. **Ledger** - Finance & Analytics Specialist (LangChain) ✅
+4. **Patch** - Problem-solving & Repair Specialist (LangChain) ✅
+
+#### **Perplexity AI Framework Agents**
+5. **Pearl** - Search & Discovery Specialist (Perplexity AI) ✅
+
+#### **AutoGen Framework Agents**
+6. **Flint** - Communication & Coordination Specialist (AutoGen) ✅
+7. **Beacon** - Monitoring & Alerts Specialist (AutoGen) ✅
+
+#### **Hybrid Framework Agents**
+8. **Splash** - Creative & Content Specialist (Hybrid) ✅
+9. **Drake** - Automation & Workflow Specialist (Hybrid) ✅
+10. **Anchor** - Supply Chain Admiral (Hybrid) ✅
+
+### 🛠 Maritime Skills & Daily-Use Tools
+Each agent includes universal daily-use tools with maritime theming:
+- **Meal Planning** - Crew galley management and nutrition
+- **Fitness Planning** - Crew wellness and workout routines
+- **Image Generation** - Visual content creation
+- **Personal Productivity** - Daily task optimization and organization
+
+### 💰 Subscription Tiers
+- **Starter ($29/month)**: Pearl + 2 LangChain agents, 500 requests each
+- **Professional ($59/month)**: All Starter + Splash, Drake, Flint (6 agents), 750 requests each
+- **Enterprise ($89/month)**: Full fleet access (10 agents), 1,000 requests each
 
 ## 🛠 Tech Stack
 

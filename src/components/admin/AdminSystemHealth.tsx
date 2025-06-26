@@ -50,12 +50,12 @@ export function AdminSystemHealth() {
 
       <div className="p-6 space-y-4">
         {/* Database Health */}
-        <div className="flex items-center justify-between p-3 bg-secondary-700 rounded-lg border border-secondary-600">
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
             <span className="text-lg">{getStatusIcon(healthData.database.status)}</span>
             <div>
-              <p className="text-sm font-medium text-white">🗄️ Database</p>
-              <p className="text-xs text-secondary-400">Response time: {healthData.database.responseTime}ms</p>
+              <p className="text-sm font-medium text-gray-900">🗄️ Database</p>
+              <p className="text-xs text-gray-600">Response time: {healthData.database.responseTime}ms</p>
             </div>
           </div>
           <span className={`px-2 py-1 text-xs font-medium rounded border ${getStatusColor(healthData.database.status)}`}>
@@ -64,12 +64,12 @@ export function AdminSystemHealth() {
         </div>
 
         {/* API Health */}
-        <div className="flex items-center justify-between p-3 bg-secondary-700 rounded-lg border border-secondary-600">
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
             <span className="text-lg">{getStatusIcon(healthData.api.status)}</span>
             <div>
-              <p className="text-sm font-medium text-white">🔌 API Services</p>
-              <p className="text-xs text-secondary-400">Response time: {healthData.api.responseTime}ms</p>
+              <p className="text-sm font-medium text-gray-900">🔌 API Services</p>
+              <p className="text-xs text-gray-600">Response time: {healthData.api.responseTime}ms</p>
             </div>
           </div>
           <span className={`px-2 py-1 text-xs font-medium rounded border ${getStatusColor(healthData.api.status)}`}>
@@ -78,12 +78,12 @@ export function AdminSystemHealth() {
         </div>
 
         {/* AI Agents Health */}
-        <div className="flex items-center justify-between p-3 bg-secondary-700 rounded-lg border border-secondary-600">
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
             <span className="text-lg">{getStatusIcon(healthData.agents.status)}</span>
             <div>
-              <p className="text-sm font-medium text-white">🤖 AI Agents</p>
-              <p className="text-xs text-secondary-400">{healthData.agents.activeAgents}/10 agents active</p>
+              <p className="text-sm font-medium text-gray-900">🤖 AI Agents</p>
+              <p className="text-xs text-gray-600">{healthData.agents.activeAgents}/10 agents active</p>
             </div>
           </div>
           <span className={`px-2 py-1 text-xs font-medium rounded border ${getStatusColor(healthData.agents.status)}`}>
@@ -92,12 +92,12 @@ export function AdminSystemHealth() {
         </div>
 
         {/* Storage Health */}
-        <div className="flex items-center justify-between p-3 bg-secondary-700 rounded-lg border border-secondary-600">
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
             <span className="text-lg">{getStatusIcon(healthData.storage.status)}</span>
             <div>
-              <p className="text-sm font-medium text-white">💾 Storage</p>
-              <p className="text-xs text-secondary-400">{healthData.storage.usage}% used</p>
+              <p className="text-sm font-medium text-gray-900">💾 Storage</p>
+              <p className="text-xs text-gray-600">{healthData.storage.usage}% used</p>
             </div>
           </div>
           <span className={`px-2 py-1 text-xs font-medium rounded border ${getStatusColor(healthData.storage.status)}`}>
@@ -107,12 +107,12 @@ export function AdminSystemHealth() {
       </div>
 
       {/* System Actions */}
-      <div className="p-4 bg-secondary-700 border-t border-secondary-600">
+      <div className="p-4 bg-gray-50 border-t border-gray-200">
         <div className="flex space-x-2">
-          <button className="flex-1 px-3 py-2 text-sm font-medium text-secondary-300 bg-secondary-600 border border-secondary-500 rounded hover:bg-secondary-500">
+          <button className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50">
             🔍 Run Diagnostics
           </button>
-          <button className="flex-1 px-3 py-2 text-sm font-medium text-white bg-primary-500 rounded hover:bg-primary-600">
+          <button className="flex-1 px-3 py-2 text-sm font-medium text-white bg-orange-500 rounded hover:bg-orange-600">
             📋 View Logs
           </button>
         </div>

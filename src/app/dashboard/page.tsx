@@ -3,6 +3,8 @@
 import { useAuth } from '@/lib/auth-context'
 import { AGENTS, getAgentsForTier } from '@/lib/agents'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createSupabaseClient } from '@/lib/supabase/client'
 
 // Helper function to get framework badge styling
 const getFrameworkBadge = (framework: string) => {
@@ -19,16 +21,70 @@ const getFrameworkBadge = (framework: string) => {
       return 'bg-gray-100 text-gray-700 border-gray-200'
   }
 }
-import { useEffect, useState } from 'react'
+
+// Interface for dashboard metrics
+interface DashboardMetrics {
+  requestsToday: number
+  requestsGrowth: number
+  tasksCompleted: number
+  timeSaved: string
+  recentActivity: Array<{
+    id: string
+    agent_name: string
+    message_type: string
+    timestamp: string
+    success: boolean
+  }>
+}
+
+// Helper function to format time ago
+const formatTimeAgo = (timestamp: string): string => {
+  const now = new Date()
+  const time = new Date(timestamp)
+  const diffInSeconds = Math.floor((now.getTime() - time.getTime()) / 1000)
+
+  if (diffInSeconds < 60) {
+    return 'Just now'
+  } else if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60)
+    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
+  } else if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600)
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`
+  } else {
+    const days = Math.floor(diffInSeconds / 86400)
+    return `${days} day${days > 1 ? 's' : ''} ago`
+  }
+}
+
+// Helper function to format action text based on message type
+const formatActionText = (messageType: string, success: boolean): string => {
+  const baseActions = {
+    'chat': 'had a conversation',
+    'preset_action': 'executed a preset action',
+    'tool_execution': 'used a tool'
+  }
+
+  const action = baseActions[messageType as keyof typeof baseActions] || 'performed an action'
+  return success ? action : `attempted to ${action.replace('had', 'have').replace('executed', 'execute').replace('used', 'use')}`
+}
 
 export default function DashboardPage() {
-  const { userProfile } = useAuth()
+  const { userProfile, user } = useAuth()
   // Show all agents for admin users or enterprise users
   const isAdmin = userProfile?.role === 'admin'
   const isEnterprise = userProfile?.subscription_tier === 'enterprise'
   const isDebugUser = userProfile?.email === 'borzeckikamil7@gmail.com'
   const availableAgents = (isAdmin || isEnterprise || isDebugUser) ? Object.values(AGENTS) : getAgentsForTier(userProfile?.subscription_tier)
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const [dashboardMetrics, setDashboardMetrics] = useState<DashboardMetrics>({
+    requestsToday: 0,
+    requestsGrowth: 0,
+    tasksCompleted: 0,
+    timeSaved: '0h',
+    recentActivity: []
+  })
+  const [loading, setLoading] = useState(true)
 
   // Debug logging
   console.log('Dashboard: User Profile:', {
@@ -43,6 +99,82 @@ export default function DashboardPage() {
     allAgentsCount: Object.values(AGENTS).length
   })
 
+  // Fetch real dashboard metrics
+  const fetchDashboardMetrics = async () => {
+    if (!user?.id) return
+
+    try {
+      const supabase = createSupabaseClient()
+
+      // Get today's date for filtering
+      const today = new Date()
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
+
+      // Fetch today's requests
+      const { data: todayRequests, error: todayError } = await supabase
+        .from('agent_usage_detailed')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('timestamp', todayStart.toISOString())
+        .lt('timestamp', new Date(todayStart.getTime() + 24 * 60 * 60 * 1000).toISOString())
+
+      if (todayError) {
+        console.error('Error fetching today requests:', todayError)
+      }
+
+      // Fetch yesterday's requests for growth calculation
+      const { data: yesterdayRequests, error: yesterdayError } = await supabase
+        .from('agent_usage_detailed')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('timestamp', yesterdayStart.toISOString())
+        .lt('timestamp', todayStart.toISOString())
+
+      if (yesterdayError) {
+        console.error('Error fetching yesterday requests:', yesterdayError)
+      }
+
+      // Fetch recent activity (last 10 records)
+      const { data: recentActivity, error: activityError } = await supabase
+        .from('agent_usage_detailed')
+        .select('id, agent_name, message_type, timestamp, success')
+        .eq('user_id', user.id)
+        .order('timestamp', { ascending: false })
+        .limit(10)
+
+      if (activityError) {
+        console.error('Error fetching recent activity:', activityError)
+      }
+
+      // Calculate metrics
+      const todayCount = todayRequests?.length || 0
+      const yesterdayCount = yesterdayRequests?.length || 0
+      const growth = yesterdayCount > 0 ? ((todayCount - yesterdayCount) / yesterdayCount) * 100 : 0
+
+      // Calculate successful tasks (successful requests)
+      const successfulTasks = todayRequests?.filter(req => req.success).length || 0
+
+      // Calculate estimated time saved (rough estimate: 5 minutes per successful task)
+      const minutesSaved = successfulTasks * 5
+      const hoursSaved = Math.floor(minutesSaved / 60)
+      const remainingMinutes = minutesSaved % 60
+      const timeSaved = hoursSaved > 0 ? `${hoursSaved}h ${remainingMinutes}m` : `${remainingMinutes}m`
+
+      setDashboardMetrics({
+        requestsToday: todayCount,
+        requestsGrowth: Math.round(growth),
+        tasksCompleted: successfulTasks,
+        timeSaved,
+        recentActivity: recentActivity || []
+      })
+    } catch (error) {
+      console.error('Error fetching dashboard metrics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Check for email confirmation success
   useEffect(() => {
     // Check URL parameters using window.location instead of useSearchParams
@@ -56,6 +188,13 @@ export default function DashboardPage() {
       }
     }
   }, [])
+
+  // Fetch dashboard data when user is available
+  useEffect(() => {
+    if (user?.id) {
+      fetchDashboardMetrics()
+    }
+  }, [user?.id])
 
   return (
     <div className="space-y-8">
@@ -122,8 +261,18 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Requests Today</p>
-              <p className="text-2xl font-bold text-gray-900">127</p>
-              <p className="text-green-600 text-sm mt-1">↗ +15% from yesterday</p>
+              {loading ? (
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.requestsToday}</p>
+                  {dashboardMetrics.requestsGrowth !== 0 && (
+                    <p className={`text-sm mt-1 ${dashboardMetrics.requestsGrowth > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {dashboardMetrics.requestsGrowth > 0 ? '↗' : '↘'} {Math.abs(dashboardMetrics.requestsGrowth)}% from yesterday
+                    </p>
+                  )}
+                </>
+              )}
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +286,11 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Tasks Completed</p>
-              <p className="text-2xl font-bold text-gray-900">89</p>
+              {loading ? (
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.tasksCompleted}</p>
+              )}
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +304,11 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Time Saved</p>
-              <p className="text-2xl font-bold text-gray-900">24h</p>
+              {loading ? (
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.timeSaved}</p>
+              )}
             </div>
             <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,48 +405,65 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="p-6">
-            <div className="space-y-4">
-              {[
-                {
-                  agent: 'Coral',
-                  action: 'Generated customer support response',
-                  time: '2 minutes ago',
-                  color: '#f97316'
-                },
-                {
-                  agent: 'Mariner',
-                  action: 'Created marketing campaign strategy',
-                  time: '15 minutes ago',
-                  color: '#0ea5e9'
-                },
-                {
-                  agent: 'Pearl',
-                  action: 'Optimized blog post for SEO',
-                  time: '1 hour ago',
-                  color: '#14b8a6'
-                }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                    style={{ backgroundColor: activity.color }}
-                  >
-                    {activity.agent[0]}
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center space-x-4 p-3">
+                    <div className="w-8 h-8 bg-gray-200 animate-pulse rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="w-3/4 h-4 bg-gray-200 animate-pulse rounded"></div>
+                      <div className="w-1/4 h-3 bg-gray-200 animate-pulse rounded"></div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-gray-900 text-sm">
-                      <span className="font-semibold">{activity.agent}</span> {activity.action}
-                    </p>
-                    <p className="text-gray-500 text-xs">{activity.time}</p>
-                  </div>
-                  <button className="text-gray-500 hover:text-gray-700 transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                ))}
+              </div>
+            ) : dashboardMetrics.recentActivity.length > 0 ? (
+              <div className="space-y-4">
+                {dashboardMetrics.recentActivity.map((activity) => {
+                  // Get agent info from AGENTS config
+                  const agent = Object.values(AGENTS).find(a => a.name.toLowerCase() === activity.agent_name.toLowerCase())
+                  const agentColor = agent?.color || '#6b7280'
+                  const agentName = activity.agent_name
+
+                  // Format timestamp
+                  const timeAgo = formatTimeAgo(activity.timestamp)
+
+                  // Format action based on message type
+                  const actionText = formatActionText(activity.message_type, activity.success)
+
+                  return (
+                    <div key={activity.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                        style={{ backgroundColor: agentColor }}
+                      >
+                        {agentName[0]?.toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-gray-900 text-sm">
+                          <span className="font-semibold">{agentName}</span> {actionText}
+                          {!activity.success && (
+                            <span className="ml-2 text-red-500 text-xs">(Failed)</span>
+                          )}
+                        </p>
+                        <p className="text-gray-500 text-xs">{timeAgo}</p>
+                      </div>
+                      <div className={`w-2 h-2 rounded-full ${activity.success ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                 </div>
-              ))}
-            </div>
+                <p className="text-gray-500 text-sm">No recent activity</p>
+                <p className="text-gray-400 text-xs mt-1">Start using your AI agents to see activity here</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
