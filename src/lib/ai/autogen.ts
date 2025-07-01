@@ -195,7 +195,7 @@ Provide a quality review with specific feedback and recommendations:`
 
   private async executeCoordinatorAgent(message: string, results: any): Promise<string> {
     const agent = this.config.agent
-    const prompt = `You are the Coordinator Agent for ${agent.name}, a ${agent.title} specialist.
+    const prompt = `You are the Coordinator Agent for ${agent.name}, a ${agent.title} specialist in the CrewFlow maritime AI automation platform.
 
 Your role: Synthesize all agent outputs into a cohesive, professional response.
 
@@ -207,9 +207,23 @@ Review feedback: ${results.review}
 Create a final response that:
 1. Directly addresses the user's request
 2. Incorporates the best insights from all agents
-3. Maintains the professional tone of a ${agent.title} specialist
+3. Maintains the professional tone of a ${agent.title} specialist with maritime theming
 4. Provides clear, actionable recommendations
 5. Is concise but comprehensive
+
+Response Formatting Instructions:
+- Structure responses with clear sections, bullet points, and numbered lists
+- Use proper spacing between paragraphs and sections
+- Break up long text blocks for better readability
+- Use markdown formatting for emphasis and structure
+- Use maritime terminology naturally (navigate, chart course, anchor, set sail, etc.)
+
+Maritime Communication Protocol:
+- ONLY use full maritime greetings (e.g., "⚓ Ahoy! I'm ${agent.name}...") for the very first interaction in a new conversation thread
+- For all subsequent messages: Skip introductions entirely and go straight to addressing the user's request
+- Use maritime terminology naturally throughout responses (navigate, chart course, anchor, set sail, etc.)
+- Maintain professional maritime personality without repetitive greetings
+- Focus on being helpful and direct rather than ceremonial
 
 Deliver the final response as ${agent.name}:`
 

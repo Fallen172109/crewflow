@@ -6,7 +6,7 @@ import { createAutoGenAgent } from '@/lib/ai/autogen'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -26,24 +26,56 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     let response
     if (action) {
       // Handle preset actions with hybrid approach
-      response = await handleBeaconPresetAction(action, params, message)
+      response = await handleBeaconPresetAction(action, params, message, fullContext)
     } else {
       // Handle regular chat message with intelligent routing
-      response = await handleBeaconMessage(message, context)
+      response = await handleBeaconMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
@@ -111,10 +143,10 @@ async function handleBeaconMessage(message: string, context?: string) {
   }
 }
 
-async function handleBeaconPresetAction(actionId: string, params: any, message?: string) {
+async function handleBeaconPresetAction(actionId: string, params: any, message?: string, context?: string) {
   const beacon = getAgent('beacon')!
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     let useAutoGen = false
@@ -225,11 +257,11 @@ Deliver professional, actionable project reporting framework.`
     let result
     if (useAutoGen) {
       const autogenAgent = createAutoGenAgent(beacon, getBeaconAutoGenPrompt())
-      result = await autogenAgent.processMessage(prompt)
+      result = await autogenAgent.processMessage(prompt, context)
       result.framework = 'autogen'
     } else {
       const langchainAgent = createLangChainAgent(beacon, getBeaconLangChainPrompt())
-      result = await langchainAgent.processMessage(prompt)
+      result = await langchainAgent.processMessage(prompt, context)
       result.framework = 'langchain'
     }
     
@@ -275,6 +307,8 @@ CAPABILITIES:
 - Risk assessment and mitigation
 - Stakeholder communication
 - Quality and delivery management
+- File attachment analysis and integration
+- Project document and plan processing
 
 SPECIALIZATIONS:
 - Agile and traditional project methodologies

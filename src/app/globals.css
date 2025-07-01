@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -83,4 +84,128 @@ body {
 
 .bg-ocean-wave {
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* CrewFlow AI Response Typography Styles - Enhanced */
+.crewflow-markdown-content {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.6;
+  color: #374151;
+  max-width: none;
+  font-size: 0.875rem; /* 14px base font size */
+}
+
+.crewflow-markdown-content h1 {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 700;
+  color: #1f2937;
+  margin: 1.5rem 0 1rem 0;
+  line-height: 1.3;
+  border-bottom: 2px solid #f97316;
+  padding-bottom: 0.5rem;
+}
+
+.crewflow-markdown-content h2 {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  color: #1f2937;
+  margin: 1.25rem 0 0.75rem 0;
+  line-height: 1.3;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.25rem;
+}
+
+.crewflow-markdown-content h3 {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 600;
+  color: #1f2937;
+  margin: 1rem 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.crewflow-markdown-content h4 {
+  font-size: 1rem; /* 16px */
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0.875rem 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.crewflow-markdown-content p {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.6;
+  color: #374151;
+  margin: 0.75rem 0;
+}
+
+.crewflow-markdown-content ul {
+  list-style-type: disc;
+  list-style-position: outside;
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.crewflow-markdown-content ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.crewflow-markdown-content li {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0.375rem 0;
+  padding-left: 0.25rem;
+}
+
+/* Nested lists */
+.crewflow-markdown-content ul ul,
+.crewflow-markdown-content ol ol,
+.crewflow-markdown-content ul ol,
+.crewflow-markdown-content ol ul {
+  margin: 0.25rem 0;
+  padding-left: 1rem;
+}
+
+.crewflow-markdown-content strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.crewflow-markdown-content em {
+  font-style: italic;
+  color: #4b5563;
+}
+
+.crewflow-markdown-content code {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+}
+
+.crewflow-markdown-content blockquote {
+  border-left: 4px solid #f97316;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* Maritime-themed elements */
+.crewflow-markdown-content .maritime-emoji {
+  color: #f97316;
+  font-size: 1.1em;
+}
+
+.crewflow-markdown-content .maritime-highlight {
+  background-color: #fff7ed;
+  color: #c2410c;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
 }

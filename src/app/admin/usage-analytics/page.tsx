@@ -106,7 +106,7 @@ export default async function UsageAnalyticsPage({ searchParams }: Props) {
                 {page > 1 && (
                   <a
                     href={`/admin/usage-analytics?${new URLSearchParams({
-                      ...searchParams,
+                      ...params,
                       page: (page - 1).toString()
                     }).toString()}`}
                     className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
@@ -117,7 +117,7 @@ export default async function UsageAnalyticsPage({ searchParams }: Props) {
                 {page < Math.ceil(usageData.totalCount / limit) && (
                   <a
                     href={`/admin/usage-analytics?${new URLSearchParams({
-                      ...searchParams,
+                      ...params,
                       page: (page + 1).toString()
                     }).toString()}`}
                     className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"

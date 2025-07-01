@@ -23,6 +23,7 @@ export interface PerplexityAgentConfig {
   maxTokens?: number
   model?: string
   searchDomainFilter?: string[]
+  userId?: string
 }
 
 // Perplexity AI Agent Manager
@@ -55,8 +56,24 @@ export class PerplexityAgent {
       }
     } catch (error) {
       console.error('Perplexity AI error:', error)
+
+      // Provide more specific error messages based on error type
+      let errorMessage = 'I encountered an issue while processing your request.'
+
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'The request timed out. Please try again with a shorter message.'
+        } else if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          errorMessage = 'There was an authentication issue. Please contact support.'
+        } else if (error.message.includes('429') || error.message.includes('rate limit')) {
+          errorMessage = 'I\'m receiving too many requests right now. Please wait a moment and try again.'
+        } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
+          errorMessage = 'I\'m having trouble connecting to my knowledge base. Please check your internet connection and try again.'
+        }
+      }
+
       return {
-        response: 'I apologize, but I encountered an error while processing your request. Please try again.',
+        response: errorMessage,
         tokensUsed: 0,
         latency: Date.now() - startTime,
         model: this.config.model || 'unknown',
@@ -85,8 +102,23 @@ Key Guidelines:
 - Always provide accurate, up-to-date information using real-time web search
 - Cite sources when providing factual information
 - Focus on ${agent.category}-specific expertise
-- Maintain a professional, helpful tone
-- If you need to search for current information, do so automatically`
+- Maintain a professional, helpful tone with maritime theming
+- If you need to search for current information, do so automatically
+- Use maritime terminology naturally (navigate, chart course, anchor, set sail, etc.)
+
+Response Formatting Instructions:
+- Structure responses with clear sections, bullet points, and numbered lists
+- Use proper spacing between paragraphs and sections
+- Break up long text blocks for better readability
+- Use markdown formatting for emphasis and structure
+- Always reference attached files when relevant to the conversation
+
+Maritime Communication Protocol:
+- ONLY use full maritime greetings (e.g., "⚓ Ahoy! I'm ${agent.name}...") for the very first interaction in a new conversation thread
+- For all subsequent messages: Skip introductions entirely and go straight to addressing the user's request
+- Use maritime terminology naturally throughout responses (navigate, chart course, anchor, set sail, etc.)
+- Maintain professional maritime personality without repetitive greetings
+- Focus on being helpful and direct rather than ceremonial`
   }
 
   private async callPerplexityAPI(message: string, systemPrompt: string, context?: string) {
@@ -137,8 +169,8 @@ Key Guidelines:
     const agent = this.config.agent
 
     // Handle image generation separately
-    if (actionId === 'visual_content_creator') {
-      return this.handleImageGeneration(params)
+    if (actionId === 'visual_content_creator' || actionId === 'seo_visual_content') {
+      return this.handleImageGeneration(params, actionId)
     }
 
     switch (actionId) {
@@ -179,43 +211,84 @@ Key Guidelines:
     return this.processMessage(message)
   }
 
-  private async handleImageGeneration(params: any): Promise<PerplexityResponse> {
+  private async handleImageGeneration(params: any, actionId?: string): Promise<PerplexityResponse> {
     const startTime = Date.now()
 
     try {
       const imageService = createImageGenerationService()
 
       // Extract parameters from the request
+      let enhancedPrompt = params.prompt || params.description || 'A professional SEO-optimized image'
+
+      // Enhance prompt with comprehensive SEO and business context
+      if (actionId === 'seo_visual_content') {
+        const keywordContext = params.target_keywords ?
+          `Target keywords: ${params.target_keywords}` : ''
+        const topicContext = params.content_topic ?
+          `Content topic: ${params.content_topic}` : ''
+        const audienceContext = params.target_audience ?
+          `Target audience: ${params.target_audience}` : ''
+
+        // Add SEO-specific visual optimization
+        const seoOptimization = getSEOVisualOptimization(params.content_topic, params.target_keywords)
+
+        enhancedPrompt = `${enhancedPrompt}. ${topicContext} ${keywordContext} ${audienceContext}. ${seoOptimization} Professional, SEO-friendly, content marketing optimized, high search visibility potential.`
+      }
+
       const imageRequest: ImageGenerationRequest = {
-        prompt: params.prompt || params.description || 'A professional SEO-optimized image',
+        prompt: enhancedPrompt,
         style: params.style,
         aspectRatio: params.aspect_ratio || params.aspectRatio,
-        quality: params.quality === 'high' ? 'hd' : 'standard'
+        quality: params.quality === 'high' ? 'hd' : 'standard',
+        userId: this.config.userId
       }
 
       console.log('Pearl generating image with request:', imageRequest)
       const imageResult = await imageService.generateImage(imageRequest)
 
       if (imageResult.success && imageResult.imageUrl) {
-        const response = `🎨 **SEO-Optimized Image Generated Successfully!**
+        const isSeoPurpose = actionId === 'seo_visual_content'
+        const titlePrefix = isSeoPurpose ? 'SEO-Optimized' : 'Content'
 
-**Original Prompt:** ${imageResult.metadata?.originalPrompt}
-**Enhanced Prompt:** ${imageResult.metadata?.enhancedPrompt}
-**Style:** ${imageResult.metadata?.style}
-**Aspect Ratio:** ${imageResult.metadata?.aspectRatio}
+        let response = `🎨 **${titlePrefix} Image Generated Successfully!**
 
-**Image URL:** ${imageResult.imageUrl}
+![${imageResult.metadata?.originalPrompt || 'Generated Image'}](${imageResult.imageUrl})
 
-${imageResult.revisedPrompt ? `**DALL-E Revised Prompt:** ${imageResult.revisedPrompt}` : ''}
+**Image Details:**
+- **Original Prompt:** ${imageResult.metadata?.originalPrompt}
+- **Enhanced Prompt:** ${imageResult.metadata?.enhancedPrompt}
+- **Style:** ${imageResult.metadata?.style}
+- **Aspect Ratio:** ${imageResult.metadata?.aspectRatio}
+${imageResult.revisedPrompt ? `- **DALL-E Revised Prompt:** ${imageResult.revisedPrompt}` : ''}
 
-**SEO Recommendations for this image:**
-- Use descriptive alt text based on the image content
-- Optimize file name with relevant keywords
-- Consider image compression for web performance
-- Add structured data markup if appropriate
-- Use in relevant content context for better SEO value
+**Maritime Mission Complete!** Your ${isSeoPurpose ? 'SEO-optimized' : 'content'} image has been generated and is ready for use.`
 
-The image has been generated using OpenAI's DALL-E 3 model and is optimized for content marketing and SEO purposes.`
+        if (isSeoPurpose) {
+          const suggestedAltText = `${params.content_topic || 'Professional'} ${params.target_keywords || 'content'} image`
+          const suggestedFilename = params.target_keywords ?
+            params.target_keywords.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-image.jpg' :
+            'seo-optimized-image.jpg'
+
+          response += `
+
+**SEO Optimization Package:**
+- **Suggested Alt Text:** "${suggestedAltText}"
+- **Suggested Filename:** "${suggestedFilename}"
+- **Target Keywords:** ${params.target_keywords || 'Not specified'}
+- **Content Topic:** ${params.content_topic || 'General'}
+- **Target Audience:** ${params.target_audience || 'General audience'}
+
+**SEO Best Practices:**
+- Use the suggested alt text for accessibility and SEO
+- Rename the file with the suggested filename before uploading
+- Compress the image for web performance (aim for <100KB)
+- Use in relevant content context for maximum SEO value
+- Consider adding structured data markup if appropriate`
+        }
+
+        response += `
+
+The image has been generated using OpenAI's DALL-E 3 model and is optimized for ${isSeoPurpose ? 'SEO and content marketing' : 'general content'} purposes.`
 
         return {
           response,
@@ -259,12 +332,13 @@ The image has been generated using OpenAI's DALL-E 3 model and is optimized for 
 }
 
 // Factory function to create Perplexity agents
-export function createPerplexityAgent(agent: Agent, systemPrompt: string): PerplexityAgent {
+export function createPerplexityAgent(agent: Agent, systemPrompt: string, userId?: string): PerplexityAgent {
   return new PerplexityAgent({
     agent,
     systemPrompt,
     temperature: 0.7,
-    maxTokens: 4000
+    maxTokens: 4000,
+    userId
   })
 }
 
@@ -277,4 +351,31 @@ export function validatePerplexityConfig(): { isValid: boolean; error?: string }
   }
   
   return { isValid: true }
+}
+
+// Helper function for SEO visual optimization
+function getSEOVisualOptimization(topic?: string, keywords?: string): string {
+  const baseOptimization = 'Use clear, descriptive visual elements that support content comprehension.'
+
+  if (!topic && !keywords) return baseOptimization
+
+  const topicOptimizations: Record<string, string> = {
+    'technology': 'Include modern, clean tech elements. Use blue and white color schemes.',
+    'business': 'Professional corporate aesthetic. Use charts, graphs, or business imagery.',
+    'health': 'Clean, medical-inspired visuals. Use green and blue tones for trust.',
+    'education': 'Academic, learning-focused elements. Use warm, approachable colors.',
+    'finance': 'Professional, trustworthy design. Use blue, green, and gold accents.',
+    'lifestyle': 'Aspirational, relatable imagery. Use warm, inviting color palettes.',
+    'travel': 'Destination-focused, adventure elements. Use vibrant, inspiring colors.',
+    'food': 'Appetizing, fresh imagery. Use natural, warm color tones.'
+  }
+
+  // Find matching topic optimization
+  const topicKey = Object.keys(topicOptimizations).find(key =>
+    topic?.toLowerCase().includes(key) || keywords?.toLowerCase().includes(key)
+  )
+
+  const specificOptimization = topicKey ? topicOptimizations[topicKey] : baseOptimization
+
+  return `${specificOptimization} Ensure visual elements support the content narrative and improve user engagement.`
 }

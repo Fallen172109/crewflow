@@ -33,7 +33,9 @@ const getInputSchema = (abilityId: string): InputField[] => {
   switch (abilityId) {
     case 'image_generator':
     case 'visual_content_creator':
-      return [
+    case 'branded_social_visuals':
+    case 'seo_visual_content':
+      const baseFields = [
         {
           id: 'prompt',
           label: 'Image Description',
@@ -57,6 +59,69 @@ const getInputSchema = (abilityId: string): InputField[] => {
           required: false
         }
       ]
+
+      // Add business context fields for project-aware image generation
+      if (abilityId === 'branded_social_visuals') {
+        return [
+          ...baseFields,
+          {
+            id: 'brand_name',
+            label: 'Brand Name',
+            type: 'text',
+            placeholder: 'Your brand or company name...',
+            required: false,
+            description: 'Include your brand name for consistent branding'
+          },
+          {
+            id: 'platform',
+            label: 'Social Media Platform',
+            type: 'select',
+            options: ['Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'TikTok', 'YouTube', 'General'],
+            required: false,
+            description: 'Optimize for specific platform requirements'
+          },
+          {
+            id: 'campaign_context',
+            label: 'Campaign Context',
+            type: 'textarea',
+            placeholder: 'Describe your marketing campaign or project context...',
+            required: false,
+            description: 'Provide context about your marketing goals or campaign'
+          }
+        ]
+      }
+
+      if (abilityId === 'seo_visual_content') {
+        return [
+          ...baseFields,
+          {
+            id: 'target_keywords',
+            label: 'Target Keywords',
+            type: 'text',
+            placeholder: 'SEO keywords to optimize for...',
+            required: false,
+            description: 'Keywords to consider for alt text and metadata'
+          },
+          {
+            id: 'content_topic',
+            label: 'Content Topic',
+            type: 'text',
+            placeholder: 'Main topic or theme of your content...',
+            required: false,
+            description: 'The main subject matter for SEO optimization'
+          },
+          {
+            id: 'target_audience',
+            label: 'Target Audience',
+            type: 'text',
+            placeholder: 'Who is your target audience?',
+            required: false,
+            description: 'Describe your intended audience for better targeting'
+          }
+        ]
+      }
+
+      return baseFields
 
     case 'crew_meal_planner':
     case 'meal_prep_workflow':
@@ -228,6 +293,322 @@ const getInputSchema = (abilityId: string): InputField[] => {
           label: 'Focus Area',
           type: 'select',
           options: ['Supply Inventory', 'Maintenance Schedule', 'Cleaning Routine', 'Meal Planning', 'Budget Tracking'],
+          required: false
+        }
+      ]
+
+    // Meal Planning Tools
+    case 'meal_plan_generator':
+      return [
+        {
+          id: 'request',
+          label: 'Meal Planning Request',
+          type: 'textarea',
+          placeholder: 'Describe your meal planning needs, goals, or specific requirements...',
+          required: true,
+          description: 'Include any specific dietary needs, time constraints, or preferences'
+        },
+        // User Profile Section
+        {
+          id: 'height_value',
+          label: 'Height',
+          type: 'number',
+          placeholder: '170',
+          required: false,
+          description: 'Your height (will use unit preference below)'
+        },
+        {
+          id: 'height_unit',
+          label: 'Height Unit',
+          type: 'select',
+          options: ['cm', 'm', 'ft_in', 'inches'],
+          required: false
+        },
+        {
+          id: 'weight_value',
+          label: 'Weight',
+          type: 'number',
+          placeholder: '70',
+          required: false,
+          description: 'Your current weight (will use unit preference below)'
+        },
+        {
+          id: 'weight_unit',
+          label: 'Weight Unit',
+          type: 'select',
+          options: ['kg', 'g', 'lbs', 'oz', 'stone'],
+          required: false
+        },
+        {
+          id: 'primary_goal',
+          label: 'Primary Goal',
+          type: 'select',
+          options: ['weight_loss', 'weight_gain', 'muscle_building', 'maintenance', 'athletic_performance', 'health_improvement'],
+          required: true
+        },
+        {
+          id: 'activity_level',
+          label: 'Activity Level',
+          type: 'select',
+          options: ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'],
+          required: true
+        },
+        {
+          id: 'household_size',
+          label: 'Household Size',
+          type: 'number',
+          placeholder: '2',
+          required: false,
+          description: 'Number of people to cook for'
+        },
+        // Dietary Restrictions
+        {
+          id: 'allergies',
+          label: 'Food Allergies',
+          type: 'multiselect',
+          options: ['nuts', 'dairy', 'eggs', 'shellfish', 'fish', 'soy', 'wheat', 'gluten', 'sesame'],
+          required: false,
+          description: 'Select all that apply'
+        },
+        {
+          id: 'dietary_preferences',
+          label: 'Dietary Preferences',
+          type: 'multiselect',
+          options: ['vegetarian', 'vegan', 'pescatarian', 'keto', 'paleo', 'mediterranean', 'low_carb', 'low_fat', 'diabetic_friendly'],
+          required: false,
+          description: 'Select all that apply'
+        },
+        // Meal Planning Preferences
+        {
+          id: 'plan_duration_days',
+          label: 'Plan Duration (Days)',
+          type: 'number',
+          placeholder: '7',
+          required: false,
+          description: 'How many days should the meal plan cover?'
+        },
+        {
+          id: 'preferred_meal_count',
+          label: 'Meals Per Day',
+          type: 'select',
+          options: ['2', '3', '4', '5', '6'],
+          required: false
+        },
+        {
+          id: 'max_cooking_time',
+          label: 'Max Cooking Time (minutes)',
+          type: 'number',
+          placeholder: '60',
+          required: false,
+          description: 'Maximum time you want to spend cooking per meal'
+        },
+        {
+          id: 'budget_range',
+          label: 'Budget Range',
+          type: 'select',
+          options: ['budget', 'moderate', 'premium', 'no_limit'],
+          required: false
+        },
+        {
+          id: 'cuisine_preferences',
+          label: 'Cuisine Preferences',
+          type: 'multiselect',
+          options: ['italian', 'asian', 'mediterranean', 'mexican', 'indian', 'american', 'french', 'thai', 'japanese', 'middle_eastern'],
+          required: false,
+          description: 'Select cuisines you enjoy'
+        },
+        // Pantry Integration
+        {
+          id: 'current_pantry',
+          label: 'Current Pantry Items',
+          type: 'textarea',
+          placeholder: 'List ingredients you currently have available (e.g., chicken breast, rice, broccoli, olive oil...)',
+          required: false,
+          description: 'Help us suggest meals using ingredients you already have'
+        }
+      ]
+
+    case 'nutrition_analyzer':
+      return [
+        {
+          id: 'request',
+          label: 'Nutrition Analysis Request',
+          type: 'textarea',
+          placeholder: 'What would you like me to analyze? (meal, recipe, daily intake, etc.)',
+          required: true,
+          description: 'Describe what you want analyzed and any specific nutritional concerns'
+        },
+        {
+          id: 'analysis_type',
+          label: 'Analysis Type',
+          type: 'select',
+          options: ['single_meal', 'daily_intake', 'recipe', 'ingredient_comparison', 'meal_plan_review'],
+          required: true
+        },
+        {
+          id: 'dietary_goals',
+          label: 'Dietary Goals',
+          type: 'multiselect',
+          options: ['weight_loss', 'muscle_gain', 'heart_health', 'diabetes_management', 'general_wellness'],
+          required: false
+        }
+      ]
+
+    case 'recipe_optimizer':
+      return [
+        {
+          id: 'request',
+          label: 'Recipe Optimization Request',
+          type: 'textarea',
+          placeholder: 'What recipe would you like me to optimize or what ingredients do you want to use?',
+          required: true,
+          description: 'Include the original recipe or list of available ingredients'
+        },
+        {
+          id: 'available_ingredients',
+          label: 'Available Ingredients',
+          type: 'textarea',
+          placeholder: 'List all ingredients you have available...',
+          required: false,
+          description: 'Help me suggest the best recipes using what you have'
+        },
+        {
+          id: 'optimization_goal',
+          label: 'Optimization Goal',
+          type: 'select',
+          options: ['use_available_ingredients', 'healthier_version', 'lower_calories', 'higher_protein', 'budget_friendly', 'time_saving'],
+          required: true
+        },
+        {
+          id: 'dietary_restrictions',
+          label: 'Dietary Restrictions',
+          type: 'multiselect',
+          options: ['vegetarian', 'vegan', 'gluten_free', 'dairy_free', 'nut_free', 'low_sodium', 'keto', 'paleo'],
+          required: false
+        }
+      ]
+
+    case 'dietary_consultation':
+      return [
+        {
+          id: 'request',
+          label: 'Dietary Consultation Request',
+          type: 'textarea',
+          placeholder: 'What dietary concerns or questions do you have?',
+          required: true,
+          description: 'Describe your dietary concerns, health goals, or questions about nutrition'
+        },
+        {
+          id: 'health_conditions',
+          label: 'Health Conditions',
+          type: 'multiselect',
+          options: ['diabetes', 'hypertension', 'heart_disease', 'digestive_issues', 'food_allergies', 'autoimmune', 'none'],
+          required: false,
+          description: 'Select any relevant health conditions (for informational purposes only)'
+        },
+        {
+          id: 'current_diet',
+          label: 'Current Diet Type',
+          type: 'select',
+          options: ['standard', 'vegetarian', 'vegan', 'keto', 'paleo', 'mediterranean', 'intermittent_fasting', 'other'],
+          required: false
+        }
+      ]
+
+    case 'allergy_management':
+      return [
+        {
+          id: 'request',
+          label: 'Allergy Management Request',
+          type: 'textarea',
+          placeholder: 'What food allergies do you need help managing?',
+          required: true,
+          description: 'Describe your allergies and what kind of help you need'
+        },
+        {
+          id: 'known_allergies',
+          label: 'Known Food Allergies',
+          type: 'multiselect',
+          options: ['nuts', 'peanuts', 'dairy', 'eggs', 'shellfish', 'fish', 'soy', 'wheat', 'gluten', 'sesame', 'other'],
+          required: true,
+          description: 'Select all known food allergies'
+        },
+        {
+          id: 'severity_level',
+          label: 'Severity Level',
+          type: 'select',
+          options: ['mild', 'moderate', 'severe', 'life_threatening'],
+          required: true,
+          description: 'Highest severity level among your allergies'
+        }
+      ]
+
+    case 'meal_prep_scheduler':
+      return [
+        {
+          id: 'request',
+          label: 'Meal Prep Scheduling Request',
+          type: 'textarea',
+          placeholder: 'What kind of meal prep schedule do you need help creating?',
+          required: true,
+          description: 'Describe your meal prep goals, time constraints, and preferences'
+        },
+        {
+          id: 'prep_frequency',
+          label: 'Prep Frequency',
+          type: 'select',
+          options: ['daily', 'every_other_day', 'twice_weekly', 'weekly', 'bi_weekly'],
+          required: true
+        },
+        {
+          id: 'available_time',
+          label: 'Available Prep Time',
+          type: 'select',
+          options: ['30_minutes', '1_hour', '2_hours', '3_hours', '4_plus_hours'],
+          required: true,
+          description: 'How much time can you dedicate to meal prep?'
+        },
+        {
+          id: 'storage_capacity',
+          label: 'Storage Capacity',
+          type: 'select',
+          options: ['limited_fridge', 'standard_fridge', 'large_fridge', 'chest_freezer', 'multiple_freezers'],
+          required: false,
+          description: 'What storage space do you have available?'
+        }
+      ]
+
+    case 'shopping_list_organizer':
+      return [
+        {
+          id: 'request',
+          label: 'Shopping List Organization Request',
+          type: 'textarea',
+          placeholder: 'What shopping list do you need help organizing?',
+          required: true,
+          description: 'Include your meal plan, dietary needs, or specific items you need'
+        },
+        {
+          id: 'store_preference',
+          label: 'Primary Store',
+          type: 'select',
+          options: ['grocery_chain', 'warehouse_store', 'local_market', 'specialty_stores', 'online_delivery'],
+          required: false,
+          description: 'Where do you usually shop?'
+        },
+        {
+          id: 'organization_method',
+          label: 'Organization Method',
+          type: 'select',
+          options: ['by_store_layout', 'by_category', 'by_priority', 'by_meal', 'by_recipe'],
+          required: true,
+          description: 'How would you like the list organized?'
+        },
+        {
+          id: 'budget_consideration',
+          label: 'Budget Consideration',
+          type: 'select',
+          options: ['strict_budget', 'moderate_budget', 'flexible_budget', 'no_budget_limit'],
           required: false
         }
       ]

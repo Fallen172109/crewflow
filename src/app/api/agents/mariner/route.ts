@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Verify user authentication if userId provided
     let userProfile = null
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Log usage if user is authenticated
     if (userId && userProfile) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       await supabase.from('agent_usage').insert({
         user_id: userId,
         agent_id: 'mariner',

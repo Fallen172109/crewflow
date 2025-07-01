@@ -117,6 +117,7 @@ export interface Database {
           timestamp: string
           archived: boolean
           task_type: string
+          thread_id: string | null
         }
         Insert: {
           id?: string
@@ -127,6 +128,7 @@ export interface Database {
           timestamp?: string
           archived?: boolean
           task_type?: string
+          thread_id?: string | null
         }
         Update: {
           id?: string
@@ -137,6 +139,89 @@ export interface Database {
           timestamp?: string
           archived?: boolean
           task_type?: string
+          thread_id?: string | null
+        }
+      }
+      chat_threads: {
+        Row: {
+          id: string
+          user_id: string
+          agent_name: string
+          task_type: string
+          title: string
+          context: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          agent_name: string
+          task_type?: string
+          title: string
+          context?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          agent_name?: string
+          task_type?: string
+          title?: string
+          context?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      chat_attachments: {
+        Row: {
+          id: string
+          user_id: string
+          thread_id: string | null
+          message_id: string | null
+          file_name: string
+          file_type: string
+          file_size: number
+          storage_path: string
+          public_url: string | null
+          upload_status: 'uploading' | 'completed' | 'failed'
+          metadata: Record<string, any>
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          thread_id?: string | null
+          message_id?: string | null
+          file_name: string
+          file_type: string
+          file_size: number
+          storage_path: string
+          public_url?: string | null
+          upload_status?: 'uploading' | 'completed' | 'failed'
+          metadata?: Record<string, any>
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          thread_id?: string | null
+          message_id?: string | null
+          file_name?: string
+          file_type?: string
+          file_size?: number
+          storage_path?: string
+          public_url?: string | null
+          upload_status?: 'uploading' | 'completed' | 'failed'
+          metadata?: Record<string, any>
+          created_at?: string
+          updated_at?: string
         }
       }
       api_connections: {
@@ -233,6 +318,217 @@ export interface Database {
           status?: string
           period_start?: string
           period_end?: string
+          created_at?: string
+        }
+      }
+      user_meal_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          height_value: number | null
+          height_unit: 'cm' | 'ft_in' | 'inches' | 'm'
+          weight_value: number | null
+          weight_unit: 'kg' | 'lbs' | 'g' | 'oz' | 'stone'
+          primary_goal: 'weight_loss' | 'weight_gain' | 'muscle_building' | 'maintenance' | 'athletic_performance' | 'health_improvement'
+          target_date: string | null
+          target_weight: number | null
+          timeline_duration_days: number | null
+          activity_level: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
+          household_size: number
+          preferred_meal_count: number
+          max_cooking_time_minutes: number
+          budget_range: 'budget' | 'moderate' | 'premium' | 'no_limit'
+          food_likes: string | null
+          food_dislikes: string | null
+          preferred_diet_type: string | null
+          age: number | null
+          gender: 'male' | 'female' | 'other' | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          height_value?: number | null
+          height_unit?: 'cm' | 'ft_in' | 'inches' | 'm'
+          weight_value?: number | null
+          weight_unit?: 'kg' | 'lbs' | 'g' | 'oz' | 'stone'
+          primary_goal: 'weight_loss' | 'weight_gain' | 'muscle_building' | 'maintenance' | 'athletic_performance' | 'health_improvement'
+          target_date?: string | null
+          target_weight?: number | null
+          timeline_duration_days?: number | null
+          activity_level: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
+          household_size?: number
+          preferred_meal_count?: number
+          max_cooking_time_minutes?: number
+          budget_range?: 'budget' | 'moderate' | 'premium' | 'no_limit'
+          food_likes?: string | null
+          food_dislikes?: string | null
+          preferred_diet_type?: string | null
+          age?: number | null
+          gender?: 'male' | 'female' | 'other' | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          height_value?: number | null
+          height_unit?: 'cm' | 'ft_in' | 'inches' | 'm'
+          weight_value?: number | null
+          weight_unit?: 'kg' | 'lbs' | 'g' | 'oz' | 'stone'
+          primary_goal?: 'weight_loss' | 'weight_gain' | 'muscle_building' | 'maintenance' | 'athletic_performance' | 'health_improvement'
+          target_date?: string | null
+          target_weight?: number | null
+          timeline_duration_days?: number | null
+          activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
+          household_size?: number
+          preferred_meal_count?: number
+          max_cooking_time_minutes?: number
+          budget_range?: 'budget' | 'moderate' | 'premium' | 'no_limit'
+          food_likes?: string | null
+          food_dislikes?: string | null
+          preferred_diet_type?: string | null
+          age?: number | null
+          gender?: 'male' | 'female' | 'other' | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_dietary_restrictions: {
+        Row: {
+          id: string
+          user_id: string
+          restriction_type: 'allergy' | 'dietary_preference' | 'medical_restriction' | 'religious_restriction'
+          restriction_value: string
+          severity: 'mild' | 'moderate' | 'severe' | 'absolute'
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          restriction_type: 'allergy' | 'dietary_preference' | 'medical_restriction' | 'religious_restriction'
+          restriction_value: string
+          severity?: 'mild' | 'moderate' | 'severe' | 'absolute'
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          restriction_type?: 'allergy' | 'dietary_preference' | 'medical_restriction' | 'religious_restriction'
+          restriction_value?: string
+          severity?: 'mild' | 'moderate' | 'severe' | 'absolute'
+          notes?: string | null
+          created_at?: string
+        }
+      }
+      user_pantry_items: {
+        Row: {
+          id: string
+          user_id: string
+          ingredient_name: string
+          quantity: number | null
+          unit: string | null
+          category: 'protein' | 'vegetables' | 'fruits' | 'grains' | 'dairy' | 'pantry_staples' | 'spices' | 'condiments' | 'frozen' | 'canned'
+          expiration_date: string | null
+          purchase_date: string | null
+          status: 'available' | 'running_low' | 'expired' | 'used_up'
+          include_in_meal_plans: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          ingredient_name: string
+          quantity?: number | null
+          unit?: string | null
+          category: 'protein' | 'vegetables' | 'fruits' | 'grains' | 'dairy' | 'pantry_staples' | 'spices' | 'condiments' | 'frozen' | 'canned'
+          expiration_date?: string | null
+          purchase_date?: string | null
+          status?: 'available' | 'running_low' | 'expired' | 'used_up'
+          include_in_meal_plans?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          ingredient_name?: string
+          quantity?: number | null
+          unit?: string | null
+          category?: 'protein' | 'vegetables' | 'fruits' | 'grains' | 'dairy' | 'pantry_staples' | 'spices' | 'condiments' | 'frozen' | 'canned'
+          expiration_date?: string | null
+          purchase_date?: string | null
+          status?: 'available' | 'running_low' | 'expired' | 'used_up'
+          include_in_meal_plans?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_meal_plans: {
+        Row: {
+          id: string
+          user_id: string
+          plan_name: string | null
+          plan_duration_days: number
+          generated_for_date: string | null
+          plan_data: any // JSONB
+          preferences_snapshot: any // JSONB
+          is_active: boolean
+          completion_status: 'active' | 'completed' | 'abandoned' | 'modified'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plan_name?: string | null
+          plan_duration_days: number
+          generated_for_date?: string | null
+          plan_data: any // JSONB
+          preferences_snapshot: any // JSONB
+          is_active?: boolean
+          completion_status?: 'active' | 'completed' | 'abandoned' | 'modified'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plan_name?: string | null
+          plan_duration_days?: number
+          generated_for_date?: string | null
+          plan_data?: any // JSONB
+          preferences_snapshot?: any // JSONB
+          is_active?: boolean
+          completion_status?: 'active' | 'completed' | 'abandoned' | 'modified'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_cuisine_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          cuisine_type: string
+          preference_level: 'love' | 'like' | 'neutral' | 'dislike' | 'avoid'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          cuisine_type: string
+          preference_level?: 'love' | 'like' | 'neutral' | 'dislike' | 'avoid'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          cuisine_type?: string
+          preference_level?: 'love' | 'like' | 'neutral' | 'dislike' | 'avoid'
           created_at?: string
         }
       }

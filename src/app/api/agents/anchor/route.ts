@@ -6,12 +6,13 @@ import { createPerplexityAgent } from '@/lib/ai/perplexity'
 import { createAutoGenAgent } from '@/lib/ai/autogen'
 import { getAgentTool } from '@/lib/agent-tools'
 import { trackDetailedUsage } from '@/lib/usage-analytics'
+import axios from 'axios'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
-    console.log('Anchor API called with:', { message, action, userId })
+    console.log('Anchor API called with:', { message, action, userId, threadId })
 
     if (!message && !action) {
       return NextResponse.json(
@@ -30,6 +31,9 @@ export async function POST(request: NextRequest) {
 
     // Get user profile for tracking
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
       const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
@@ -38,7 +42,36 @@ export async function POST(request: NextRequest) {
         .eq('id', userId)
         .single()
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     // Track request start time
     const startTime = Date.now()
@@ -48,9 +81,9 @@ export async function POST(request: NextRequest) {
 
     try {
       if (action) {
-        response = await handleAnchorPresetAction(action, params, message)
+        response = await handleAnchorPresetAction(action, params, message, fullContext)
       } else {
-        response = await handleAnchorMessage(message, context)
+        response = await handleAnchorMessage(message, fullContext)
       }
     } catch (error) {
       success = false
@@ -114,22 +147,24 @@ async function handleAnchorMessage(message: string, context?: string) {
   console.log('Handling Anchor message:', message)
   const anchor = getAgent('anchor')!
 
-  const needsResearch = /market|supplier|price|trend|analysis|intelligence/i.test(message)
-  const needsWorkflow = /process|workflow|automation|optimization|complex/i.test(message)
+  const needsResearch = /market|supplier|price|trend|analysis|intelligence|research|compare|best|recommend|which.*better/i.test(message)
+  const needsWorkflow = /process|workflow|automat|optimization|complex|integrate|coordinate|manage.*system/i.test(message)
 
   console.log('Message analysis:', { needsResearch, needsWorkflow })
 
   try {
     if (needsResearch) {
-      const perplexityAgent = createPerplexityAgent(anchor, getAnchorPerplexityPrompt())
-      const result = await perplexityAgent.processMessage(message, context)
+      console.log('Using Perplexity AI for research-based question')
+      // Direct Perplexity API call to bypass framework issues
+      const result = await callPerplexityDirectly(message, context)
       return { ...result, framework: 'perplexity' }
     } else if (needsWorkflow) {
-      const autogenAgent = createAutoGenAgent(anchor, getAnchorAutoGenPrompt())
-      const result = await autogenAgent.processMessage(message, context)
-      return { ...result, framework: 'autogen' }
+      console.log('Using OpenAI for workflow/automation question')
+      // Direct OpenAI API call to bypass framework issues
+      const result = await callOpenAIDirectly(message, context)
+      return { ...result, framework: 'openai' }
     } else {
-      console.log('Using maritime response for message processing')
+      console.log('Using maritime response for message processing - no AI framework match')
       // Temporary maritime response while we fix LangChain
       const maritimeResponse = generateMaritimeResponse(message)
       return {
@@ -143,18 +178,46 @@ async function handleAnchorMessage(message: string, context?: string) {
     }
   } catch (error) {
     console.error('AI processing error:', error)
-    // Fallback to maritime-themed response
-    const fallbackResponse = `⚓ Ahoy! I'm Anchor, your Supply Chain Admiral. I encountered some rough seas while processing your request: "${message}"
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    })
 
-As your steadfast quartermaster, I'm here to help you navigate both business supply chains and daily life planning. Let me provide you with some general guidance while I get my systems back online.
+    // Create a more intelligent fallback response based on the message content
+    let fallbackResponse = `I'm Anchor, your Supply Chain Admiral. I encountered some technical difficulties while processing your request, but let me try to help you anyway.`
 
-Whether you need help with:
-🚢 Supply chain optimization and inventory tracking
-🍽️ Meal planning and nutrition guidance
-💰 Budget management and cost optimization
-🏠 Home organization and maintenance
+    const lowerMessage = message.toLowerCase()
 
-I'll keep you anchored and well-supplied through any storm! Please try your request again, or let me know how I can help you in a different way.`
+    // Handle specific types of questions
+    if (lowerMessage.includes('which') && (lowerMessage.includes('best') || lowerMessage.includes('better'))) {
+      fallbackResponse = `I understand you're asking about which option is best. While I'm experiencing some technical issues with my analysis systems, I can still provide guidance.
+
+For automation decisions, the best choice typically depends on:
+• Your specific business requirements and goals
+• Available budget and resources
+• Technical complexity and implementation timeline
+• Integration needs with existing systems
+• Long-term scalability requirements
+
+Could you provide more details about what you're trying to automate? I'd be happy to give you more specific recommendations once I know more about your situation.`
+    } else if (lowerMessage.includes('automate')) {
+      fallbackResponse = `I see you're interested in automation solutions. Even with my current technical difficulties, I can share some general guidance.
+
+The most effective automation strategies usually focus on:
+• Repetitive, time-consuming tasks
+• Processes with clear, defined rules
+• Areas where human error is costly
+• Tasks that require consistent execution
+
+What specific processes are you looking to automate? With more details, I can provide more targeted recommendations.`
+    } else {
+      fallbackResponse += `
+
+As your steadfast quartermaster, I'm here to help you navigate both business supply chains and daily life planning. Whether you need assistance with supply chain optimization, meal planning, budget management, or home organization, I'll do my best to provide useful guidance.
+
+Please try rephrasing your request, or let me know how I can help you in a different way.`
+    }
 
     return {
       response: fallbackResponse,
@@ -172,7 +235,7 @@ function generateMaritimeResponse(message: string): string {
 
   // Greeting responses
   if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
-    return `⚓ Ahoy there! I'm Anchor, your Supply Chain Admiral and steadfast quartermaster. Welcome aboard the CrewFlow vessel!
+    return `Ahoy there! I'm Anchor, your Supply Chain Admiral and steadfast quartermaster. Welcome aboard the CrewFlow vessel!
 
 I'm here to help you navigate both the choppy waters of business supply chains and the daily currents of life planning. Whether you need assistance with:
 
@@ -191,7 +254,7 @@ What course shall we chart together today? I'll keep you anchored and well-suppl
 
   // Diet/meal planning
   if (lowerMessage.includes('diet') || lowerMessage.includes('meal') || lowerMessage.includes('food') || lowerMessage.includes('nutrition')) {
-    return `⚓ Ahoy! As your ship's quartermaster, I know the importance of keeping the crew well-fed and healthy!
+    return `As your ship's quartermaster, I know the importance of keeping the crew well-fed and healthy!
 
 For a proper maritime meal plan, I'll need to know:
 • Your current weight and height (I see you mentioned some details)
@@ -210,7 +273,7 @@ Would you like me to use my Crew Meal Planner tool to create a detailed nutritio
 
   // Budget/financial
   if (lowerMessage.includes('budget') || lowerMessage.includes('money') || lowerMessage.includes('expense') || lowerMessage.includes('cost')) {
-    return `⚓ Aye, managing the ship's treasury is one of my most important duties! As quartermaster, I've learned that proper financial planning keeps any vessel afloat.
+    return `Aye, managing the ship's treasury is one of my most important duties! As quartermaster, I've learned that proper financial planning keeps any vessel afloat.
 
 I can help you navigate these financial waters:
 💰 **Personal Budget Management:**
@@ -228,24 +291,79 @@ I can help you navigate these financial waters:
 Would you like to use my Budget Navigator tool? I can help you chart a course to financial stability and identify where you might be taking on unnecessary ballast!`
   }
 
+  // Handle "which is best" or comparison questions
+  if ((lowerMessage.includes('which') && (lowerMessage.includes('best') || lowerMessage.includes('better'))) ||
+      lowerMessage.includes('compare') || lowerMessage.includes('recommend')) {
+    return `I understand you're looking for recommendations or comparisons. As your Supply Chain Admiral, I can help you evaluate options based on several key factors:
+
+**For Business/Automation Decisions:**
+• Cost-effectiveness and ROI potential
+• Implementation complexity and timeline
+• Integration capabilities with existing systems
+• Scalability and future-proofing
+• Support and maintenance requirements
+
+**For Personal Decisions:**
+• Your specific needs and priorities
+• Available budget and resources
+• Time investment required
+• Long-term benefits and sustainability
+
+To give you the most accurate recommendation, could you provide more details about:
+- What specific options you're comparing
+- Your main goals and priorities
+- Any constraints or requirements you have
+
+With more context, I can provide much more targeted guidance to help you make the best choice for your situation.`
+  }
+
+  // Handle automation questions
+  if (lowerMessage.includes('automate') || lowerMessage.includes('automation')) {
+    return `Automation is one of my specialties! As a Supply Chain Admiral, I've seen how the right automation can transform operations.
+
+The best automation approach depends on several factors:
+
+**Assessment Questions:**
+• What processes are you looking to automate?
+• What's your current workflow like?
+• What challenges are you facing with manual processes?
+• What's your budget and timeline?
+
+**Common Automation Priorities:**
+• Repetitive, time-consuming tasks
+• Error-prone manual processes
+• Data entry and reporting
+• Inventory management and tracking
+• Communication and notifications
+
+**Popular Automation Tools by Category:**
+• **Workflow Automation:** Zapier, Microsoft Power Automate
+• **Business Process:** Monday.com, Asana automation
+• **Data Management:** Airtable, Notion databases
+• **Communication:** Slack bots, email automation
+• **E-commerce:** Shopify apps, inventory sync tools
+
+What specific area would you like to automate? I can provide more detailed recommendations once I understand your particular needs.`
+  }
+
   // General response
-  return `⚓ Ahoy! I'm Anchor, your Supply Chain Admiral. I received your message: "${message}"
+  return `I'm Anchor, your Supply Chain Admiral. I received your message: "${message}"
 
 As your steadfast quartermaster, I'm here to help you navigate both business supply chains and daily life planning. My maritime experience has taught me that proper planning and resource management are the keys to weathering any storm.
 
 I can assist you with:
-🚢 **Supply Chain & Business:** Inventory tracking, supplier management, cost optimization
-🍽️ **Meal Planning:** Nutrition guidance, meal prep, shopping lists
-💰 **Budget Management:** Expense tracking, financial planning, cost analysis
-🏠 **Home Organization:** Household supplies, maintenance schedules, efficiency planning
+• **Supply Chain & Business:** Inventory tracking, supplier management, cost optimization
+• **Meal Planning:** Nutrition guidance, meal prep, shopping lists
+• **Budget Management:** Expense tracking, financial planning, cost analysis
+• **Home Organization:** Household supplies, maintenance schedules, efficiency planning
 
 What specific challenge would you like this old quartermaster to help you tackle? I'll make sure we chart the right course together!`
 }
 
-async function handleAnchorPresetAction(actionId: string, params: any, message?: string) {
+async function handleAnchorPresetAction(actionId: string, params: any, message?: string, context?: string) {
   const anchor = getAgent('anchor')!
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     let framework = 'langchain'
@@ -411,13 +529,13 @@ Speak as the experienced quartermaster who keeps everything shipshape and organi
     let result
     if (framework === 'perplexity') {
       const perplexityAgent = createPerplexityAgent(anchor, getAnchorPerplexityPrompt())
-      result = await perplexityAgent.processMessage(prompt)
+      result = await perplexityAgent.processMessage(prompt, context)
     } else if (framework === 'autogen') {
       const autogenAgent = createAutoGenAgent(anchor, getAnchorAutoGenPrompt())
-      result = await autogenAgent.processMessage(prompt)
+      result = await autogenAgent.processMessage(prompt, context)
     } else {
       const langchainAgent = createLangChainAgent(anchor, getAnchorLangChainPrompt())
-      result = await langchainAgent.processMessage(prompt)
+      result = await langchainAgent.processMessage(prompt, context)
     }
     
     return {
@@ -461,6 +579,8 @@ CORE EXPERTISE:
 - Budget management and cost optimization
 - Meal planning and household management
 - Resource allocation and efficiency
+- File attachment analysis and integration
+- Supply chain document and inventory report processing
 
 AGENT TOOLS (Maritime Skills):
 Business Tools:
@@ -487,6 +607,17 @@ RESPONSE GUIDELINES:
 4. Focus on organization, planning, and resource management
 5. Consider both business and personal applications
 6. Emphasize stability and preparedness
+7. When file attachments are provided, analyze and reference them in your responses
+8. Process supply chain documents, inventory reports, and planning files effectively
+9. Integrate file content with your supply chain expertise
+
+FILE ATTACHMENT HANDLING:
+- Analyze uploaded supply chain documents, inventory reports, and planning files
+- Extract key supply chain insights and optimization opportunities from attachments
+- Reference specific content from files in your recommendations
+- Combine file analysis with your supply chain expertise
+- Provide comprehensive analysis that includes both uploaded content and best practices
+- Identify supply chain risks and opportunities from uploaded documents
 
 Remember: A good quartermaster keeps the ship well-supplied and the crew well-fed, whether navigating business waters or daily life challenges.`
 }
@@ -552,4 +683,80 @@ export async function GET() {
       autogen: 'Complex optimization, multi-location coordination'
     }
   })
+}
+
+// Direct API call functions to bypass framework issues
+async function callPerplexityDirectly(message: string, context?: string) {
+  const startTime = Date.now()
+
+  try {
+    const systemPrompt = `You are Anchor, a Supply Chain Admiral AI assistant specializing in business automation and software integrations. You help users make intelligent decisions about which software to connect with their CrewFlow application for automation purposes. Provide specific, actionable recommendations with clear explanations.`
+
+    const response = await axios.post('https://api.perplexity.ai/chat/completions', {
+      model: process.env.PERPLEXITY_MODEL || 'llama-3.1-sonar-large-128k-online',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: context ? `Context: ${context}\n\nQuestion: ${message}` : message }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+      stream: false
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000
+    })
+
+    const latency = Date.now() - startTime
+
+    return {
+      response: response.data.choices[0].message.content,
+      tokensUsed: response.data.usage.total_tokens,
+      latency,
+      model: response.data.model,
+      success: true
+    }
+  } catch (error) {
+    console.error('Direct Perplexity API error:', error)
+    throw error
+  }
+}
+
+async function callOpenAIDirectly(message: string, context?: string) {
+  const startTime = Date.now()
+
+  try {
+    const systemPrompt = `You are Anchor, a Supply Chain Admiral AI assistant specializing in business automation and workflow optimization. You help users understand how to automate their business processes and integrate different systems. Provide specific, actionable guidance with clear implementation steps.`
+
+    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: context ? `Context: ${context}\n\nQuestion: ${message}` : message }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000
+    })
+
+    const latency = Date.now() - startTime
+
+    return {
+      response: response.data.choices[0].message.content,
+      tokensUsed: response.data.usage.total_tokens,
+      latency,
+      model: response.data.model,
+      success: true
+    }
+  } catch (error) {
+    console.error('Direct OpenAI API error:', error)
+    throw error
+  }
 }

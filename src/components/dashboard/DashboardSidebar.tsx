@@ -16,15 +16,7 @@ const baseNavigation = [
       </svg>
     )
   },
-  {
-    name: 'Crew Abilities',
-    href: '/dashboard/crew',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    )
-  },
+
   {
     name: 'Analytics',
     href: '/dashboard/analytics',
@@ -93,6 +85,7 @@ const getFrameworkBadge = (framework: string) => {
 export default function DashboardSidebar() {
   const pathname = usePathname()
   const [isAgentsExpanded, setIsAgentsExpanded] = useState(true)
+  const [isCrewAbilitiesExpanded, setIsCrewAbilitiesExpanded] = useState(false)
   const { isAdmin } = useAdmin()
 
   // Debug log to see admin status in sidebar
@@ -126,6 +119,123 @@ export default function DashboardSidebar() {
             )
           })}
         </nav>
+
+        {/* Crew Abilities Section */}
+        <div className="mb-8">
+          <button
+            onClick={() => setIsCrewAbilitiesExpanded(!isCrewAbilitiesExpanded)}
+            className="flex items-center justify-between w-full px-3 py-2 text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            <span className="font-semibold text-sm uppercase tracking-wider">Crew Abilities</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${isCrewAbilitiesExpanded ? 'rotate-90' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {isCrewAbilitiesExpanded && (
+            <div className="mt-2 space-y-1">
+              <Link
+                href="/dashboard/crew"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  pathname === '/dashboard/crew'
+                    ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">All Abilities</p>
+                  <p className="text-xs text-gray-500">Daily-use tools & utilities</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/crew/image-generation"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  pathname === '/dashboard/crew/image-generation'
+                    ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">Image Generator</p>
+                  <p className="text-xs text-gray-500">Create any image you imagine</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/crew/meal-planning"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  pathname === '/dashboard/crew/meal-planning'
+                    ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">Meal Planning</p>
+                  <p className="text-xs text-gray-500">Nutrition & meal prep</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/crew/fitness-planning"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  pathname === '/dashboard/crew/fitness-planning'
+                    ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">Fitness Planning</p>
+                  <p className="text-xs text-gray-500">Workouts & wellness</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/crew/productivity"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  pathname === '/dashboard/crew/productivity'
+                    ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">Productivity Tools</p>
+                  <p className="text-xs text-gray-500">Task & life optimization</p>
+                </div>
+              </Link>
+            </div>
+          )}
+        </div>
 
         {/* AI Agents Section */}
         <div>

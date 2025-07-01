@@ -7,7 +7,7 @@ import { createImageGenerationService, type ImageGenerationRequest } from '@/lib
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -27,6 +27,9 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
       const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
@@ -36,15 +39,44 @@ export async function POST(request: NextRequest) {
         .single()
 
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     let response
     if (action) {
       // Handle preset actions with hybrid approach
-      response = await handleSplashPresetAction(action, params, message)
+      response = await handleSplashPresetAction(action, params, message, fullContext)
     } else {
       // Handle regular chat message with intelligent routing
-      response = await handleSplashMessage(message, context)
+      response = await handleSplashMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
@@ -89,13 +121,14 @@ export async function POST(request: NextRequest) {
 
 async function handleSplashMessage(message: string, context?: string) {
   const splash = getAgent('splash')!
-  
+
   // Determine if we need real-time research (Perplexity) or content generation (LangChain)
   const needsResearch = /trend|competitor|analysis|research|current|latest|popular|viral/i.test(message)
-  
+
   if (needsResearch) {
     // Use Perplexity for research-based queries
-    const perplexityAgent = createPerplexityAgent(splash, getSplashPerplexityPrompt())
+    const systemPrompt = buildSplashSystemPrompt('perplexity', context)
+    const perplexityAgent = createPerplexityAgent(splash, systemPrompt)
     const result = await perplexityAgent.processMessage(message, context)
     return {
       ...result,
@@ -104,7 +137,8 @@ async function handleSplashMessage(message: string, context?: string) {
     }
   } else {
     // Use LangChain for content generation and automation
-    const langchainAgent = createLangChainAgent(splash, getSplashLangChainPrompt())
+    const systemPrompt = buildSplashSystemPrompt('langchain', context)
+    const langchainAgent = createLangChainAgent(splash, systemPrompt)
     const result = await langchainAgent.processMessage(message, context)
     return {
       ...result,
@@ -114,7 +148,7 @@ async function handleSplashMessage(message: string, context?: string) {
   }
 }
 
-async function handleSplashPresetAction(actionId: string, params: any, message?: string) {
+async function handleSplashPresetAction(actionId: string, params: any, message?: string, context?: string) {
   const splash = getAgent('splash')!
   const startTime = Date.now()
   
@@ -233,6 +267,7 @@ Provide actionable insights for competitive advantage.`
 
       case 'visual_content_creator':
       case 'image_generator':
+      case 'branded_social_visuals':
         // Handle image generation requests
         return await handleImageGeneration(params, message)
 
@@ -242,12 +277,14 @@ Provide actionable insights for competitive advantage.`
 
     let result
     if (usePerplexity) {
-      const perplexityAgent = createPerplexityAgent(splash, getSplashPerplexityPrompt())
-      result = await perplexityAgent.processMessage(prompt)
+      const systemPrompt = buildSplashSystemPrompt('perplexity', context)
+      const perplexityAgent = createPerplexityAgent(splash, systemPrompt)
+      result = await perplexityAgent.processMessage(prompt, context)
       result.framework = 'perplexity'
     } else {
-      const langchainAgent = createLangChainAgent(splash, getSplashLangChainPrompt())
-      result = await langchainAgent.processMessage(prompt)
+      const systemPrompt = buildSplashSystemPrompt('langchain', context)
+      const langchainAgent = createLangChainAgent(splash, systemPrompt)
+      result = await langchainAgent.processMessage(prompt, context)
       result.framework = 'langchain'
     }
     
@@ -295,6 +332,29 @@ function extractPlatforms(text: string): string[] {
   return platforms.length > 0 ? platforms : ['multi-platform']
 }
 
+function buildSplashSystemPrompt(framework: 'langchain' | 'perplexity', context?: string): string {
+  const basePrompt = framework === 'langchain' ? getSplashLangChainPrompt() : getSplashPerplexityPrompt()
+
+  if (!context) {
+    return basePrompt
+  }
+
+  return `${basePrompt}
+
+IMPORTANT CONTEXT FOR THIS CONVERSATION:
+${context}
+
+CONTEXT INTEGRATION GUIDELINES:
+- Always reference and incorporate the provided context into your responses
+- Tailor your social media advice to the specific business, project, or situation described
+- Use the context to provide more personalized and relevant recommendations
+- If files are attached, analyze them and reference their content in your suggestions
+- Maintain consistency with the context throughout the conversation
+- Ask clarifying questions if you need more details about the context
+
+Remember: Your responses should be specifically tailored to the user's context, not generic advice.`
+}
+
 function getSplashLangChainPrompt(): string {
   return `You are Splash, the Social Media specialist in the CrewFlow maritime AI automation platform.
 
@@ -330,11 +390,14 @@ FRAMEWORK: LangChain
 - Develop systematic approaches to social media management
 
 RESPONSE STYLE:
-- Creative and engaging
-- Platform-specific recommendations
-- Actionable content suggestions
-- Clear formatting with bullet points
-- Include specific examples and templates
+- Conversational and enthusiastic, like a knowledgeable friend
+- Creative and engaging with personality
+- Platform-specific recommendations with reasoning
+- Actionable content suggestions with step-by-step guidance
+- Clear formatting with bullet points and emojis where appropriate
+- Include specific examples, templates, and real-world case studies
+- Ask follow-up questions to better understand needs
+- Avoid robotic or repetitive language patterns
 
 MARITIME THEME INTEGRATION:
 - Use nautical metaphors for social media strategies
@@ -391,11 +454,14 @@ FRAMEWORK: Perplexity AI
 - Monitor brand mentions across platforms
 
 RESPONSE STYLE:
-- Data-driven with current statistics
-- Include trending examples and case studies
-- Provide real-time insights and recommendations
+- Conversational and insightful, like a social media expert colleague
+- Data-driven with current statistics and context
+- Include trending examples and relevant case studies
+- Provide real-time insights with clear explanations
 - Cite sources for all claims and data
-- Focus on actionable intelligence
+- Focus on actionable intelligence with implementation steps
+- Ask clarifying questions to provide better insights
+- Avoid generic responses - tailor everything to the user's situation
 
 MARITIME THEME INTEGRATION:
 - "Navigating" trending waters
@@ -414,6 +480,31 @@ KEY GUIDELINES:
 7. Provide crisis detection and response recommendations
 
 Remember: Social media moves fast - stay current with real-time insights and trending opportunities.`
+}
+
+// Helper functions for platform-specific optimization
+function getPlatformSpecs(platform: string): string {
+  const specs: Record<string, string> = {
+    'Instagram': 'square format, vibrant colors, mobile-first design',
+    'Facebook': 'engaging visuals, community-focused, shareable content',
+    'Twitter': 'concise visual message, trending topics, viral potential',
+    'LinkedIn': 'professional aesthetic, business-focused, thought leadership',
+    'TikTok': 'dynamic, youth-oriented, trend-aware, vertical format',
+    'YouTube': 'thumbnail-optimized, attention-grabbing, video-ready'
+  }
+  return specs[platform] || 'general social media optimization'
+}
+
+function getPlatformOptimization(platform: string): string {
+  const optimizations: Record<string, string> = {
+    'Instagram': 'Use bright, saturated colors and clear focal points. Include lifestyle elements.',
+    'Facebook': 'Focus on community and connection. Use warm, inviting tones.',
+    'Twitter': 'Keep visual elements simple and impactful. Use trending color schemes.',
+    'LinkedIn': 'Maintain professional color palette (blues, grays, whites). Include business context.',
+    'TikTok': 'Use bold, contrasting colors. Include Gen Z aesthetic elements.',
+    'YouTube': 'Create thumbnail-worthy composition with clear subject focus.'
+  }
+  return optimizations[platform] || 'Optimize for social media engagement and shareability.'
 }
 
 // Health check endpoint
@@ -446,30 +537,54 @@ async function handleImageGeneration(params: any, message?: string) {
     const imageService = createImageGenerationService()
 
     // Extract parameters from the request
+    let enhancedPrompt = params.prompt || params.description || message || 'A professional social media image'
+
+    // Enhance prompt with comprehensive business context for branded visuals
+    if (params.brand_name || params.platform || params.campaign_context) {
+      const brandContext = params.brand_name ? `for ${params.brand_name} brand` : ''
+      const platformContext = params.platform && params.platform !== 'General' ?
+        `optimized for ${params.platform} (${getPlatformSpecs(params.platform)})` : ''
+      const campaignContext = params.campaign_context ?
+        `Campaign: ${params.campaign_context}` : ''
+
+      // Add platform-specific optimization
+      const platformOptimization = getPlatformOptimization(params.platform)
+
+      enhancedPrompt = `${enhancedPrompt} ${brandContext} ${platformContext}. ${campaignContext}. ${platformOptimization} Professional, branded, social media ready, high engagement potential.`
+    }
+
     const imageRequest: ImageGenerationRequest = {
-      prompt: params.prompt || params.description || message || 'A professional fitness-related image',
+      prompt: enhancedPrompt,
       style: params.style || 'Digital Art',
       aspectRatio: params.aspect_ratio || params.aspectRatio || 'Square (1:1)',
-      quality: params.quality === 'high' ? 'hd' : 'standard'
+      quality: params.quality === 'high' ? 'hd' : 'standard',
+      isModification: params.isModification || false,
+      previousImageContext: params.previousImageContext || undefined,
+      modificationInstructions: params.modificationInstructions || undefined
     }
 
     console.log('Splash generating image with request:', imageRequest)
     const imageResult = await imageService.generateImage(imageRequest)
 
     if (imageResult.success && imageResult.imageUrl) {
-      const response = `🎨 **Visual Content Created Successfully!**
+      const isModification = imageRequest.isModification
+      const actionType = isModification ? 'Modified' : 'Created'
+      const actionEmoji = isModification ? '✨' : '🎨'
 
-![Generated Image](${imageResult.imageUrl})
+      const response = `${actionEmoji} **Visual Content ${actionType} Successfully!**
+
+![${imageResult.metadata?.originalPrompt || 'Generated Visual Content'}](${imageResult.imageUrl})
 
 **Image Details:**
-- **Original Prompt:** ${imageResult.metadata?.originalPrompt}
+- **${isModification ? 'Modification' : 'Original'} Prompt:** ${imageResult.metadata?.originalPrompt}
 - **Enhanced Prompt:** ${imageResult.metadata?.enhancedPrompt}
 - **Style:** ${imageResult.metadata?.style}
 - **Aspect Ratio:** ${imageResult.metadata?.aspectRatio}
+${isModification && imageRequest.previousImageContext ? `- **Based On:** ${imageRequest.previousImageContext}` : ''}
 
-**Maritime Mission Complete!** Your visual content has been generated and is ready for use in your fitness content, social media posts, or any other creative projects. The image has been optimized for digital use and follows current design trends.
+**Maritime Mission Complete!** Your visual content has been ${isModification ? 'modified' : 'generated'} and is ready for use in your fitness content, social media posts, or any other creative projects. The image has been optimized for digital use and follows current design trends.
 
-*This image was created using advanced AI technology and is ready for immediate use in your content strategy.*`
+*This image was ${isModification ? 'modified' : 'created'} using advanced AI technology and is ready for immediate use in your content strategy.*`
 
       return {
         response,

@@ -5,7 +5,7 @@ import { createLangChainAgent } from '@/lib/ai/langchain-working'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -23,24 +23,56 @@ export async function POST(request: NextRequest) {
     }
 
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     const langchainAgent = createLangChainAgent(helm, getHelmSystemPrompt())
 
     let response
     if (action) {
-      response = await handleHelmPresetAction(langchainAgent, action, params)
+      response = await handleHelmPresetAction(langchainAgent, action, params, fullContext)
     } else {
-      response = await langchainAgent.processMessage(message, context)
+      response = await langchainAgent.processMessage(message, fullContext)
     }
 
     if (userId && userProfile) {
@@ -80,9 +112,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleHelmPresetAction(langchainAgent: any, actionId: string, params: any) {
+async function handleHelmPresetAction(langchainAgent: any, actionId: string, params: any, context?: string) {
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     
@@ -179,7 +211,7 @@ Create comprehensive benefits management framework.`
         prompt = `Execute HR action "${actionId}": ${JSON.stringify(params)}`
     }
 
-    const response = await langchainAgent.processMessage(prompt)
+    const response = await langchainAgent.processMessage(prompt, context)
     
     return {
       response: response.response,
@@ -222,6 +254,8 @@ CAPABILITIES:
 - Benefits enrollment and administration
 - Performance review and development
 - HR compliance and policy management
+- File attachment analysis and integration
+- Resume and document processing
 
 SPECIALIZATIONS:
 - Recruitment and talent acquisition
@@ -259,6 +293,16 @@ KEY GUIDELINES:
 5. Emphasize data-driven HR decisions
 6. Balance company needs with employee welfare
 7. Provide scalable HR solutions
+8. When file attachments are provided, analyze and reference them in your responses
+9. Process resumes, job descriptions, and HR documents effectively
+10. Integrate file content with your HR expertise
+
+FILE ATTACHMENT HANDLING:
+- Analyze uploaded resumes, job descriptions, and HR documents
+- Extract key qualifications and requirements from attachments
+- Reference specific content from files in your HR recommendations
+- Combine file analysis with your HR expertise
+- Provide comprehensive analysis that includes both uploaded content and best practices
 
 Remember: Great HR management creates an environment where both employees and the organization can thrive.`
 }

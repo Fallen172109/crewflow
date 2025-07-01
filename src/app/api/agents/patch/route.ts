@@ -5,7 +5,7 @@ import { createLangChainAgent } from '@/lib/ai/langchain-working'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -25,16 +25,48 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     // Create LangChain agent instance
     const langchainAgent = createLangChainAgent(patch, getPatchSystemPrompt())
@@ -42,10 +74,10 @@ export async function POST(request: NextRequest) {
     let response
     if (action) {
       // Handle preset actions
-      response = await handlePatchPresetAction(langchainAgent, action, params)
+      response = await handlePatchPresetAction(langchainAgent, action, params, fullContext)
     } else {
       // Handle regular chat message
-      response = await langchainAgent.processMessage(message, context)
+      response = await langchainAgent.processMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
@@ -86,9 +118,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePatchPresetAction(langchainAgent: any, actionId: string, params: any) {
+async function handlePatchPresetAction(langchainAgent: any, actionId: string, params: any, context?: string) {
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     
@@ -222,7 +254,7 @@ Deliver complete IT asset management and tracking framework.`
         prompt = `Execute IT service desk action "${actionId}": ${JSON.stringify(params)}`
     }
 
-    const response = await langchainAgent.processMessage(prompt)
+    const response = await langchainAgent.processMessage(prompt, context)
     
     return {
       response: response.response,
@@ -266,6 +298,8 @@ CAPABILITIES:
 - IT asset tracking and lifecycle management
 - Knowledge base creation and maintenance
 - User support and training coordination
+- File attachment analysis and integration
+- Technical document and log file processing
 
 SPECIALIZATIONS:
 - ITIL service management framework
@@ -308,6 +342,17 @@ KEY GUIDELINES:
 8. Consider compliance and audit requirements
 9. Focus on measurable service quality improvements
 10. Provide scalable and sustainable IT solutions
+11. When file attachments are provided, analyze and reference them in your responses
+12. Process technical documents, logs, and system reports effectively
+13. Integrate file content with your IT expertise
+
+FILE ATTACHMENT HANDLING:
+- Analyze uploaded technical documents, log files, and system reports
+- Extract key technical information and error patterns from attachments
+- Reference specific content from files in your troubleshooting recommendations
+- Combine file analysis with your IT service desk expertise
+- Provide comprehensive analysis that includes both uploaded content and best practices
+- Identify system issues and patterns from uploaded logs and reports
 
 Remember: Great IT service management combines technical expertise with excellent customer service to keep business operations running smoothly and securely.`
 }

@@ -7,7 +7,7 @@ import { createAutoGenAgent } from '@/lib/ai/autogen'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -27,24 +27,56 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     let response
     if (action) {
       // Handle preset actions with hybrid approach
-      response = await handleDrakePresetAction(action, params, message)
+      response = await handleDrakePresetAction(action, params, message, fullContext)
     } else {
       // Handle regular chat message with intelligent routing
-      response = await handleDrakeMessage(message, context)
+      response = await handleDrakeMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
@@ -123,10 +155,10 @@ async function handleDrakeMessage(message: string, context?: string) {
   }
 }
 
-async function handleDrakePresetAction(actionId: string, params: any, message?: string) {
+async function handleDrakePresetAction(actionId: string, params: any, message?: string, context?: string) {
   const drake = getAgent('drake')!
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     let framework = 'langchain' // default
@@ -243,13 +275,13 @@ Deliver professional, persuasive proposal content.`
     let result
     if (framework === 'perplexity') {
       const perplexityAgent = createPerplexityAgent(drake, getDrakePerplexityPrompt())
-      result = await perplexityAgent.processMessage(prompt)
+      result = await perplexityAgent.processMessage(prompt, context)
     } else if (framework === 'autogen') {
       const autogenAgent = createAutoGenAgent(drake, getDrakeAutoGenPrompt())
-      result = await autogenAgent.processMessage(prompt)
+      result = await autogenAgent.processMessage(prompt, context)
     } else {
       const langchainAgent = createLangChainAgent(drake, getDrakeLangChainPrompt())
-      result = await langchainAgent.processMessage(prompt)
+      result = await langchainAgent.processMessage(prompt, context)
     }
     
     return {

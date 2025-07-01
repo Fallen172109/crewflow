@@ -63,17 +63,48 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
     }
   }, [agent.id])
 
-  const handleSendMessage = async (content: string, taskType: string = 'general') => {
+  const handleSendMessage = async (content: string, taskType: string = 'general', responseTaskType?: string, threadId?: string | null) => {
     setIsLoading(true)
 
     try {
       // Parse the message to detect if it's a Crew Ability action
       const isCrewAbilityAction = taskType === 'crew_ability' && content.includes('Action:')
-      let apiUrl = `/api/agents/${agent.id}/chat`
+
+      // Check if this is an image generation request in general chat
+      const isImageGenerationRequest = !isCrewAbilityAction && (
+        // Direct image creation commands
+        /create.*image|generate.*image|make.*image|draw.*image|visual.*content|image.*of/i.test(content) ||
+        /picture.*of|photo.*of|illustration.*of|artwork.*of|design.*image/i.test(content) ||
+        /show.*me.*image|can.*you.*draw|can.*you.*create.*visual/i.test(content) ||
+
+        // Specific image types
+        /\b(icon|logo|avatar|banner|thumbnail|poster|wallpaper|background)\b/i.test(content) ||
+        /\b(streamer|gamer|gaming|twitch|youtube)\s+(icon|logo|avatar|banner|image)/i.test(content) ||
+
+        // Professional/business images
+        /\b(profile|headshot|portrait|business|professional)\s+(image|photo|picture)/i.test(content) ||
+        /\b(company|brand|business)\s+(logo|icon|image)/i.test(content) ||
+        /\bdesign\s+(a|an)?\s*(professional|business|corporate)\s+(headshot|portrait|image)/i.test(content) ||
+
+        // Social media content
+        /\b(social|media|post|story|content)\s+(image|visual|graphic)/i.test(content) ||
+        /\b(instagram|facebook|twitter|linkedin)\s+(post|image|graphic)/i.test(content) ||
+        /\b(social\s+media|social)\s+(post|content)/i.test(content) ||
+
+        // Creative requests
+        /\b(design|create|make|generate)\s+(a|an|some)?\s*(logo|icon|banner|image|visual|graphic)/i.test(content) ||
+        /\bi\s+need\s+(a|an)\s+(logo|icon|image|visual|graphic)/i.test(content) ||
+        /\bcan\s+you\s+(make|create|design|generate)\s+(a|an|some)?\s*(image|visual|logo|icon)/i.test(content)
+      )
+
+
+
+      let apiUrl = `/api/agents/${agent.id}`
       let requestBody: any = {
         message: content,
         taskType: taskType,
-        userId: userProfile?.id
+        userId: userProfile?.id,
+        threadId: threadId
       }
 
       // If it's a crew ability action, parse the action and params
@@ -99,8 +130,37 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
             action: actionId,
             params: params,
             message: content,
-            userId: userProfile?.id
+            userId: userProfile?.id,
+            threadId: threadId
           }
+        }
+      } else if (isImageGenerationRequest && (agent.id === 'splash' || agent.id === 'pearl')) {
+        // Route image generation requests from general chat to the action endpoint
+        console.log(`Detected image generation request in general chat for ${agent.id}, routing to action endpoint`)
+        apiUrl = `/api/agents/${agent.id}`
+        requestBody = {
+          action: 'visual_content_creator',
+          params: {
+            prompt: content,
+            style: 'Digital Art',
+            aspect_ratio: 'Square (1:1)',
+            quality: 'standard'
+          },
+          message: content,
+          userId: userProfile?.id,
+          threadId: threadId
+        }
+      }
+
+      // IMPORTANT: Always use the chat API for thread-based conversations to ensure context is loaded
+      // Only use the direct agent API for specific actions or non-threaded requests
+      if (threadId && !isCrewAbilityAction && !isImageGenerationRequest) {
+        apiUrl = `/api/agents/${agent.id}/chat`
+        requestBody = {
+          message: content,
+          taskType: taskType,
+          userId: userProfile?.id,
+          threadId: threadId
         }
       }
 
@@ -113,25 +173,61 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
         body: JSON.stringify(requestBody),
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response. This might be an authentication or server error.')
+      }
+
       const data = await response.json()
 
       if (response.ok) {
         // Add agent response to the appropriate tab via the ref
+        // Use responseTaskType if provided, otherwise use taskType
+        const finalResponseTaskType = responseTaskType || taskType
         if (chatInterfaceRef.current) {
-          chatInterfaceRef.current.addAgentResponse(data.response, taskType)
+          chatInterfaceRef.current.addAgentResponse(data.response, finalResponseTaskType)
         }
       } else {
         console.error('Error from agent API:', data.error)
+
+        // Handle specific error types
+        let errorMessage = 'Sorry, I encountered an error processing your request. Please try again.'
+
+        if (response.status === 401) {
+          errorMessage = 'Authentication required. Please refresh the page and sign in again.'
+        } else if (response.status === 403) {
+          errorMessage = 'This agent is not available in your current plan. Please upgrade to access this feature.'
+        } else if (response.status === 429) {
+          errorMessage = 'You\'ve reached your monthly usage limit. Please upgrade your plan or wait until next month.'
+        } else if (data.error) {
+          errorMessage = `Error: ${data.error}`
+        }
+
         // Add error message to chat
+        const finalResponseTaskType = responseTaskType || taskType
         if (chatInterfaceRef.current) {
-          chatInterfaceRef.current.addAgentResponse('Sorry, I encountered an error processing your request. Please try again.', taskType)
+          chatInterfaceRef.current.addAgentResponse(errorMessage, finalResponseTaskType)
         }
       }
     } catch (error) {
       console.error('Error sending message:', error)
+
+      // Provide more specific error messages
+      let errorMessage = 'Sorry, I encountered a connection error. Please try again.'
+
+      if (error instanceof Error) {
+        if (error.message.includes('non-JSON response')) {
+          errorMessage = 'There was a server error. Please refresh the page and try again. If the problem persists, you may need to sign in again.'
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.'
+        }
+      }
+
       // Add error message to chat
+      const finalResponseTaskType = responseTaskType || taskType
       if (chatInterfaceRef.current) {
-        chatInterfaceRef.current.addAgentResponse('Sorry, I encountered a connection error. Please try again.', taskType)
+        chatInterfaceRef.current.addAgentResponse(errorMessage, finalResponseTaskType)
       }
     } finally {
       setIsLoading(false)

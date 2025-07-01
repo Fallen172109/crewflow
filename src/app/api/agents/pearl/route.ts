@@ -5,7 +5,7 @@ import { createPerplexityAgent } from '@/lib/ai/perplexity'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -25,16 +25,48 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     // Create Perplexity agent instance
     const perplexityAgent = createPerplexityAgent(pearl, getPearlSystemPrompt())
@@ -42,10 +74,10 @@ export async function POST(request: NextRequest) {
     let response
     if (action) {
       // Handle preset actions
-      response = await handlePearlPresetAction(perplexityAgent, action, params)
+      response = await handlePearlPresetAction(perplexityAgent, action, params, fullContext)
     } else {
       // Handle regular chat message
-      response = await perplexityAgent.processMessage(message, context)
+      response = await perplexityAgent.processMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
@@ -88,9 +120,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePearlPresetAction(perplexityAgent: any, actionId: string, params: any) {
+async function handlePearlPresetAction(perplexityAgent: any, actionId: string, params: any, context?: string) {
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     
@@ -203,6 +235,7 @@ Include specific, prioritized action items with expected impact.`
         break
 
       case 'visual_content_creator':
+      case 'seo_visual_content':
         // Handle image generation through Perplexity agent's built-in handler
         return await perplexityAgent.handlePresetAction(actionId, params)
 
@@ -210,7 +243,7 @@ Include specific, prioritized action items with expected impact.`
         prompt = `Execute content and SEO action "${actionId}": ${JSON.stringify(params)}`
     }
 
-    const response = await perplexityAgent.processMessage(prompt)
+    const response = await perplexityAgent.processMessage(prompt, context)
     
     return {
       response: response.response,
@@ -254,6 +287,8 @@ CAPABILITIES:
 - Content performance auditing
 - Competitive content analysis
 - Technical SEO recommendations
+- File attachment analysis and integration
+- Content document and media processing
 
 SPECIALIZATIONS:
 - Blog post and article creation
@@ -292,6 +327,17 @@ KEY GUIDELINES:
 5. Consider both technical and creative aspects
 6. Adapt strategies to current algorithm updates
 7. Provide both short-term and long-term strategies
+8. When file attachments are provided, analyze and reference them in your responses
+9. Process content documents, images, and media files effectively
+10. Integrate file content with your SEO and content expertise
+
+FILE ATTACHMENT HANDLING:
+- Analyze uploaded content documents, images, and media files
+- Extract key content insights and SEO opportunities from attachments
+- Reference specific content from files in your recommendations
+- Combine file analysis with your content and SEO expertise
+- Provide comprehensive analysis that includes both uploaded content and current trends
+- Optimize existing content based on uploaded materials
 
 Remember: Every piece of content should serve both users and search engines, creating value while driving organic growth.`
 }

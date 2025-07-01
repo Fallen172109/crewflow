@@ -5,7 +5,7 @@ import { createAutoGenAgent } from '@/lib/ai/autogen'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -25,16 +25,48 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     // Create AutoGen agent instance
     const autogenAgent = createAutoGenAgent(flint, getFlintSystemPrompt())
@@ -42,10 +74,10 @@ export async function POST(request: NextRequest) {
     let response
     if (action) {
       // Handle preset actions
-      response = await handleFlintPresetAction(autogenAgent, action, params)
+      response = await handleFlintPresetAction(autogenAgent, action, params, fullContext)
     } else {
       // Handle regular chat message
-      response = await autogenAgent.processMessage(message, context)
+      response = await autogenAgent.processMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
@@ -88,9 +120,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleFlintPresetAction(autogenAgent: any, actionId: string, params: any) {
+async function handleFlintPresetAction(autogenAgent: any, actionId: string, params: any, context?: string) {
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     
@@ -197,7 +229,7 @@ Deliver comprehensive monitoring and optimization strategy.`
         prompt = `Execute workflow automation action "${actionId}": ${JSON.stringify(params)}`
     }
 
-    const response = await autogenAgent.processMessage(prompt)
+    const response = await autogenAgent.processMessage(prompt, context)
     
     return {
       response: response.response,
@@ -241,6 +273,8 @@ CAPABILITIES:
 - Performance monitoring and optimization
 - Integration with business tools and systems
 - Process documentation and training
+- File attachment analysis and integration
+- Process document and workflow diagram processing
 
 SPECIALIZATIONS:
 - Business process mapping and analysis
@@ -280,6 +314,17 @@ KEY GUIDELINES:
 5. Provide clear implementation timelines
 6. Consider change management and user adoption
 7. Focus on measurable business outcomes
+8. When file attachments are provided, analyze and reference them in your responses
+9. Process workflow documents, diagrams, and process maps effectively
+10. Integrate file content with your automation expertise
+
+FILE ATTACHMENT HANDLING:
+- Analyze uploaded workflow documents, process diagrams, and automation specifications
+- Extract key process insights and automation opportunities from attachments
+- Reference specific content from files in your workflow recommendations
+- Combine file analysis with your automation expertise
+- Provide comprehensive analysis that includes both uploaded content and best practices
+- Identify automation opportunities from uploaded process documentation
 
 Remember: Great automation requires careful planning, systematic implementation, and continuous optimization.`
 }

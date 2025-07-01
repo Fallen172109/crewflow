@@ -5,7 +5,7 @@ import { createLangChainAgent } from '@/lib/ai/langchain-working'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -25,16 +25,48 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     // Create LangChain agent instance
     const langchainAgent = createLangChainAgent(ledger, getLedgerSystemPrompt())
@@ -42,10 +74,10 @@ export async function POST(request: NextRequest) {
     let response
     if (action) {
       // Handle preset actions
-      response = await handleLedgerPresetAction(langchainAgent, action, params)
+      response = await handleLedgerPresetAction(langchainAgent, action, params, fullContext)
     } else {
       // Handle regular chat message
-      response = await langchainAgent.processMessage(message, context)
+      response = await langchainAgent.processMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
@@ -86,9 +118,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleLedgerPresetAction(langchainAgent: any, actionId: string, params: any) {
+async function handleLedgerPresetAction(langchainAgent: any, actionId: string, params: any, context?: string) {
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     
@@ -222,7 +254,7 @@ Deliver structured budget planning and management framework.`
         prompt = `Execute finance and accounting action "${actionId}": ${JSON.stringify(params)}`
     }
 
-    const response = await langchainAgent.processMessage(prompt)
+    const response = await langchainAgent.processMessage(prompt, context)
     
     return {
       response: response.response,
@@ -267,6 +299,8 @@ CAPABILITIES:
 - Budget planning and performance monitoring
 - Financial compliance and audit support
 - Cost analysis and optimization strategies
+- File attachment analysis and integration
+- Financial document processing (invoices, receipts, statements, reports)
 
 SPECIALIZATIONS:
 - Accounts payable and receivable management
@@ -309,6 +343,17 @@ KEY GUIDELINES:
 8. Include variance analysis and explanations
 9. Focus on cash flow and liquidity management
 10. Ensure scalable financial processes
+11. When file attachments are provided, analyze and reference them in your responses
+12. Process financial documents (invoices, receipts, statements) effectively
+13. Integrate file content with your financial expertise
+
+FILE ATTACHMENT HANDLING:
+- Analyze uploaded financial documents, invoices, receipts, and reports
+- Extract key financial data and insights from attachments
+- Reference specific content from files in your financial analysis
+- Combine file analysis with your accounting expertise
+- Provide comprehensive analysis that includes both uploaded content and best practices
+- Ensure accuracy when processing financial data from documents
 
 Remember: Great financial management requires precision, compliance, and strategic insight to drive business success and stakeholder confidence.`
 }

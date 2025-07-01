@@ -5,6 +5,7 @@ import { Send, Loader2, Waves } from 'lucide-react'
 import { type Agent } from '@/lib/agents'
 import { getAgentTools, canUserAccessTool, type AgentTool, type AgentToolResult } from '@/lib/agent-tools'
 import AgentToolsInterface from './AgentToolsInterface'
+import MarkdownRenderer from '@/components/chat/MarkdownRenderer'
 
 interface BaseAgentInterfaceProps {
   agent: Agent
@@ -23,20 +24,106 @@ interface AgentResponse {
   }
 }
 
-export default function BaseAgentInterface({ 
-  agent, 
-  userId, 
+export default function BaseAgentInterface({
+  agent,
+  userId,
   userTier = 'starter',
-  children 
+  children
 }: BaseAgentInterfaceProps) {
   const [message, setMessage] = useState('')
   const [response, setResponse] = useState<AgentResponse | null>(null)
   const [loading, setLoading] = useState(false)
 
   // Get available agent tools
-  const availableTools = getAgentTools(agent.id).filter(tool => 
+  const availableTools = getAgentTools(agent.id).filter(tool =>
     canUserAccessTool(userTier, tool.tier)
   )
+
+  // Function to render message content with image support
+  const renderMessageContent = (content: string) => {
+    // Check if the content contains markdown image syntax
+    const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g
+    const parts = []
+    let lastIndex = 0
+    let match
+
+    while ((match = imageRegex.exec(content)) !== null) {
+      // Add text before the image
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index))
+      }
+
+      // Add the image with improved error handling
+      const altText = match[1] || 'Generated Image'
+      const imageUrl = match[2]
+
+      parts.push(
+        <div key={match.index} className="my-3">
+          <div className="relative">
+            <img
+              src={imageUrl}
+              alt={altText}
+              className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm transition-opacity duration-300"
+              style={{ maxHeight: '400px', opacity: '1' }}
+              loading="lazy"
+              onLoad={(e) => {
+                const target = e.target as HTMLImageElement
+                target.style.opacity = '1'
+              }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                const container = target.parentElement
+                if (container) {
+                  container.innerHTML = `
+                    <div class="flex items-center justify-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      <div class="text-center">
+                        <div class="text-gray-400 mb-2">🖼️</div>
+                        <p class="text-sm text-gray-600">Image could not be loaded</p>
+                        <p class="text-xs text-gray-400 mt-1">The image URL may have expired</p>
+                        <a href="${imageUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-orange-600 hover:text-orange-700 underline mt-1 inline-block">
+                          Try opening in new tab
+                        </a>
+                      </div>
+                    </div>
+                  `
+                }
+              }}
+            />
+          </div>
+          {altText && altText !== 'Generated Image' && (
+            <p className="text-xs text-gray-500 mt-1 italic">{altText}</p>
+          )}
+          <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
+            <span>AI Generated Image</span>
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-orange-600 hover:text-orange-700 underline"
+            >
+              Open full size
+            </a>
+          </div>
+        </div>
+      )
+
+      lastIndex = match.index + match[0].length
+    }
+
+    // Add remaining text after the last image
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex))
+    }
+
+    // If no images were found, return the original content
+    if (parts.length === 0) {
+      return content
+    }
+
+    return parts.map((part, index) =>
+      typeof part === 'string' ? <span key={index}>{part}</span> : part
+    )
+  }
 
   const handleSendMessage = async () => {
     if (!message.trim() || loading) return
@@ -213,8 +300,8 @@ export default function BaseAgentInterface({
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Chat with {agent.name}</h2>
         <div className={`bg-${agent.color.replace('#', '')}-50 border border-${agent.color.replace('#', '')}-200 rounded-lg p-3 mb-4`}>
-          <p className={`text-${agent.color.replace('#', '')}-800 text-sm`}>
-            <strong>⚓ {agent.name}:</strong> "Ahoy! I'm here to help you with {agent.category} tasks and daily planning. 
+          <p className={`text-${agent.color.replace('#', '')}-800 text-base font-chat leading-extra-loose`}>
+            <strong>⚓ {agent.name}:</strong> "Ahoy! I'm here to help you with {agent.category} tasks and daily planning.
             What can this maritime specialist help you navigate today?"
           </p>
         </div>
@@ -255,10 +342,8 @@ export default function BaseAgentInterface({
             </div>
           </div>
           
-          <div className="prose max-w-none">
-            <div className="whitespace-pre-wrap text-gray-700">
-              {response.response}
-            </div>
+          <div className="max-w-none">
+            <MarkdownRenderer content={response.response} />
           </div>
 
           {/* Usage Stats */}

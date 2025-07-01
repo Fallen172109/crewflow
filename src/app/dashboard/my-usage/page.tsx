@@ -1,36 +1,63 @@
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import { calculateTokenCost } from '@/lib/ai-cost-calculator'
 import RealUsageTest from '@/components/dashboard/RealUsageTest'
+import { supabase } from '@/lib/supabase'
 
-export default async function MyUsagePage() {
-  const supabase = createSupabaseServerClient()
-  
-  // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  if (userError || !user) {
-    redirect('/auth/signin')
+export default function MyUsagePage() {
+  const { user, loading } = useAuth()
+  const [usageData, setUsageData] = useState<any[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+
+  useEffect(() => {
+    if (!loading && !user) {
+      window.location.href = '/auth/signin'
+      return
+    }
+
+    if (user) {
+      loadUsageData()
+    }
+  }, [user, loading])
+
+  const loadUsageData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agent_usage_detailed')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('timestamp', { ascending: false })
+        .limit(100)
+
+      if (error) throw error
+      setUsageData(data || [])
+    } catch (error) {
+      console.error('Error loading usage data:', error)
+    } finally {
+      setLoadingData(false)
+    }
   }
 
-  // Get user's usage data
-  const { data: usageData, error: usageError } = await supabase
-    .from('agent_usage_detailed')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('timestamp', { ascending: false })
-    .limit(50)
+  if (loading || loadingData) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading usage data...</p>
+        </div>
+      </div>
+    )
+  }
 
   // Calculate totals
-  const totalCost = usageData?.reduce((sum, record) => sum + parseFloat(record.cost_usd || '0'), 0) || 0
-  const totalTokens = usageData?.reduce((sum, record) => sum + (record.input_tokens || 0) + (record.output_tokens || 0), 0) || 0
-  const totalRequests = usageData?.length || 0
-
-  // Find most expensive provider
-  const mostExpensiveProvider = Object.entries(usageByProvider)
-    .sort(([,a], [,b]) => b.cost - a.cost)[0]
+  const totalCost = usageData.reduce((sum, record) => sum + parseFloat(record.cost_usd || '0'), 0)
+  const totalTokens = usageData.reduce((sum, record) => sum + (record.input_tokens || 0) + (record.output_tokens || 0), 0)
+  const totalRequests = usageData.length
 
   // Get usage by agent
-  const usageByAgent = usageData?.reduce((acc, record) => {
+  const usageByAgent = usageData.reduce((acc, record) => {
     const agent = record.agent_name
     if (!acc[agent]) {
       acc[agent] = {
@@ -43,10 +70,10 @@ export default async function MyUsagePage() {
     acc[agent].cost += parseFloat(record.cost_usd || '0')
     acc[agent].tokens += (record.input_tokens || 0) + (record.output_tokens || 0)
     return acc
-  }, {} as Record<string, { requests: number; cost: number; tokens: number }>) || {}
+  }, {} as Record<string, { requests: number; cost: number; tokens: number }>)
 
   // Get usage by provider with enhanced statistics
-  const usageByProvider = usageData?.reduce((acc, record) => {
+  const usageByProvider = usageData.reduce((acc, record) => {
     const provider = record.provider
     if (!acc[provider]) {
       acc[provider] = {
@@ -87,6 +114,10 @@ export default async function MyUsagePage() {
     data.avgResponseTime = data.requests > 0 ? Math.round(data.avgResponseTime / data.requests) : 0
     data.successRate = data.requests > 0 ? Math.round((data.successfulRequests / data.requests) * 100) : 0
   })
+
+  // Find most expensive provider
+  const mostExpensiveProvider = Object.entries(usageByProvider)
+    .sort(([,a], [,b]) => b.cost - a.cost)[0]
 
   return (
     <div className="space-y-6">

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Verify user authentication if userId provided
     let userProfile = null
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')

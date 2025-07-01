@@ -36,10 +36,12 @@ export class LangChainAgent {
   private agent: Agent
   private systemPrompt: string
   private llm: ChatOpenAI
+  private userId?: string
 
-  constructor(config: { agent: Agent; systemPrompt: string }) {
+  constructor(config: { agent: Agent; systemPrompt: string; userId?: string }) {
     this.agent = config.agent
     this.systemPrompt = config.systemPrompt
+    this.userId = config.userId
     this.llm = this.initializeLLM()
   }
 
@@ -163,8 +165,23 @@ ${this.systemPrompt}
 Key Guidelines:
 - Provide expert-level assistance in ${this.agent.category}
 - Use your specialized knowledge and integrations
-- Maintain a professional, helpful tone
-- Focus on practical, actionable solutions`
+- Maintain a professional, helpful tone with maritime theming
+- Focus on practical, actionable solutions
+- Use maritime terminology naturally (navigate, chart course, anchor, set sail, etc.)
+
+Response Formatting Instructions:
+- Structure responses with clear sections, bullet points, and numbered lists
+- Use proper spacing between paragraphs and sections
+- Break up long text blocks for better readability
+- Use markdown formatting for emphasis and structure
+- Always reference attached files when relevant to the conversation
+
+Maritime Communication Protocol:
+- ONLY use full maritime greetings (e.g., "⚓ Ahoy! I'm ${this.agent.name}...") for the very first interaction in a new conversation thread
+- For all subsequent messages: Skip introductions entirely and go straight to addressing the user's request
+- Use maritime terminology naturally throughout responses (navigate, chart course, anchor, set sail, etc.)
+- Maintain professional maritime personality without repetitive greetings
+- Focus on being helpful and direct rather than ceremonial`
   }
 
   private buildCoralSystemPrompt(): string {
@@ -705,7 +722,8 @@ This productivity plan has been customized to your work style and goals. It incl
         prompt: params.prompt || params.description || 'A professional image',
         style: params.style,
         aspectRatio: params.aspect_ratio || params.aspectRatio,
-        quality: params.quality === 'high' ? 'hd' : 'standard'
+        quality: params.quality === 'high' ? 'hd' : 'standard',
+        userId: this.userId
       }
 
       console.log('Generating image with request:', imageRequest)
@@ -713,6 +731,8 @@ This productivity plan has been customized to your work style and goals. It incl
 
       if (imageResult.success && imageResult.imageUrl) {
         const response = `🎨 **Image Generated Successfully!**
+
+![${imageResult.metadata?.originalPrompt || 'Generated Image'}](${imageResult.imageUrl})
 
 **Original Prompt:** ${imageResult.metadata?.originalPrompt}
 **Enhanced Prompt:** ${imageResult.metadata?.enhancedPrompt}
@@ -763,6 +783,6 @@ The image has been generated using OpenAI's DALL-E 3 model. You can view and dow
   }
 }
 
-export function createLangChainAgent(agent: Agent, systemPrompt: string): LangChainAgent {
-  return new LangChainAgent({ agent, systemPrompt })
+export function createLangChainAgent(agent: Agent, systemPrompt: string, userId?: string): LangChainAgent {
+  return new LangChainAgent({ agent, systemPrompt, userId })
 }

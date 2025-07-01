@@ -154,11 +154,26 @@ export class HybridAgent {
       }
     } catch (error) {
       console.error('Hybrid agent error:', error)
+
+      // Provide more helpful error messages and fallback responses
+      let errorMessage = `I encountered an issue while processing your request. Let me try to help you in a different way.`
+
+      if (error instanceof Error) {
+        console.error('Detailed error:', error.message, error.stack)
+
+        // Try to provide a helpful response even when there's an error
+        if (message.toLowerCase().includes('which') && message.toLowerCase().includes('best')) {
+          errorMessage = `I understand you're asking about which option is best. While I'm having some technical difficulties with my analysis systems, I can still provide some general guidance. Could you please rephrase your question or provide more specific details about what you're trying to choose between?`
+        } else if (message.toLowerCase().includes('automate')) {
+          errorMessage = `I see you're interested in automation. Even though I'm experiencing some technical issues, I can suggest that the best automation approach typically depends on your specific needs, budget, and technical requirements. Would you like to discuss your particular automation goals?`
+        }
+      }
+
       return {
-        response: 'I apologize, but I encountered an error while processing your request. Please try again.',
+        response: errorMessage,
         tokensUsed: 0,
         latency: 0,
-        model: 'hybrid',
+        model: 'hybrid-fallback',
         framework: 'hybrid',
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'

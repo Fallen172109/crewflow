@@ -79,6 +79,10 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+        chat: ['"Source Sans Pro"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+      },
+      lineHeight: {
+        'extra-loose': '2',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
@@ -122,5 +126,7 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 } satisfies Config;

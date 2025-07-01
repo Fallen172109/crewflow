@@ -6,32 +6,43 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth()
     const { searchParams } = new URL(request.url)
-    
+
     const agentName = searchParams.get('agent')
     const taskType = searchParams.get('taskType') || 'general'
+    const threadId = searchParams.get('threadId')
     const limit = parseInt(searchParams.get('limit') || '50')
-    
+
     if (!agentName) {
       return NextResponse.json({ error: 'Agent name is required' }, { status: 400 })
     }
 
     const supabase = await createSupabaseServerClient()
 
-    // Fetch chat history for the specific agent and task type
-    // Only get messages from the last 30 days for performance
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-    const { data: chatHistory, error } = await supabase
+    let query = supabase
       .from('chat_history')
       .select('*')
       .eq('user_id', user.id)
       .eq('agent_name', agentName)
-      .eq('task_type', taskType)
       .eq('archived', false)
-      .gte('timestamp', thirtyDaysAgo.toISOString())
       .order('timestamp', { ascending: true })
       .limit(limit)
+
+    // If threadId is provided, get messages for that specific thread
+    if (threadId) {
+      query = query.eq('thread_id', threadId)
+    } else {
+      // Otherwise, get messages for the task type without a thread (legacy messages)
+      query = query
+        .eq('task_type', taskType)
+        .is('thread_id', null)
+    }
+
+    // Only get messages from the last 30 days for performance
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    query = query.gte('timestamp', thirtyDaysAgo.toISOString())
+
+    const { data: chatHistory, error } = await query
 
     if (error) {
       console.error('Error fetching chat history:', error)

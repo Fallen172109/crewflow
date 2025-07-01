@@ -188,6 +188,22 @@ ${additionalData && Object.keys(additionalData).length > 0 ?
               </p>
             </div>
           </div>
+          {/* New Image Generation Notice */}
+          <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200 mb-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <Camera className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">🎨 Image Generation Now Available in Sidebar!</h3>
+                <p className="text-gray-700 text-sm">
+                  General image generation has moved to the <strong>Crew Abilities</strong> dropdown in the sidebar for easier access.
+                  Agent-specific image tools (with business context) remain available within individual agent chats.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-gradient-to-r from-orange-50 to-blue-50 rounded-lg p-4 border border-orange-200">
             <p className="text-gray-700 text-sm">
               🚢 <strong>Welcome aboard, Captain!</strong> These daily-use tools are powered by real AI technology including OpenAI DALL-E for image generation,

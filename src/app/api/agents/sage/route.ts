@@ -5,7 +5,7 @@ import { createLangChainAgent } from '@/lib/ai/langchain-working'
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context, action, params, userId } = await request.json()
+    const { message, context, action, params, userId, threadId } = await request.json()
 
     if (!message && !action) {
       return NextResponse.json(
@@ -25,16 +25,48 @@ export async function POST(request: NextRequest) {
 
     // Verify user authentication if userId provided
     let userProfile = null
+    let threadContext = ''
+    let fileContext = ''
+
     if (userId) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: profile } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
-      
+
       userProfile = profile
+
+      // Load thread context if threadId is provided
+      if (threadId) {
+        const { data: thread } = await supabase
+          .from('chat_threads')
+          .select('title, context')
+          .eq('id', threadId)
+          .eq('user_id', userId)
+          .single()
+
+        if (thread) {
+          threadContext = `\n\nThread Context:\nTitle: ${thread.title}\nBackground: ${thread.context || 'No additional context provided'}\n`
+        }
+
+        // Get and analyze file attachments
+        try {
+          const { getFileAttachments, analyzeFileAttachments, createFileContext } = await import('@/lib/ai/file-analysis')
+          const attachments = await getFileAttachments(threadId, undefined, userId)
+          if (attachments.length > 0) {
+            const analyses = await analyzeFileAttachments(attachments)
+            fileContext = createFileContext(analyses)
+          }
+        } catch (error) {
+          console.error('Error processing file attachments:', error)
+        }
+      }
     }
+
+    // Combine all context
+    const fullContext = [context, threadContext, fileContext].filter(Boolean).join('\n')
 
     // Create LangChain agent instance
     const langchainAgent = createLangChainAgent(sage, getSageSystemPrompt())
@@ -42,15 +74,15 @@ export async function POST(request: NextRequest) {
     let response
     if (action) {
       // Handle preset actions
-      response = await handleSagePresetAction(langchainAgent, action, params)
+      response = await handleSagePresetAction(langchainAgent, action, params, fullContext)
     } else {
       // Handle regular chat message
-      response = await langchainAgent.processMessage(message, context)
+      response = await langchainAgent.processMessage(message, fullContext)
     }
 
     // Log usage if user is authenticated
     if (userId && userProfile) {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       await supabase.from('agent_usage').insert({
         user_id: userId,
         agent_id: 'sage',
@@ -86,9 +118,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleSagePresetAction(langchainAgent: any, actionId: string, params: any) {
+async function handleSagePresetAction(langchainAgent: any, actionId: string, params: any, context?: string) {
   const startTime = Date.now()
-  
+
   try {
     let prompt = ''
     
@@ -184,8 +216,8 @@ Ensure accuracy, completeness, and actionable insights.`
         prompt = `Execute knowledge management action "${actionId}": ${JSON.stringify(params)}`
     }
 
-    const response = await langchainAgent.processMessage(prompt)
-    
+    const response = await langchainAgent.processMessage(prompt, context)
+
     return {
       response: response.response,
       tokensUsed: response.tokensUsed,
@@ -227,6 +259,8 @@ CAPABILITIES:
 - Information synthesis and extraction
 - Question answering with source attribution
 - Content organization and categorization
+- File attachment analysis and integration
+- Multi-format document processing (PDF, images, text, spreadsheets)
 
 SPECIALIZATIONS:
 - Enterprise knowledge management
@@ -264,6 +298,16 @@ KEY GUIDELINES:
 5. Consider multiple perspectives and viewpoints
 6. Identify knowledge gaps and learning opportunities
 7. Provide clear next steps and recommendations
+8. When file attachments are provided, analyze and reference them in your responses
+9. Integrate file content seamlessly with your knowledge management expertise
+10. Highlight insights from uploaded documents and images
+
+FILE ATTACHMENT HANDLING:
+- Analyze uploaded documents, images, and data files
+- Extract key information and insights from attachments
+- Reference specific content from files in your responses
+- Combine file analysis with your knowledge management expertise
+- Provide comprehensive analysis that includes both uploaded content and your expertise
 
 Remember: Great knowledge management transforms information into wisdom, making organizational intelligence accessible and actionable.`
 }
