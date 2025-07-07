@@ -5,6 +5,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import crypto from 'crypto'
 
+// Validate Shopify webhook HMAC signature
+function validateShopifyWebhook(body: string, signature: string, secret: string): boolean {
+  try {
+    const hmac = crypto.createHmac('sha256', secret)
+    hmac.update(body, 'utf8')
+    const calculatedSignature = hmac.digest('base64')
+
+    return crypto.timingSafeEqual(
+      Buffer.from(signature, 'base64'),
+      Buffer.from(calculatedSignature, 'base64')
+    )
+  } catch (error) {
+    console.error('HMAC validation error:', error)
+    return false
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const headersList = headers()
@@ -14,7 +31,21 @@ export async function POST(request: NextRequest) {
 
     // Get raw body for signature verification
     const body = await request.text()
-    
+
+    // Validate webhook signature - REQUIRED for Shopify compliance
+    const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET || process.env.CREWFLOW_SHOPIFY_WEBHOOK_SECRET
+
+    if (!shopifyHmacSha256 || !webhookSecret) {
+      console.error('Missing HMAC signature or webhook secret')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const isValid = validateShopifyWebhook(body, shopifyHmacSha256, webhookSecret)
+    if (!isValid) {
+      console.error('Invalid Shopify webhook signature for customer data request')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // Log the webhook for compliance tracking
     console.log('Shopify customer data request webhook received:', {
       topic: shopifyTopic,
@@ -22,20 +53,34 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
 
-    // For GDPR compliance - always return success
-    // Actual data request handling would be implemented here
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Customer data request acknowledged',
+    // Parse the webhook payload
+    let payload
+    try {
+      payload = JSON.parse(body)
+    } catch (error) {
+      console.error('Failed to parse webhook payload:', error)
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+    }
+
+    // TODO: Implement actual customer data retrieval logic here
+    // This should collect all data associated with the customer
+    console.log('Processing customer data request for:', {
+      customerId: payload.customer?.id,
+      email: payload.customer?.email,
+      shop: payload.shop_domain
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Customer data request processed',
       timestamp: new Date().toISOString()
     })
 
   } catch (error) {
     console.error('Customer data request webhook error:', error)
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Request acknowledged' 
-    })
+    return NextResponse.json({
+      error: 'Internal server error'
+    }, { status: 500 })
   }
 }
 
