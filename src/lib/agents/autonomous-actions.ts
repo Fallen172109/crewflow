@@ -3,6 +3,7 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createFacebookAPI, type FacebookPost } from '@/lib/integrations/facebook-business-api'
+import { createShopifyAPI, type ShopifyProduct, type ShopifyOrder, type ShopifyCustomer } from '@/lib/integrations/shopify-admin-api'
 
 export interface AutonomousAction {
   id: string
@@ -169,6 +170,236 @@ export class AutonomousActionManager {
     }
   }
 
+  // Execute Shopify product creation autonomously
+  async executeShopifyProductCreate(product: Partial<ShopifyProduct>, agentId: string): Promise<{ success: boolean; productId?: number; error?: string }> {
+    try {
+      // Check permissions
+      const hasPermission = await this.hasPermission('shopify', 'product_create')
+      if (!hasPermission) {
+        throw new Error('User has not granted permission for autonomous product creation')
+      }
+
+      // Check rate limits
+      const canExecute = await this.checkRateLimit('shopify', 'product_create')
+      if (!canExecute) {
+        throw new Error('Rate limit exceeded for autonomous product creation')
+      }
+
+      // Initialize Shopify API
+      const shopifyAPI = await createShopifyAPI(this.userId)
+      if (!shopifyAPI) {
+        throw new Error('Shopify API not available - user needs to reconnect')
+      }
+
+      // Create the product
+      const createdProduct = await shopifyAPI.createProduct(product as ShopifyProduct)
+
+      // Log the action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'product_create',
+        actionData: product,
+        status: 'completed',
+        result: { productId: createdProduct.id, title: createdProduct.title }
+      })
+
+      return {
+        success: true,
+        productId: createdProduct.id
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+      // Log the failed action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'product_create',
+        actionData: product,
+        status: 'failed',
+        error: errorMessage
+      })
+
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+  }
+
+  // Execute Shopify product update autonomously
+  async executeShopifyProductUpdate(productId: number, updates: Partial<ShopifyProduct>, agentId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Check permissions
+      const hasPermission = await this.hasPermission('shopify', 'product_update')
+      if (!hasPermission) {
+        throw new Error('User has not granted permission for autonomous product updates')
+      }
+
+      // Check rate limits
+      const canExecute = await this.checkRateLimit('shopify', 'product_update')
+      if (!canExecute) {
+        throw new Error('Rate limit exceeded for autonomous product updates')
+      }
+
+      // Initialize Shopify API
+      const shopifyAPI = await createShopifyAPI(this.userId)
+      if (!shopifyAPI) {
+        throw new Error('Shopify API not available - user needs to reconnect')
+      }
+
+      // Update the product
+      const updatedProduct = await shopifyAPI.updateProduct(productId, updates)
+
+      // Log the action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'product_update',
+        actionData: { productId, updates },
+        status: 'completed',
+        result: { productId: updatedProduct.id, title: updatedProduct.title }
+      })
+
+      return {
+        success: true
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+      // Log the failed action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'product_update',
+        actionData: { productId, updates },
+        status: 'failed',
+        error: errorMessage
+      })
+
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+  }
+
+  // Execute Shopify inventory update autonomously
+  async executeShopifyInventoryUpdate(inventoryItemId: number, locationId: number, available: number, agentId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Check permissions
+      const hasPermission = await this.hasPermission('shopify', 'inventory_update')
+      if (!hasPermission) {
+        throw new Error('User has not granted permission for autonomous inventory updates')
+      }
+
+      // Check rate limits
+      const canExecute = await this.checkRateLimit('shopify', 'inventory_update')
+      if (!canExecute) {
+        throw new Error('Rate limit exceeded for autonomous inventory updates')
+      }
+
+      // Initialize Shopify API
+      const shopifyAPI = await createShopifyAPI(this.userId)
+      if (!shopifyAPI) {
+        throw new Error('Shopify API not available - user needs to reconnect')
+      }
+
+      // Update inventory
+      const inventoryLevel = await shopifyAPI.updateInventoryLevel(inventoryItemId, locationId, available)
+
+      // Log the action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'inventory_update',
+        actionData: { inventoryItemId, locationId, available },
+        status: 'completed',
+        result: { inventoryItemId, available: inventoryLevel.available }
+      })
+
+      return {
+        success: true
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+      // Log the failed action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'inventory_update',
+        actionData: { inventoryItemId, locationId, available },
+        status: 'failed',
+        error: errorMessage
+      })
+
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+  }
+
+  // Execute Shopify order fulfillment autonomously
+  async executeShopifyOrderFulfill(orderId: number, fulfillmentData: any, agentId: string): Promise<{ success: boolean; fulfillmentId?: number; error?: string }> {
+    try {
+      // Check permissions
+      const hasPermission = await this.hasPermission('shopify', 'order_fulfill')
+      if (!hasPermission) {
+        throw new Error('User has not granted permission for autonomous order fulfillment')
+      }
+
+      // Check rate limits
+      const canExecute = await this.checkRateLimit('shopify', 'order_fulfill')
+      if (!canExecute) {
+        throw new Error('Rate limit exceeded for autonomous order fulfillment')
+      }
+
+      // Initialize Shopify API
+      const shopifyAPI = await createShopifyAPI(this.userId)
+      if (!shopifyAPI) {
+        throw new Error('Shopify API not available - user needs to reconnect')
+      }
+
+      // Create fulfillment
+      const fulfillment = await shopifyAPI.createFulfillment(orderId, fulfillmentData)
+
+      // Log the action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'order_fulfill',
+        actionData: { orderId, fulfillmentData },
+        status: 'completed',
+        result: { fulfillmentId: fulfillment.id, orderId }
+      })
+
+      return {
+        success: true,
+        fulfillmentId: fulfillment.id
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+      // Log the failed action
+      await this.logAction({
+        agentId,
+        integrationId: 'shopify',
+        actionType: 'order_fulfill',
+        actionData: { orderId, fulfillmentData },
+        status: 'failed',
+        error: errorMessage
+      })
+
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+  }
+
   // Schedule an autonomous action for later execution
   async scheduleAction(
     agentId: string,
@@ -179,7 +410,7 @@ export class AutonomousActionManager {
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
       const supabase = createSupabaseServerClient()
-      
+
       const { data, error } = await supabase
         .from('autonomous_actions')
         .insert({
@@ -321,7 +552,7 @@ export function createAutonomousActionManager(userId: string): AutonomousActionM
 export async function grantDefaultPermissions(userId: string, integrationId: string): Promise<void> {
   try {
     const supabase = createSupabaseServerClient()
-    
+
     // Default permissions for Facebook Business
     if (integrationId === 'facebook-business') {
       const defaultPermissions = [
@@ -340,6 +571,70 @@ export async function grantDefaultPermissions(userId: string, integrationId: str
           enabled: true,
           max_frequency: 'hourly',
           restrictions: { maxActions: 20 }
+        }
+      ]
+
+      await supabase.from('action_permissions').upsert(defaultPermissions)
+    }
+
+    // Default permissions for Shopify
+    if (integrationId === 'shopify') {
+      const defaultPermissions = [
+        {
+          user_id: userId,
+          integration_id: integrationId,
+          action_type: 'product_create',
+          enabled: true,
+          max_frequency: 'daily',
+          restrictions: { maxActions: 10 }
+        },
+        {
+          user_id: userId,
+          integration_id: integrationId,
+          action_type: 'product_update',
+          enabled: true,
+          max_frequency: 'hourly',
+          restrictions: { maxActions: 50 }
+        },
+        {
+          user_id: userId,
+          integration_id: integrationId,
+          action_type: 'inventory_update',
+          enabled: true,
+          max_frequency: 'hourly',
+          restrictions: { maxActions: 100 }
+        },
+        {
+          user_id: userId,
+          integration_id: integrationId,
+          action_type: 'order_fulfill',
+          enabled: true,
+          max_frequency: 'hourly',
+          restrictions: { maxActions: 25 }
+        },
+        {
+          user_id: userId,
+          integration_id: integrationId,
+          action_type: 'customer_create',
+          enabled: true,
+          max_frequency: 'daily',
+          restrictions: { maxActions: 20 }
+        },
+        {
+          user_id: userId,
+          integration_id: integrationId,
+          action_type: 'price_update',
+          enabled: false, // Requires explicit approval
+          max_frequency: 'daily',
+          restrictions: { maxActions: 5, requiresApproval: true }
+        },
+        {
+          user_id: userId,
+          integration_id: integrationId,
+          action_type: 'bulk_operations',
+          enabled: false, // Requires explicit approval
+          max_frequency: 'daily',
+          restrictions: { maxActions: 2, requiresApproval: true }
         }
       ]
 

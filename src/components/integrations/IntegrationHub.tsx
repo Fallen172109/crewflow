@@ -309,7 +309,7 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
                 {/* Badges */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {/* One-click ready indicator for master OAuth integrations */}
-                  {['facebook-business', 'google-ads', 'linkedin', 'twitter'].includes(integration.id) ? (
+                  {['facebook-business', 'google-ads', 'linkedin', 'twitter', 'shopify'].includes(integration.id) ? (
                     <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700 font-medium">
                       ⚡ One-Click Ready
                     </span>

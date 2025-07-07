@@ -177,18 +177,75 @@ export const INTEGRATIONS: Record<string, IntegrationConfig> = {
   shopify: {
     id: 'shopify',
     name: 'Shopify',
-    description: 'E-commerce platform for online stores',
+    description: 'Complete e-commerce automation and store management',
     logo: '/integrations/shopify.png',
     category: 'ecommerce',
     authType: 'oauth2',
-    scopes: ['read_products', 'write_products', 'read_orders', 'write_orders', 'read_customers'],
+    productionReady: true,
+
+    features: {
+      webhooks: true,
+      realTimeSync: true,
+      bulkOperations: true,
+      fileUpload: true,
+      customFields: true
+    },
+
+    scopes: [
+      'read_products', 'write_products',
+      'read_orders', 'write_orders',
+      'read_customers', 'write_customers',
+      'read_inventory', 'write_inventory',
+      'read_fulfillments', 'write_fulfillments',
+      'read_analytics', 'read_reports',
+      'read_marketing_events', 'write_marketing_events',
+      'read_discounts', 'write_discounts',
+      'read_price_rules', 'write_price_rules',
+      'read_shipping', 'write_shipping',
+      'read_themes', 'write_themes',
+      'read_script_tags', 'write_script_tags',
+      'read_webhooks', 'write_webhooks'
+    ],
+
+    defaultScopes: [
+      'read_products', 'write_products',
+      'read_orders', 'write_orders',
+      'read_customers', 'write_customers',
+      'read_inventory', 'write_inventory'
+    ],
+
     endpoints: {
       auth: 'https://{shop}.myshopify.com/admin/oauth/authorize',
       token: 'https://{shop}.myshopify.com/admin/oauth/access_token',
-      api: 'https://{shop}.myshopify.com/admin/api/2023-10'
+      api: 'https://{shop}.myshopify.com/admin/api/2024-01',
+      webhook: 'https://{shop}.myshopify.com/admin/api/2024-01/webhooks'
     },
+
     requiredFields: ['shop_domain'],
-    testEndpoint: '/shop.json'
+    testEndpoint: '/shop.json',
+
+    oauthConfig: {
+      authorizationUrl: 'https://{shop}.myshopify.com/admin/oauth/authorize',
+      tokenUrl: 'https://{shop}.myshopify.com/admin/oauth/access_token',
+      responseType: 'code',
+      grantType: 'authorization_code',
+      pkceSupported: false,
+      refreshTokenSupported: false,
+      tokenType: 'Bearer',
+      additionalAuthParams: {
+        'grant_options[]': 'offline'
+      }
+    },
+
+    rateLimits: {
+      requestsPerMinute: 2400, // 40 requests per second * 60
+      requestsPerHour: 144000,
+      requestsPerDay: 3456000
+    },
+
+    docsUrl: 'https://shopify.dev/docs/api',
+    supportUrl: 'https://help.shopify.com/',
+    setupGuideUrl: 'https://shopify.dev/docs/apps/auth/oauth'
   },
   woocommerce: {
     id: 'woocommerce',

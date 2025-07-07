@@ -6,6 +6,7 @@ import { createPerplexityAgent } from '@/lib/ai/perplexity'
 import { createAutoGenAgent } from '@/lib/ai/autogen'
 import { getAgentTool } from '@/lib/agent-tools'
 import { trackDetailedUsage } from '@/lib/usage-analytics'
+import { handleShopifyAction, getAvailableShopifyActions, hasShopifyConnection } from '@/lib/agents/shopify-actions'
 import axios from 'axios'
 
 export async function POST(request: NextRequest) {
@@ -365,9 +366,33 @@ async function handleAnchorPresetAction(actionId: string, params: any, message?:
   const startTime = Date.now()
 
   try {
+    // Handle Shopify actions first
+    if (actionId.startsWith('shopify_')) {
+      const shopifyAction = actionId.replace('shopify_', '')
+      const shopifyResult = await handleShopifyAction({
+        action: shopifyAction,
+        params,
+        userId: params.userId || '',
+        agentId: 'anchor'
+      })
+
+      if (!shopifyResult.success) {
+        throw new Error(shopifyResult.error || 'Shopify action failed')
+      }
+
+      return {
+        response: `Aye, Captain! Successfully executed ${shopifyAction}. ${JSON.stringify(shopifyResult.data)}`,
+        tokensUsed: 0,
+        latency: Date.now() - startTime,
+        model: 'shopify-api',
+        framework: 'shopify',
+        provider: 'shopify'
+      }
+    }
+
     let prompt = ''
     let framework = 'langchain'
-    
+
     switch (actionId) {
       case 'track_inventory':
         prompt = `Track and analyze inventory levels across all locations:
