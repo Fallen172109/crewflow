@@ -12,12 +12,15 @@ export async function GET(request: NextRequest) {
     const embedded = searchParams.get('embedded')
     const hmac = searchParams.get('hmac')
     const timestamp = searchParams.get('timestamp')
-    
+
     console.log('Shopify embedded app installation request:', {
       shop,
       embedded,
       timestamp,
-      hasHmac: !!hmac
+      hasHmac: !!hmac,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      clientId: process.env.SHOPIFY_CLIENT_ID ? 'Present' : 'Missing',
+      clientSecret: process.env.SHOPIFY_CLIENT_SECRET ? 'Present' : 'Missing'
     })
 
     if (!shop) {
@@ -41,12 +44,14 @@ export async function GET(request: NextRequest) {
 
     // For embedded apps, we need to handle the installation differently
     if (embedded === '1') {
+      console.log('Handling embedded app installation for shop:', shop)
       // Return HTML that will handle the embedded app installation
       const installationHtml = generateEmbeddedInstallationPage(shop)
       return new NextResponse(installationHtml, {
         headers: {
           'Content-Type': 'text/html',
-          'X-Frame-Options': 'ALLOWALL'
+          'X-Frame-Options': 'ALLOWALL',
+          'Content-Security-Policy': "frame-ancestors 'self' https://*.shopify.com https://admin.shopify.com"
         }
       })
     }
@@ -94,19 +99,32 @@ export async function GET(request: NextRequest) {
     // Build Shopify OAuth URL
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/shopify/callback`
     const authUrl = new URL(`https://${shop}/admin/oauth/authorize`)
-    
+
     authUrl.searchParams.set('client_id', clientId)
     authUrl.searchParams.set('scope', scopes)
     authUrl.searchParams.set('redirect_uri', redirectUri)
     authUrl.searchParams.set('state', state)
-    
+
+    console.log('Shopify OAuth redirect details:', {
+      redirectUri,
+      authUrl: authUrl.toString(),
+      shop,
+      clientId: clientId.substring(0, 8) + '...'
+    })
+
     // Redirect to Shopify OAuth
     return NextResponse.redirect(authUrl.toString())
 
   } catch (error) {
     console.error('Shopify installation error:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('Environment check:', {
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      hasClientId: !!process.env.SHOPIFY_CLIENT_ID,
+      hasClientSecret: !!process.env.SHOPIFY_CLIENT_SECRET
+    })
     return NextResponse.json(
-      { error: 'Installation failed' },
+      { error: 'Installation failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
