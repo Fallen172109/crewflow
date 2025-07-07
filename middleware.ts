@@ -10,6 +10,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // Skip middleware for Shopify auth routes to prevent interference
+  if (pathname.startsWith('/api/auth/shopify/')) {
+    return NextResponse.next()
+  }
+
   // Handle Supabase authentication for API routes
   if (pathname.startsWith('/api/')) {
     let response = NextResponse.next({
