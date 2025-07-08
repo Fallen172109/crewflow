@@ -42,3 +42,5 @@ next-env.d.ts
 
 # Temporary directories
 crewflow-app/
+
+.vercel

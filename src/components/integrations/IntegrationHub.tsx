@@ -129,7 +129,29 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
     setConnectingIntegration(integrationId)
 
     try {
-      // Call the real OAuth connect endpoint
+      // Special handling for Shopify - route to dedicated Shopify OAuth flow
+      if (integrationId === 'shopify') {
+        const shopDomain = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com):')
+        if (shopDomain) {
+          const cleanDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '')
+
+          // Validate domain format
+          if (!cleanDomain.endsWith('.myshopify.com')) {
+            alert('Please enter a valid Shopify domain ending with .myshopify.com')
+            setConnectingIntegration('')
+            return
+          }
+
+          // Redirect to Shopify OAuth flow
+          window.location.href = `/api/auth/shopify?shop=${encodeURIComponent(cleanDomain)}`
+          return
+        } else {
+          setConnectingIntegration('')
+          return
+        }
+      }
+
+      // Call the real OAuth connect endpoint for other integrations
       const response = await fetch('/api/integrations/connect', {
         method: 'POST',
         headers: {
