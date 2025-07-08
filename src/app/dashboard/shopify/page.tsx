@@ -7,6 +7,7 @@ import ShopifyConnectionStatus from '@/components/shopify/ShopifyConnectionStatu
 import ProductManagement from '@/components/shopify/ProductManagement'
 import OrderManagement from '@/components/shopify/OrderManagement'
 import AnalyticsDashboard from '@/components/shopify/AnalyticsDashboard'
+import ConnectStoreModal from '@/components/shopify/ConnectStoreModal'
 import {
   Store,
   Package,
@@ -54,6 +55,7 @@ export default function ShopifyDashboard() {
   const [metrics, setMetrics] = useState<StoreMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected')
+  const [showShopifyModal, setShowShopifyModal] = useState(false)
 
   useEffect(() => {
     loadShopifyData()
@@ -212,14 +214,7 @@ export default function ShopifyDashboard() {
           stores={stores}
           selectedStore={selectedStore}
           onStoreSelect={setSelectedStore}
-          onConnect={() => {
-            // Redirect to Shopify OAuth flow
-            const shopDomain = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com):')
-            if (shopDomain) {
-              const cleanDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '')
-              window.location.href = `/api/auth/shopify?shop=${encodeURIComponent(cleanDomain)}`
-            }
-          }}
+          onConnect={() => setShowShopifyModal(true)}
           onRefresh={loadShopifyData}
           loading={loading}
         />
@@ -334,6 +329,16 @@ export default function ShopifyDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Shopify Connect Modal */}
+      <ConnectStoreModal
+        isOpen={showShopifyModal}
+        onClose={() => setShowShopifyModal(false)}
+        onSuccess={() => {
+          setShowShopifyModal(false)
+          loadShopifyData() // Refresh the data after successful connection
+        }}
+      />
     </div>
   )
 }

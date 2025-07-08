@@ -27,6 +27,7 @@ import {
   EyeOff,
   TestTube
 } from 'lucide-react'
+import ConnectStoreModal from '@/components/shopify/ConnectStoreModal'
 
 interface IntegrationHubProps {
   className?: string
@@ -37,6 +38,7 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
   const [error, setError] = useState<string | null>(null)
   const [connections, setConnections] = useState<any[]>([])
   const [connectingIntegration, setConnectingIntegration] = useState<string | null>(null)
+  const [showShopifyModal, setShowShopifyModal] = useState(false)
 
   // Demo integrations to show in the interface
   const demoIntegrations = [
@@ -129,26 +131,11 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
     setConnectingIntegration(integrationId)
 
     try {
-      // Special handling for Shopify - route to dedicated Shopify OAuth flow
+      // Special handling for Shopify - show modal instead of prompt
       if (integrationId === 'shopify') {
-        const shopDomain = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com):')
-        if (shopDomain) {
-          const cleanDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '')
-
-          // Validate domain format
-          if (!cleanDomain.endsWith('.myshopify.com')) {
-            alert('Please enter a valid Shopify domain ending with .myshopify.com')
-            setConnectingIntegration('')
-            return
-          }
-
-          // Redirect to Shopify OAuth flow
-          window.location.href = `/api/auth/shopify?shop=${encodeURIComponent(cleanDomain)}`
-          return
-        } else {
-          setConnectingIntegration('')
-          return
-        }
+        setShowShopifyModal(true)
+        setConnectingIntegration('')
+        return
       }
 
       // Call the real OAuth connect endpoint for other integrations
@@ -356,6 +343,16 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
           })}
         </div>
       </div>
+
+      {/* Shopify Connect Modal */}
+      <ConnectStoreModal
+        isOpen={showShopifyModal}
+        onClose={() => setShowShopifyModal(false)}
+        onSuccess={() => {
+          setShowShopifyModal(false)
+          // Optionally refresh connections or show success message
+        }}
+      />
     </div>
   )
 }

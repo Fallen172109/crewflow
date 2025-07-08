@@ -103,7 +103,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
               <p className="text-gray-600 mb-4">
                 Enter your Shopify store domain to connect it to CrewFlow. Your AI maritime crew will be able to manage your store operations automatically.
               </p>
-              
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -116,6 +116,18 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
                       <li>• You'll return to the CrewFlow dashboard</li>
                     </ul>
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900 mb-2">How to find your store domain:</p>
+                  <ul className="text-gray-700 space-y-1">
+                    <li>• Log into your Shopify admin panel</li>
+                    <li>• Look at the URL - it will be something like <code className="bg-gray-200 px-1 rounded">yourstore.myshopify.com</code></li>
+                    <li>• Or check your store settings for the "myshopify.com domain"</li>
+                    <li>• Example: If your store is "Ocean Gear", your domain might be <code className="bg-gray-200 px-1 rounded">ocean-gear.myshopify.com</code></li>
+                  </ul>
                 </div>
               </div>
             </div>
