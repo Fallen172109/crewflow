@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { handleAuthError } from '@/lib/auth-error-handler'
 import ShopifyConnectionStatus from '@/components/shopify/ShopifyConnectionStatus'
 import ProductManagement from '@/components/shopify/ProductManagement'
 import OrderManagement from '@/components/shopify/OrderManagement'
@@ -56,43 +57,87 @@ export default function ShopifyDashboard() {
 
   useEffect(() => {
     loadShopifyData()
+
+    // Check for OAuth callback parameters
+    const urlParams = new URLSearchParams(window.location.search)
+    const success = urlParams.get('success')
+    const error = urlParams.get('error')
+    const store = urlParams.get('store')
+
+    if (success === 'store_connected' && store) {
+      // Show success message
+      console.log(`Successfully connected store: ${store}`)
+      // You could show a toast notification here
+    } else if (error) {
+      // Show error message
+      console.error(`OAuth error: ${error}`)
+      // You could show an error toast here
+    }
   }, [])
 
   const loadShopifyData = async () => {
     try {
       setLoading(true)
-      // TODO: Implement API calls to load Shopify stores and metrics
-      // For now, using mock data
-      const mockStores: ShopifyStore[] = [
-        {
-          id: '1',
-          shop_domain: 'demo-store.myshopify.com',
-          store_name: 'Demo Maritime Store',
-          currency: 'USD',
-          status: 'active',
-          total_products: 156,
-          total_orders: 1247,
-          total_customers: 892,
-          monthly_revenue: 45230.50,
-          last_sync: new Date().toISOString()
+
+      // Load real Shopify stores from API
+      const response = await fetch('/api/shopify/stores')
+      if (response.ok) {
+        const data = await response.json()
+        const stores = data.stores || []
+
+        // Transform API data to component format
+        const transformedStores: ShopifyStore[] = stores.map((store: any) => ({
+          id: store.id,
+          shop_domain: store.shop_domain,
+          store_name: store.store_name,
+          currency: store.currency,
+          status: store.is_active ? 'active' : 'inactive',
+          total_products: store.sync_data?.products || 0,
+          total_orders: store.sync_data?.orders || 0,
+          total_customers: store.sync_data?.customers || 0,
+          monthly_revenue: store.sync_data?.revenue || 0,
+          last_sync: store.last_sync_at || store.connected_at
+        }))
+
+        setStores(transformedStores)
+        setSelectedStore(transformedStores.find(s => s.status === 'active') || transformedStores[0] || null)
+
+        // Calculate metrics from stores
+        if (transformedStores.length > 0) {
+          const totalRevenue = transformedStores.reduce((sum, store) => sum + store.monthly_revenue, 0)
+          const totalProducts = transformedStores.reduce((sum, store) => sum + store.total_products, 0)
+          const totalOrders = transformedStores.reduce((sum, store) => sum + store.total_orders, 0)
+          const totalCustomers = transformedStores.reduce((sum, store) => sum + store.total_customers, 0)
+
+          const metrics: StoreMetrics = {
+            totalRevenue,
+            ordersToday: Math.floor(totalOrders * 0.05), // Estimate 5% of orders are today
+            productsCount: totalProducts,
+            customersCount: totalCustomers,
+            conversionRate: totalOrders > 0 ? (totalOrders / totalCustomers) * 100 : 0,
+            averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0
+          }
+
+          setMetrics(metrics)
+          setConnectionStatus('connected')
+        } else {
+          setMetrics(null)
+          setConnectionStatus('disconnected')
         }
-      ]
-
-      const mockMetrics: StoreMetrics = {
-        totalRevenue: 45230.50,
-        ordersToday: 23,
-        productsCount: 156,
-        customersCount: 892,
-        conversionRate: 3.2,
-        averageOrderValue: 89.45
+      } else {
+        console.error('Failed to load stores:', response.statusText)
+        setStores([])
+        setMetrics(null)
+        setConnectionStatus('disconnected')
       }
-
-      setStores(mockStores)
-      setSelectedStore(mockStores[0])
-      setMetrics(mockMetrics)
-      setConnectionStatus(mockStores.length > 0 ? 'connected' : 'disconnected')
     } catch (error) {
       console.error('Failed to load Shopify data:', error)
+
+      // Handle auth errors gracefully
+      await handleAuthError(error)
+
+      setStores([])
+      setMetrics(null)
       setConnectionStatus('error')
     } finally {
       setLoading(false)
@@ -168,8 +213,12 @@ export default function ShopifyDashboard() {
           selectedStore={selectedStore}
           onStoreSelect={setSelectedStore}
           onConnect={() => {
-            // TODO: Implement OAuth connection flow
-            console.log('Connecting to Shopify...')
+            // Redirect to Shopify OAuth flow
+            const shopDomain = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com):')
+            if (shopDomain) {
+              const cleanDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '')
+              window.location.href = `/api/auth/shopify?shop=${encodeURIComponent(cleanDomain)}`
+            }
           }}
           onRefresh={loadShopifyData}
           loading={loading}

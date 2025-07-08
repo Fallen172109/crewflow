@@ -33,18 +33,32 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Verify state parameter
+    // Verify state parameter - handle both user-initiated and app installation flows
     const { data: oauthState, error: stateError } = await supabase
       .from('oauth_states')
       .select('*')
-      .eq('user_id', user.id)
       .eq('state', state)
       .eq('shop_domain', shop)
       .gt('expires_at', new Date().toISOString())
+      .eq('used', false)
       .single()
-    
+
     if (stateError || !oauthState) {
       console.error('Invalid OAuth state:', stateError)
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/shopify?error=invalid_state`
+      )
+    }
+
+    // If this is an app installation (user_id is null), update it with the current user
+    if (!oauthState.user_id) {
+      await supabase
+        .from('oauth_states')
+        .update({ user_id: user.id })
+        .eq('id', oauthState.id)
+    } else if (oauthState.user_id !== user.id) {
+      // State belongs to a different user
+      console.error('OAuth state user mismatch')
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/shopify?error=invalid_state`
       )
@@ -69,11 +83,10 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Clean up OAuth state
+    // Mark OAuth state as used instead of deleting (for audit trail)
     await supabase
       .from('oauth_states')
-      .delete()
-      .eq('user_id', user.id)
+      .update({ used: true })
       .eq('state', state)
     
     // Redirect to success page

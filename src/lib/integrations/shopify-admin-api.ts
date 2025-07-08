@@ -46,29 +46,35 @@ export class ShopifyAdminAPI {
   }
 
   // Initialize the API client with user's Shopify credentials
-  async initialize(): Promise<boolean> {
+  async initialize(shopDomain?: string): Promise<boolean> {
     try {
       const supabase = createSupabaseServerClient()
-      
-      const { data: connection } = await supabase
+
+      let query = supabase
         .from('api_connections')
-        .select('access_token, facebook_user_id, status')
+        .select('access_token, shop_domain, status')
         .eq('user_id', this.userId)
         .eq('integration_id', 'shopify')
         .eq('status', 'connected')
-        .single()
+
+      // If shop domain is provided, filter by it, otherwise get the first active connection
+      if (shopDomain) {
+        query = query.eq('shop_domain', shopDomain)
+      }
+
+      const { data: connection } = await query.single()
 
       if (!connection?.access_token) {
         console.warn('No Shopify access token found for user:', this.userId)
         return false
       }
 
-      // For Shopify, facebook_user_id field stores the shop domain
-      this.shopDomain = connection.facebook_user_id
+      // Use the correct shop_domain field
+      this.shopDomain = connection.shop_domain
       this.accessToken = connection.access_token
-      
+
       if (this.shopDomain) {
-        this.baseUrl = `https://${this.shopDomain}.myshopify.com/admin/api/2024-01`
+        this.baseUrl = `https://${this.shopDomain}/admin/api/2024-01`
       }
 
       return true
@@ -667,14 +673,24 @@ export class ShopifyAdminAPI {
 }
 
 // Factory function to create Shopify API instance
-export async function createShopifyAPI(userId: string): Promise<ShopifyAdminAPI | null> {
+export async function createShopifyAPI(userId: string, accessToken?: string, shopDomain?: string): Promise<ShopifyAdminAPI | null> {
   const api = new ShopifyAdminAPI(userId)
-  const initialized = await api.initialize()
-  
+
+  // If access token and shop domain are provided directly, use them
+  if (accessToken && shopDomain) {
+    api['accessToken'] = accessToken
+    api['shopDomain'] = shopDomain
+    api['baseUrl'] = `https://${shopDomain}/admin/api/2024-01`
+    return api
+  }
+
+  // Otherwise initialize from database
+  const initialized = await api.initialize(shopDomain)
+
   if (!initialized) {
     return null
   }
-  
+
   return api
 }
 

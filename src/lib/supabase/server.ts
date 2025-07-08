@@ -32,6 +32,11 @@ export async function createSupabaseServerClient() {
           }
         },
       },
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
     }
   )
 }
