@@ -4,6 +4,7 @@ import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🚢 Shopify OAuth initiation started')
     const { searchParams } = new URL(request.url)
     const shop = searchParams.get('shop')
     
