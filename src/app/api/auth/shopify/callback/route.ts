@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
 
 async function exchangeCodeForToken(code: string, shop: string): Promise<string | null> {
   try {
-    const clientId = process.env.SHOPIFY_CLIENT_ID
-    const clientSecret = process.env.SHOPIFY_CLIENT_SECRET
+    const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
+    const clientSecret = process.env.SHOPIFY_CLIENT_SECRET || process.env.CREWFLOW_SHOPIFY_CLIENT_SECRET
     
     if (!clientId || !clientSecret) {
       throw new Error('Shopify credentials not configured')

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    const clientId = process.env.SHOPIFY_CLIENT_ID
+    const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
     if (!clientId) {
       return NextResponse.json(
         { error: 'Shopify client ID not configured' },
