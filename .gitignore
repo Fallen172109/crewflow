@@ -79,3 +79,31 @@ temp/
 *~
 
 .vercel
+
+# Security and credentials (additional protection)
+*.key
+*.pem
+*.p12
+*.pfx
+config/secrets.json
+secrets/
+.secrets/
+.env.production
+.env.staging
+.env.backup
+*-credentials.json
+*-service-account.json
+
+# Debug and development artifacts
+src/app/api/debug*/
+src/app/debug*/
+src/app/test*/
+debug-*.log
+*.debug.log
+.debug/
+
+# Backup files
+*.backup
+*.bak
+*~
+.DS_Store?

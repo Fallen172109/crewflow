@@ -25,8 +25,8 @@ In Vercel dashboard, go to Project Settings → Environment Variables and add:
 ### Required Variables
 ```bash
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://bmlieuyijpgxdhvicpsf.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # AI Services

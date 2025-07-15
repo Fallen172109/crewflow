@@ -3,9 +3,13 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Debug: Log environment variables (remove in production)
-console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase Anon Key:', supabaseAnonKey ? `Present (${supabaseAnonKey.substring(0, 20)}...)` : 'Missing')
+// Validate environment variables are present
+if (process.env.NODE_ENV === 'development') {
+  console.log('Supabase configuration:', {
+    url: supabaseUrl ? 'Present' : 'Missing',
+    anonKey: supabaseAnonKey ? 'Present' : 'Missing'
+  })
+}
 
 // Validate environment variables
 if (!supabaseUrl) {

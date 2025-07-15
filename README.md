@@ -77,7 +77,7 @@ npm install
 ```
 
 3. **Set up environment variables**
-Copy `.env.local` and fill in your credentials:
+Copy `.env.example` to `.env.local` and fill in your credentials:
 ```bash
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
