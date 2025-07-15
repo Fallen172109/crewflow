@@ -13,7 +13,9 @@
     "test:shopify": "node scripts/test-shopify-integration.js",
     "test:quick": "bash scripts/quick-test.sh",
     "test:unit": "jest",
-    "test:integration": "npm run test:shopify && npm run test"
+    "test:integration": "npm run test:shopify && npm run test",
+    "cleanup:quick": "bash scripts/quick-cleanup.sh",
+    "cleanup:deep": "bash scripts/deep-cleanup.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0",
@@ -34,6 +36,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "langchain": "^0.1.25",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.460.0",
     "next": "15.3.3",
     "node-fetch": "^3.3.2",

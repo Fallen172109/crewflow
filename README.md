@@ -164,6 +164,10 @@ src/
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run test:unit` - Run unit tests
+- `npm run test:shopify` - Run Shopify integration tests
+- `npm run cleanup:quick` - Quick cleanup of temporary files
+- `npm run cleanup:deep` - Deep cleanup with dependency reinstall
 
 ### Key Components
 - **AgentInterface**: Main agent interaction component
@@ -171,6 +175,13 @@ src/
 - **PresetActions**: One-click automation buttons
 - **DashboardNav**: Navigation with search and profile
 - **DashboardSidebar**: Agent navigation and usage stats
+
+### Development & Testing
+- **temp/**: Directory for temporary test files and experiments
+- **temp/examples/**: Templates for common testing scenarios
+- Use `temp/examples/test-agent-template.js` for agent testing
+- Use `temp/examples/debug-api-template.js` for API debugging
+- See `CODEBASE_MAINTENANCE_GUIDE.md` for cleanup procedures
 
 ## 🔐 Security
 

@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-export default {
+const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -16,7 +16,7 @@ export default {
           200: '#fed7aa',
           300: '#fdba74',
           400: '#fb923c',
-          500: '#f97316', // Main orange
+          500: '#FF6A3D', // Main orange - updated to match spec
           600: '#ea580c',
           700: '#c2410c',
           800: '#9a3412',
@@ -90,6 +90,11 @@ export default {
         'wave': 'wave 2s ease-in-out infinite',
         'float': 'float 3s ease-in-out infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
+        // New boat animations
+        'waveFast': 'waveMotion 4s linear infinite',
+        'waveMedium': 'waveMotion 8s linear infinite',
+        'waveSlow': 'waveMotion 12s linear infinite',
+        'boatFloatSynced': 'boatFloat 4s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -112,6 +117,15 @@ export default {
           '0%': { boxShadow: '0 0 5px #f97316' },
           '100%': { boxShadow: '0 0 20px #f97316, 0 0 30px #f97316' },
         },
+        // New boat keyframes
+        waveMotion: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+        boatFloat: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -129,4 +143,6 @@ export default {
   plugins: [
     require('@tailwindcss/typography'),
   ],
-} satisfies Config;
+};
+
+export default config;

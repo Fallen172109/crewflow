@@ -113,8 +113,9 @@ if (threadId) {
 ## 🧪 Testing & Validation
 
 ### Test Pages Created:
-- `src/app/test-chat-fixes/page.tsx` - Basic functionality testing
-- `src/app/test-complete-fixes/page.tsx` - Comprehensive validation suite
+- Test pages have been moved to `temp/examples/` directory for better organization
+- Use `temp/examples/test-agent-template.js` for agent functionality testing
+- Use `temp/examples/debug-api-template.js` for API debugging
 
 ### Test Coverage:
 1. **Image Generation Security** - Verify user-specific storage and signed URLs

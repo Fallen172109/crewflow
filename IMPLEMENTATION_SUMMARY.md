@@ -85,10 +85,11 @@ All tasks in the current task list have been successfully completed. CrewFlow no
 - **Performance Benchmarks**: Measure response times and token usage
 
 ### Test Files Created
-- `test-coral-agent.js` - Coral-specific test scenarios
-- `test-all-agents.js` - Comprehensive test runner for all agents
-- Individual test pages for each agent (`/test-coral`, `/test-mariner`, etc.)
+- `test-all-agents.js` - Comprehensive test runner for all agents (kept for ongoing testing)
+- `scripts/test-shopify-integration.js` - Shopify integration testing
+- `scripts/quick-test.sh` - Quick validation script
 - Agents dashboard (`/agents-dashboard`) for status monitoring
+- Template files in `temp/examples/` for future testing needs
 
 ## 🎯 Key Achievements
 
@@ -122,7 +123,7 @@ Each agent has unique, domain-specific capabilities:
 ### Immediate Actions
 1. **Environment Setup**: Configure API keys for OpenAI, Perplexity AI
 2. **Integration Configuration**: Set up third-party service connections
-3. **Testing**: Run comprehensive test suite with `node test-all-agents.js`
+3. **Testing**: Run comprehensive test suite with `node test-all-agents.js` or use templates in `temp/examples/`
 4. **Deployment**: Deploy to production environment
 
 ### Future Enhancements
@@ -157,8 +158,8 @@ src/
     ├── autogen.ts
     └── index.ts
 
-test-coral-agent.js
 test-all-agents.js
+temp/examples/ (test templates)
 ```
 
 ## 🎊 Success Metrics

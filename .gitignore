@@ -43,4 +43,39 @@ next-env.d.ts
 # Temporary directories
 crewflow-app/
 
+# CrewFlow: Temporary test files and development artifacts
+# Prevent accumulation of one-time test scripts
+test-*.js
+test-*.ts
+test-*.jsx
+test-*.tsx
+validate-*.js
+debug-*.js
+
+# Temporary test routes (use /temp directory instead)
+src/app/test-*/
+src/app/debug-*/
+src/app/api/test-*/
+
+# Temporary documentation and notes
+*-temp.md
+*-debug.md
+*-notes.md
+debug-*.md
+test-*.md
+
+# Development artifacts
+*.log.local
+*.debug
+.temp/
+temp/
+/temp
+
+# IDE and editor temporary files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
 .vercel
