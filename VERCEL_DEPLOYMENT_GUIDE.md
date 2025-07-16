@@ -5,7 +5,7 @@ This guide will help you deploy CrewFlow to Vercel with automatic GitHub integra
 ## Prerequisites
 
 - GitHub repository: `https://github.com/Fallen172109/crewflow.git`
-- Domain: `crewflow.dev`
+- Domain: `crewflow.ai`
 - Supabase project: CrewFlowNEW (bmlieuyijpgxdhvicpsf)
 
 ## Step 1: Deploy to Vercel
@@ -42,7 +42,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
 
 # Application Settings
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://crewflow.dev
+NEXT_PUBLIC_APP_URL=https://crewflow.ai
 ```
 
 ### Optional OAuth Variables (add as needed)
@@ -66,11 +66,11 @@ SALESFORCE_CLIENT_SECRET=your-salesforce-client-secret
 
 1. **In Vercel Dashboard**:
    - Go to Project Settings → Domains
-   - Add `crewflow.dev` as a custom domain
-   - Add `www.crewflow.dev` (optional)
+   - Add `crewflow.ai` as a custom domain
+   - Add `www.crewflow.ai` (optional)
 
 2. **Update DNS Records**:
-   - Go to your domain registrar (where you bought crewflow.dev)
+   - Go to your domain registrar (where you bought crewflow.ai)
    - Update DNS records to point to Vercel:
      - Type: `A`, Name: `@`, Value: `76.76.19.61`
      - Type: `CNAME`, Name: `www`, Value: `cname.vercel-dns.com`
@@ -100,16 +100,16 @@ Vercel should auto-detect Next.js, but verify these settings:
 
 Once deployed, test these endpoints:
 
-1. **Homepage**: https://crewflow.dev
-2. **Health Check**: https://crewflow.dev/api/health
-3. **Authentication**: https://crewflow.dev/auth/login
-4. **Dashboard**: https://crewflow.dev/dashboard (after login)
+1. **Homepage**: https://crewflow.ai
+2. **Health Check**: https://crewflow.ai/api/health
+3. **Authentication**: https://crewflow.ai/auth/login
+4. **Dashboard**: https://crewflow.ai/dashboard (after login)
 
 ## Step 7: Set Up Automatic Deployments
 
 Vercel automatically deploys when you push to GitHub:
 
-- **Production**: Pushes to `main` branch → https://crewflow.dev
+- **Production**: Pushes to `main` branch → https://crewflow.ai
 - **Preview**: Pushes to other branches → temporary preview URLs
 
 ## Troubleshooting
@@ -169,4 +169,4 @@ Vercel automatically deploys when you push to GitHub:
 
 ---
 
-After deployment, your CrewFlow application will be live at https://crewflow.dev with automatic updates from GitHub!
+After deployment, your CrewFlow application will be live at https://crewflow.ai with automatic updates from GitHub!

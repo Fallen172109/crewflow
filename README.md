@@ -221,6 +221,18 @@ CrewFlow implements systematic maintenance procedures to ensure codebase quality
 - **.gitignore**: Comprehensive exclusions for clean repository
 - **Automated Cleanup**: Regular removal of obsolete test files
 
+## 🌐 Domain Information
+
+**Primary Domain**: [crewflow.ai](https://crewflow.ai) - The official CrewFlow platform
+
+### Domain Migration (January 2025)
+CrewFlow has migrated from `crewflow.dev` to `crewflow.ai` as our primary domain. All traffic from the old domain is automatically redirected to ensure seamless access.
+
+- **New Primary Domain**: `crewflow.ai`
+- **Previous Domain**: `crewflow.dev` (automatically redirects)
+- **Redirect Configuration**: Implemented via Next.js redirects in `next.config.ts`
+- **Migration Date**: January 2025
+
 ## 🚀 Deployment Status
 
 **Latest Update**: January 15, 2025 - Major codebase cleanup and maintenance system implementation!
