@@ -19,7 +19,7 @@
 - [x] `SHOPIFY_CLIENT_ID=1873049b3cc9829b691afd92310124cf`
 - [x] `SHOPIFY_CLIENT_SECRET=328b2274325dd6cfe2965b343571110e`
 - [x] `SHOPIFY_WEBHOOK_SECRET=CrewFlowShopifyWebhook2024!Maritime`
-- [x] `NEXT_PUBLIC_APP_URL=https://crewflow.dev`
+- [x] `NEXT_PUBLIC_APP_URL=https://crewflow.ai`
 
 ### ✅ Code Fixes Applied
 - [x] API Client field mapping fixed (`shop_domain` vs `facebook_user_id`)
@@ -58,7 +58,7 @@
 ## 🧪 Production Testing Protocol
 
 ### Phase 1: Basic Connectivity
-- [ ] Visit `https://crewflow.dev/dashboard/shopify`
+- [ ] Visit `https://crewflow.ai/dashboard/shopify`
 - [ ] Verify page loads without errors
 - [ ] Check browser console for JavaScript errors
 - [ ] Verify "Connect Store" button is functional
@@ -117,7 +117,7 @@ echo $SHOPIFY_CLIENT_ID
 echo $NEXT_PUBLIC_APP_URL
 
 # Verify API routes
-curl https://crewflow.dev/api/shopify/stores
+curl https://crewflow.ai/api/shopify/stores
 ```
 
 ## 📊 Success Criteria

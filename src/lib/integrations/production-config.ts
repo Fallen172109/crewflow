@@ -134,14 +134,14 @@ const ENVIRONMENT_CONFIGS: Record<string, Partial<ProductionConfig>> = {
   },
   staging: {
     environment: 'staging',
-    baseUrl: 'https://staging.crewflow.com',
+    baseUrl: 'https://staging.crewflow.ai',
     security: {
       rateLimiting: {
         enabled: true,
         maxRequests: 200
       },
       cors: {
-        origins: ['https://staging.crewflow.com']
+        origins: ['https://staging.crewflow.ai']
       }
     },
     monitoring: {
@@ -154,14 +154,14 @@ const ENVIRONMENT_CONFIGS: Record<string, Partial<ProductionConfig>> = {
   },
   production: {
     environment: 'production',
-    baseUrl: 'https://crewflow.com',
+    baseUrl: 'https://crewflow.ai',
     security: {
       rateLimiting: {
         enabled: true,
         maxRequests: 100
       },
       cors: {
-        origins: ['https://crewflow.com', 'https://www.crewflow.com']
+        origins: ['https://crewflow.ai', 'https://www.crewflow.ai']
       }
     },
     monitoring: {

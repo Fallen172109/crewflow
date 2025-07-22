@@ -7,7 +7,7 @@ The CrewFlow Shopify Integration provides a comprehensive API for managing e-com
 ## Base URL
 
 ```
-Production: https://crewflow.dev/api
+Production: https://crewflow.ai/api
 Development: http://localhost:3000/api
 ```
 
@@ -446,7 +446,7 @@ import { CrewFlowAPI } from '@crewflow/sdk'
 
 const crewflow = new CrewFlowAPI({
   apiKey: 'your-api-key',
-  baseURL: 'https://crewflow.dev/api'
+  baseURL: 'https://crewflow.ai/api'
 })
 
 // Connect store
@@ -472,7 +472,7 @@ from crewflow import CrewFlowAPI
 
 crewflow = CrewFlowAPI(
     api_key='your-api-key',
-    base_url='https://crewflow.dev/api'
+    base_url='https://crewflow.ai/api'
 )
 
 # Connect store
@@ -505,7 +505,7 @@ result = crewflow.agents.anchor.update_inventory(
    {
      "webhook": {
        "topic": "orders/create",
-       "address": "https://crewflow.dev/api/webhooks/shopify/{userId}/{storeId}",
+       "address": "https://crewflow.ai/api/webhooks/shopify/{userId}/{storeId}",
        "format": "json"
      }
    }

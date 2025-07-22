@@ -2,6 +2,7 @@
 // Enables AI agents to autonomously manage Shopify stores, products, orders, and customers
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { OAuthSecurityManager } from '@/lib/integrations/security'
 import {
   ShopifyStore,
   ShopifyProduct,
@@ -49,10 +50,11 @@ export class ShopifyAdminAPI {
   async initialize(shopDomain?: string): Promise<boolean> {
     try {
       const supabase = createSupabaseServerClient()
+      const securityManager = new OAuthSecurityManager()
 
       let query = supabase
         .from('api_connections')
-        .select('access_token, shop_domain, status')
+        .select('access_token, api_key_encrypted, shop_domain, status')
         .eq('user_id', this.userId)
         .eq('integration_id', 'shopify')
         .eq('status', 'connected')
@@ -64,14 +66,29 @@ export class ShopifyAdminAPI {
 
       const { data: connection } = await query.single()
 
-      if (!connection?.access_token) {
+      if (!connection) {
+        console.warn('No Shopify connection found for user:', this.userId)
+        return false
+      }
+
+      // Decrypt the access token (prefer api_key_encrypted, fallback to access_token)
+      const encryptedToken = connection.api_key_encrypted || connection.access_token
+      if (!encryptedToken) {
         console.warn('No Shopify access token found for user:', this.userId)
         return false
       }
 
-      // Use the correct shop_domain field
+      let accessToken: string
+      try {
+        accessToken = securityManager.decrypt(encryptedToken)
+      } catch (decryptError) {
+        console.error('Failed to decrypt access token:', decryptError)
+        return false
+      }
+
+      // Use the decrypted access token
       this.shopDomain = connection.shop_domain
-      this.accessToken = connection.access_token
+      this.accessToken = accessToken
 
       if (this.shopDomain) {
         this.baseUrl = `https://${this.shopDomain}/admin/api/2024-01`

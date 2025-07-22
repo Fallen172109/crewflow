@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { addStore } from '@/lib/shopify/multi-store-manager'
 
 export async function GET(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state')
     const shop = searchParams.get('shop')
     const error = searchParams.get('error')
-    
+
     // Handle OAuth errors
     if (error) {
       console.error('Shopify OAuth error:', error)
@@ -17,19 +17,22 @@ export async function GET(request: NextRequest) {
         `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/shopify?error=oauth_denied`
       )
     }
-    
+
     if (!code || !state || !shop) {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/shopify?error=missing_parameters`
       )
     }
-    
-    const supabase = createSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
+
+    const supabase = await createSupabaseServerClientWithCookies()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    // If user is not authenticated, redirect to login with return URL
+    if (!user || userError) {
+      console.log('User not authenticated during Shopify OAuth callback, redirecting to login')
+      const returnUrl = encodeURIComponent(`/api/auth/shopify/callback?code=${code}&state=${state}&shop=${shop}`)
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/auth/login?error=not_authenticated`
+        `${process.env.NEXT_PUBLIC_APP_URL}/auth/login?returnUrl=${returnUrl}&message=Please log in to connect your Shopify store`
       )
     }
     
@@ -74,14 +77,22 @@ export async function GET(request: NextRequest) {
     }
     
     // Add store to user's account
-    const result = await addStore(user.id, accessToken, shop)
-    
+    console.log('🔄 Adding store to user account:', { userId: user.id, shop, hasAccessToken: !!accessToken })
+    const result = await addStore(user.id, accessToken, shop, supabase)
+
     if (!result.success) {
-      console.error('Failed to add store:', result.error)
+      console.error('❌ Failed to add store:', {
+        error: result.error,
+        userId: user.id,
+        shop,
+        accessTokenLength: accessToken?.length || 0
+      })
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/shopify?error=store_connection_failed`
+        `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/shopify?error=store_connection_failed&details=${encodeURIComponent(result.error || 'Unknown error')}`
       )
     }
+
+    console.log('✅ Store added successfully:', { storeId: result.store?.id, shop })
     
     // Mark OAuth state as used instead of deleting (for audit trail)
     await supabase

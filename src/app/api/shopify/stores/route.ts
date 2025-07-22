@@ -1,27 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { getUserStores } from '@/lib/shopify/multi-store-manager'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
+    const supabase = await createSupabaseServerClientWithCookies()
+
+    // Check if supabase client was created successfully
+    if (!supabase || !supabase.auth) {
+      console.error('Supabase client not properly initialized')
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable' },
+        { status: 503 }
+      )
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError) {
+      console.error('Auth error:', authError.message)
+      return NextResponse.json(
+        { error: 'Authentication failed' },
+        { status: 401 }
+      )
+    }
+
     if (!user) {
       return NextResponse.json(
         { error: 'User not authenticated' },
         { status: 401 }
       )
     }
-    
-    // Get user's Shopify stores
-    const stores = await getUserStores(user.id)
-    
+
+    // Debug: Log user ID
+    console.log('🔍 API Debug - User ID:', user.id)
+
+    // Get user's Shopify stores - pass the authenticated supabase client
+    const stores = await getUserStores(user.id, supabase)
+
+    // Debug: Log stores result
+    console.log('🔍 API Debug - Stores returned:', { count: stores.length, stores })
+
     return NextResponse.json({
       success: true,
       stores
     })
-    
+
   } catch (error) {
     console.error('Error loading Shopify stores:', error)
     return NextResponse.json(
@@ -33,7 +57,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {

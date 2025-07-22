@@ -36,7 +36,7 @@ Create a `.env.production` file with the following variables:
 ```bash
 # Application
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://crewflow.com
+NEXT_PUBLIC_APP_URL=https://crewflow.ai
 
 # Database
 DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require

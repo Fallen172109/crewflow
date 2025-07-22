@@ -95,7 +95,7 @@
 - `SHOPIFY_CLIENT_ID`: ✅ Present
 - `SHOPIFY_CLIENT_SECRET`: ✅ Present  
 - `SHOPIFY_WEBHOOK_SECRET`: ✅ Present
-- `NEXT_PUBLIC_APP_URL`: ✅ Present (https://crewflow.dev)
+- `NEXT_PUBLIC_APP_URL`: ✅ Present (https://crewflow.ai)
 
 ## 🧪 Testing Instructions
 

@@ -3,6 +3,8 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createShopifyAPI } from '@/lib/integrations/shopify-admin-api'
+import { OAuthSecurityManager } from '@/lib/integrations/security'
+import crypto from 'crypto'
 
 export interface ShopifyStore {
   id: string
@@ -71,19 +73,63 @@ export interface CrossStoreInsight {
   impact: 'high' | 'medium' | 'low'
 }
 
-// Get all stores for a user
-export async function getUserStores(userId: string): Promise<ShopifyStore[]> {
+// Get decrypted access token for a store
+export async function getStoreAccessToken(userId: string, shopDomain: string): Promise<string | null> {
   const supabase = createSupabaseServerClient()
-  
+  const securityManager = new OAuthSecurityManager()
+
   try {
+    const { data, error } = await supabase
+      .from('api_connections')
+      .select('api_key_encrypted, access_token')
+      .eq('user_id', userId)
+      .eq('shop_domain', shopDomain)
+      .eq('integration_id', 'shopify')
+      .single()
+
+    if (error || !data) {
+      console.log('No access token found for user:', userId)
+      return null
+    }
+
+    // Try to decrypt the token (prefer api_key_encrypted, fallback to access_token)
+    const encryptedToken = data.api_key_encrypted || data.access_token
+    if (!encryptedToken) {
+      return null
+    }
+
+    return securityManager.decrypt(encryptedToken)
+  } catch (error) {
+    console.error('Error retrieving access token:', error)
+    return null
+  }
+}
+
+// Get all stores for a user
+export async function getUserStores(userId: string, supabaseClient?: any): Promise<ShopifyStore[]> {
+  // Use provided client or create a new one
+  const supabase = supabaseClient || createSupabaseServerClient()
+
+  try {
+    // Check if supabase client was created successfully
+    if (!supabase) {
+      console.error('Supabase client not available in getUserStores')
+      return []
+    }
+
+    console.log('🔍 getUserStores Debug - User ID:', userId)
+
     const { data, error } = await supabase
       .from('shopify_stores')
       .select('*')
       .eq('user_id', userId)
       .order('is_primary', { ascending: false })
       .order('connected_at', { ascending: false })
-    
+
+    console.log('🔍 getUserStores Debug - Query result:', { data, error })
+
     if (error) {
+      console.error('Database error in getUserStores:', error)
       throw error
     }
     
@@ -113,24 +159,88 @@ export async function getUserStores(userId: string): Promise<ShopifyStore[]> {
 }
 
 // Add a new store
-export async function addStore(userId: string, accessToken: string, shopDomain: string): Promise<{ success: boolean; store?: ShopifyStore; error?: string }> {
-  const supabase = createSupabaseServerClient()
-  
+export async function addStore(userId: string, accessToken: string, shopDomain: string, supabaseClient?: any): Promise<{ success: boolean; store?: ShopifyStore; error?: string }> {
+  const supabase = supabaseClient || createSupabaseServerClient()
+  const securityManager = new OAuthSecurityManager()
+
   try {
+    console.log('🔄 Starting addStore process:', { userId, shopDomain, accessTokenLength: accessToken?.length || 0 })
+
+    // Check if store already exists for this user
+    const { data: existingStoreData, error: checkError } = await supabase
+      .from('shopify_stores')
+      .select('id, store_name, is_active')
+      .eq('user_id', userId)
+      .eq('shop_domain', shopDomain)
+      .single()
+
+    if (existingStoreData && !checkError) {
+      console.log('🔄 Store already exists, updating access token:', { storeId: existingStoreData.id, storeName: existingStoreData.store_name })
+
+      // Update the existing store's access token
+      const encryptedToken = securityManager.encrypt(accessToken)
+
+      const { error: updateError } = await supabase
+        .from('api_connections')
+        .upsert({
+          user_id: userId,
+          integration_id: 'shopify',
+          service_name: 'shopify',
+          api_key_encrypted: encryptedToken,
+          access_token: encryptedToken,
+          shop_domain: shopDomain,
+          store_id: existingStoreData.id,
+          status: 'connected',
+          connected_at: new Date().toISOString()
+        })
+
+      if (updateError) {
+        console.error('❌ Failed to update access token:', updateError)
+      } else {
+        console.log('✅ Access token updated successfully')
+      }
+
+      return {
+        success: true,
+        store: {
+          id: existingStoreData.id,
+          userId,
+          shopDomain,
+          storeName: existingStoreData.store_name,
+          storeEmail: '',
+          currency: '',
+          timezone: '',
+          planName: '',
+          isActive: existingStoreData.is_active,
+          isPrimary: true,
+          connectedAt: new Date(),
+          syncStatus: 'never',
+          metadata: {},
+          permissions: getDefaultPermissions(),
+          agentAccess: getDefaultAgentAccess()
+        }
+      }
+    }
+
     // Create Shopify API client with the new token
+    console.log('🔄 Creating Shopify API client...')
     const shopifyAPI = await createShopifyAPI(userId, accessToken, shopDomain)
     if (!shopifyAPI) {
+      console.error('❌ Failed to create Shopify API client')
       throw new Error('Failed to create Shopify API client')
     }
-    
+    console.log('✅ Shopify API client created successfully')
+
     // Get shop information
+    console.log('🔄 Fetching shop information...')
     const shopInfo = await shopifyAPI.getShop()
+    console.log('✅ Shop information retrieved:', { name: shopInfo.name, id: shopInfo.id, domain: shopInfo.myshopify_domain })
     
-    // Check if store already exists
-    const existingStores = await getUserStores(userId)
-    const existingStore = existingStores.find(store => store.shopDomain === shopDomain)
-    
-    if (existingStore) {
+    // Check if store already exists (this should not happen due to earlier check, but keeping as safety)
+    const allUserStores = await getUserStores(userId)
+    const duplicateStore = allUserStores.find(store => store.shopDomain === shopDomain)
+
+    if (duplicateStore) {
       return {
         success: false,
         error: 'Store is already connected'
@@ -138,7 +248,7 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
     }
     
     // Determine if this should be the primary store
-    const isPrimary = existingStores.length === 0
+    const isPrimary = allUserStores.length === 0
     
     // Create store record
     const store: ShopifyStore = {
@@ -170,6 +280,7 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
     }
     
     // Store in database
+    console.log('🔄 Inserting store into database:', { storeId: store.id, storeName: store.storeName, isPrimary })
     const { error } = await supabase.from('shopify_stores').insert({
       id: store.id,
       user_id: userId,
@@ -187,31 +298,59 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
       permissions: store.permissions,
       agent_access: store.agentAccess
     })
-    
+
     if (error) {
+      console.error('❌ Database error inserting store:', error)
       throw error
     }
-    
-    // Store access token securely
-    await supabase.from('api_connections').insert({
+    console.log('✅ Store inserted into database successfully')
+
+    // Store access token securely with encryption
+    console.log('🔄 Storing access token in api_connections...')
+    const encryptedToken = securityManager.encrypt(accessToken)
+
+    const { error: tokenError } = await supabase.from('api_connections').insert({
       user_id: userId,
       integration_id: 'shopify',
-      store_id: store.id,
-      access_token: accessToken,
+      service_name: 'shopify',
+      api_key_encrypted: encryptedToken,
+      access_token: encryptedToken,
       shop_domain: shopDomain,
+      store_id: store.id,
       status: 'connected',
       connected_at: new Date().toISOString()
     })
+
+    if (tokenError) {
+      console.error('❌ Database error storing access token:', tokenError)
+      // Don't throw error - store creation should still succeed
+      console.warn('⚠️ Continuing without storing access token...')
+    } else {
+      console.log('✅ Access token stored successfully')
+    }
     
     // Trigger initial sync
-    await syncStoreData(store.id, userId)
-    
+    console.log('🔄 Triggering initial sync...')
+    try {
+      await syncStoreData(store.id, userId)
+      console.log('✅ Initial sync completed successfully')
+    } catch (syncError) {
+      console.warn('⚠️ Initial sync failed, but store was created:', syncError)
+      // Don't fail the entire process if sync fails
+    }
+
+    console.log('✅ Store addition process completed successfully')
     return {
       success: true,
       store
     }
   } catch (error) {
-    console.error('Error adding store:', error)
+    console.error('❌ Error in addStore process:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      userId,
+      shopDomain
+    })
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -220,8 +359,8 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
 }
 
 // Remove a store
-export async function removeStore(userId: string, storeId: string): Promise<{ success: boolean; error?: string }> {
-  const supabase = createSupabaseServerClient()
+export async function removeStore(userId: string, storeId: string, supabaseClient?: any): Promise<{ success: boolean; error?: string }> {
+  const supabase = supabaseClient || createSupabaseServerClient()
   
   try {
     // Check if user owns the store

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
@@ -35,19 +35,28 @@ export async function GET(request: NextRequest) {
     const state = crypto.randomUUID()
     
     // Store state in session/database for verification
-    const supabase = createSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
+    const supabase = await createSupabaseServerClientWithCookies()
+
+    // Check if supabase client was created successfully
+    if (!supabase || !supabase.auth) {
+      console.error('Supabase client not properly initialized')
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: 'Service temporarily unavailable' },
+        { status: 503 }
       )
     }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (!user || userError) {
+      console.log('User not authenticated during Shopify OAuth initiation:', userError?.message)
+      // For Shopify OAuth, we can proceed without user authentication initially
+      // The user will be required to authenticate during the callback
+    }
     
-    // Store OAuth state
+    // Store OAuth state (with or without user_id)
     await supabase.from('oauth_states').insert({
-      user_id: user.id,
+      user_id: user?.id || null, // Allow null for unauthenticated users
       state,
       shop_domain: shop,
       created_at: new Date().toISOString(),

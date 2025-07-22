@@ -164,8 +164,8 @@ export class OAuthMiddleware {
 
     const allowedOrigins = [
       process.env.NEXT_PUBLIC_APP_URL,
-      'https://crewflow.com',
-      'https://www.crewflow.com'
+      'https://crewflow.ai',
+      'https://www.crewflow.ai'
     ].filter(Boolean)
 
     if (!this.securityManager.validateRequestOrigin(request, allowedOrigins)) {

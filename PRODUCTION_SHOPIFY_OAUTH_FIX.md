@@ -91,19 +91,19 @@ git push origin main
 
 ## Expected OAuth Flow URLs
 
-**Initiation**: 
+**Initiation**:
 ```
-https://crewflow.dev/api/auth/shopify?shop=your-store.myshopify.com
+https://crewflow.ai/api/auth/shopify?shop=your-store.myshopify.com
 ```
 
 **Shopify Authorization**:
 ```
-https://your-store.myshopify.com/admin/oauth/authorize?client_id=1873049b3cc9829b691afd92310124cf&scope=read_products,write_products...&redirect_uri=https://crewflow.dev/api/auth/shopify/callback&state=...
+https://your-store.myshopify.com/admin/oauth/authorize?client_id=1873049b3cc9829b691afd92310124cf&scope=read_products,write_products...&redirect_uri=https://crewflow.ai/api/auth/shopify/callback&state=...
 ```
 
 **Callback**:
 ```
-https://crewflow.dev/api/auth/shopify/callback?code=...&state=...&shop=your-store.myshopify.com
+https://crewflow.ai/api/auth/shopify/callback?code=...&state=...&shop=your-store.myshopify.com
 ```
 
 ## Troubleshooting

@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Store, 
-  CheckCircle, 
-  AlertCircle, 
-  Clock, 
-  RefreshCw, 
-  Settings, 
+import {
+  Store,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  RefreshCw,
+  Settings,
   ExternalLink,
   Ship,
   Anchor,
@@ -19,6 +19,7 @@ import {
   Users,
   ShoppingCart
 } from 'lucide-react'
+import ShopifyQuickConnect from './ShopifyQuickConnect'
 
 interface ShopifyStore {
   id: string
@@ -146,13 +147,7 @@ export default function ShopifyConnectionStatus({
               </button>
             )}
             {connectionStatus !== 'connected' && (
-              <button
-                onClick={onConnect}
-                className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
-              >
-                <Ship className="w-5 h-5" />
-                <span>Connect Store</span>
-              </button>
+              <ShopifyQuickConnect />
             )}
           </div>
         </div>

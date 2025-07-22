@@ -58,34 +58,44 @@ export default function ShopifyDashboard() {
   const [showShopifyModal, setShowShopifyModal] = useState(false)
 
   useEffect(() => {
-    loadShopifyData()
-
-    // Check for OAuth callback parameters
+    // Check for OAuth callback parameters first
     const urlParams = new URLSearchParams(window.location.search)
     const success = urlParams.get('success')
     const error = urlParams.get('error')
     const store = urlParams.get('store')
+    const details = urlParams.get('details')
 
     if (success === 'store_connected' && store) {
       // Show success message
-      console.log(`Successfully connected store: ${store}`)
-      // You could show a toast notification here
+      console.log(`✅ Successfully connected store: ${store}`)
+      // Clear URL parameters
+      window.history.replaceState({}, '', window.location.pathname)
+      // Load data after successful connection
+      setTimeout(() => loadShopifyData(), 1000) // Small delay to ensure backend processing is complete
     } else if (error) {
       // Show error message
-      console.error(`OAuth error: ${error}`)
-      // You could show an error toast here
+      console.error(`❌ OAuth error: ${error}`, details ? `Details: ${details}` : '')
+      // Clear URL parameters
+      window.history.replaceState({}, '', window.location.pathname)
+      // Load data anyway to show current state
+      loadShopifyData()
+    } else {
+      // Normal page load
+      loadShopifyData()
     }
   }, [])
 
   const loadShopifyData = async () => {
     try {
       setLoading(true)
+      console.log('🔄 Loading Shopify data...')
 
       // Load real Shopify stores from API
       const response = await fetch('/api/shopify/stores')
       if (response.ok) {
         const data = await response.json()
         const stores = data.stores || []
+        console.log('✅ Shopify stores loaded:', { count: stores.length, stores: stores.map((s: any) => ({ id: s.id, name: s.store_name, domain: s.shop_domain })) })
 
         // Transform API data to component format
         const transformedStores: ShopifyStore[] = stores.map((store: any) => ({
@@ -127,10 +137,14 @@ export default function ShopifyDashboard() {
           setConnectionStatus('disconnected')
         }
       } else {
-        console.error('Failed to load stores:', response.statusText)
+        console.error('❌ Failed to load stores:', response.status, response.statusText)
+        // Try to get error details
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('❌ Error details:', errorData)
+
         setStores([])
         setMetrics(null)
-        setConnectionStatus('disconnected')
+        setConnectionStatus(response.status === 401 ? 'disconnected' : 'error')
       }
     } catch (error) {
       console.error('Failed to load Shopify data:', error)
@@ -334,9 +348,10 @@ export default function ShopifyDashboard() {
       <ConnectStoreModal
         isOpen={showShopifyModal}
         onClose={() => setShowShopifyModal(false)}
-        onSuccess={() => {
+        onSuccess={(storeDomain) => {
+          console.log('✅ Store connection initiated for:', storeDomain)
           setShowShopifyModal(false)
-          loadShopifyData() // Refresh the data after successful connection
+          // Note: Data will be refreshed when OAuth callback completes
         }}
       />
     </div>

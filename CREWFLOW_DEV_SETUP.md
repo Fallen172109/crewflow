@@ -1,12 +1,12 @@
-# 🚢 CrewFlow.dev Domain Setup Guide
+# 🚢 CrewFlow.ai Domain Setup Guide
 
-## 🎯 Your Domain: `crewflow.dev`
+## 🎯 Your Domain: `crewflow.ai`
 
-Perfect choice! I can see you have `crewflow.dev` registered with Namecheap. Let's get it connected to your CrewFlow deployment.
+Perfect choice! I can see you have `crewflow.ai` registered with Namecheap. Let's get it connected to your CrewFlow deployment.
 
 ## ✅ Configuration Already Updated
 
-I've already updated your `next.config.ts` file with the `crewflow.dev` domain configuration.
+I've already updated your `next.config.ts` file with the `crewflow.ai` domain configuration.
 
 ## 🚀 Step-by-Step Setup
 
@@ -19,20 +19,20 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 2. **Add the Domain**:
    - Go to Settings → Domains
    - Click "Add Domain"
-   - Enter: `crewflow.dev`
+   - Enter: `crewflow.ai`
    - Click "Add"
 
 3. **Note the DNS Records**:
    Vercel will provide you with DNS records. They should be:
-   
-   **Root Domain (crewflow.dev)**:
+
+   **Root Domain (crewflow.ai)**:
    ```
    Type: A
    Name: @
    Value: 76.76.19.61
    ```
-   
-   **WWW Subdomain (www.crewflow.dev)**:
+
+   **WWW Subdomain (www.crewflow.ai)**:
    ```
    Type: CNAME
    Name: www
@@ -47,7 +47,7 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 
 2. **Access Domain Management**:
    - Go to Domain List
-   - Click "Manage" next to `crewflow.dev`
+   - Click "Manage" next to `crewflow.ai`
 
 3. **Update DNS Records**:
    - Click on "Advanced DNS" tab
@@ -80,8 +80,8 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 
 2. **Update/Add these variables**:
    ```bash
-   NEXTAUTH_URL=https://crewflow.dev
-   NEXT_PUBLIC_SITE_URL=https://crewflow.dev
+   NEXTAUTH_URL=https://crewflow.ai
+   NEXT_PUBLIC_SITE_URL=https://crewflow.ai
    ```
 
 3. **Redeploy** your application after updating environment variables
@@ -94,19 +94,19 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 
 2. **Update Authentication Settings**:
    - Go to Authentication → Settings
-   - Update "Site URL" to: `https://crewflow.dev`
+   - Update "Site URL" to: `https://crewflow.ai`
 
 3. **Add Redirect URLs**:
    - Add these URLs to the redirect URLs list:
-     - `https://crewflow.dev/auth/callback`
-     - `https://www.crewflow.dev/auth/callback`
+     - `https://crewflow.ai/auth/callback`
+     - `https://www.crewflow.ai/auth/callback`
 
 ### Step 5: Deploy Changes
 
 1. **Commit your changes**:
    ```bash
    git add .
-   git commit -m "Configure crewflow.dev domain"
+   git commit -m "Configure crewflow.ai domain"
    git push origin main
    ```
 
@@ -116,10 +116,10 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 
 1. **Check DNS propagation**:
    - Visit [whatsmydns.net](https://whatsmydns.net)
-   - Enter `crewflow.dev` and check if it resolves to Vercel's IP
+   - Enter `crewflow.ai` and check if it resolves to Vercel's IP
 
 2. **Test the site**:
-   - Visit `https://crewflow.dev`
+   - Visit `https://crewflow.ai`
    - Test user registration/login
    - Verify dashboard access
    - Check all navigation works
@@ -138,7 +138,7 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 - [ ] Supabase Site URL updated
 - [ ] Supabase redirect URLs added
 - [ ] Code changes committed and deployed
-- [ ] Site accessible at `https://crewflow.dev`
+- [ ] Site accessible at `https://crewflow.ai`
 - [ ] SSL certificate active (green lock icon)
 - [ ] Authentication working
 - [ ] All functionality tested
@@ -151,7 +151,7 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 3. Clear browser cache or try incognito mode
 
 ### Authentication issues?
-1. Verify Supabase Site URL is `https://crewflow.dev`
+1. Verify Supabase Site URL is `https://crewflow.ai`
 2. Check redirect URLs are properly configured
 3. Clear browser cookies and local storage
 
@@ -162,7 +162,7 @@ I've already updated your `next.config.ts` file with the `crewflow.dev` domain c
 
 ## 🎉 After Setup
 
-Once `crewflow.dev` is live:
+Once `crewflow.ai` is live:
 
 1. **Update any external integrations** (Stripe webhooks, etc.)
 2. **Test email confirmations** work with the new domain
@@ -171,6 +171,6 @@ Once `crewflow.dev` is live:
 
 ---
 
-**Your CrewFlow maritime AI platform will soon be live at `https://crewflow.dev`!** 🚢
+**Your CrewFlow maritime AI platform will soon be live at `https://crewflow.ai`!** 🚢
 
-The `.dev` domain is perfect for your tech-forward maritime automation platform - it's secure (requires HTTPS), memorable, and clearly indicates the innovative nature of CrewFlow.
+The `.ai` domain is perfect for your AI-powered maritime automation platform - it's memorable, clearly indicates the AI nature of CrewFlow, and positions the platform as cutting-edge technology.

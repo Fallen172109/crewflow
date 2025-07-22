@@ -1,4 +1,4 @@
-# 🌐 DNS Records for crewflow.dev
+# 🌐 DNS Records for crewflow.ai
 
 ## 📋 Quick Reference
 
@@ -25,7 +25,7 @@ TTL: Automatic (or 300)
 ## 🔧 How to Add in Namecheap
 
 1. **Login to Namecheap** → Domain List
-2. **Click "Manage"** next to `crewflow.dev`
+2. **Click "Manage"** next to `crewflow.ai`
 3. **Go to "Advanced DNS"** tab
 4. **Delete existing A records** for `@` if any
 5. **Click "Add New Record"** for each record above
@@ -34,7 +34,7 @@ TTL: Automatic (or 300)
 ## ✅ Verification
 
 After adding records, verify with:
-- [whatsmydns.net](https://whatsmydns.net) - Check `crewflow.dev`
+- [whatsmydns.net](https://whatsmydns.net) - Check `crewflow.ai`
 - Should resolve to `76.76.19.61`
 
 ## ⏱️ Propagation Time
@@ -45,11 +45,11 @@ After adding records, verify with:
 
 ## 🚨 Important Notes
 
-- **.dev domains require HTTPS** (built-in security)
+- **.ai domains require HTTPS** (recommended security)
 - **Vercel provides automatic SSL** certificates
-- **Both `crewflow.dev` and `www.crewflow.dev`** will work
+- **Both `crewflow.ai` and `www.crewflow.ai`** will work
 - **HTTP automatically redirects to HTTPS**
 
 ---
 
-**After DNS propagation, your CrewFlow platform will be live at `https://crewflow.dev`!** 🚢
+**After DNS propagation, your CrewFlow platform will be live at `https://crewflow.ai`!** 🚢
