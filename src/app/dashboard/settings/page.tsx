@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
+import { Loader2 } from 'lucide-react'
+import AgentPermissionsSettings from '@/components/settings/AgentPermissionsSettings'
 
 export default function SettingsPage() {
   const { user, userProfile, updatePassword, refreshProfile } = useAuth()
@@ -82,6 +84,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'profile', name: 'Profile', icon: '👤' },
+    { id: 'agent-permissions', name: 'Agent Permissions', icon: '🛡️' },
     { id: 'security', name: 'Security', icon: '🔒' },
     { id: 'billing', name: 'Billing', icon: '💳' },
     { id: 'danger', name: 'Danger Zone', icon: '⚠️' },
@@ -175,6 +178,28 @@ export default function SettingsPage() {
                   className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-secondary-300 cursor-not-allowed"
                 />
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Agent Permissions Tab */}
+        {activeTab === 'agent-permissions' && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-white">Agent Permissions</h2>
+            <div className="bg-secondary-900 rounded-lg p-6">
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+                  <span className="ml-2 text-secondary-300">Loading agent permissions...</span>
+                </div>
+              }>
+                <AgentPermissionsSettings
+                  userId={userProfile?.id || ''}
+                  onSave={async (settings) => {
+                    console.log('Settings saved:', settings)
+                  }}
+                />
+              </Suspense>
             </div>
           </div>
         )}

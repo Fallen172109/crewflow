@@ -4,12 +4,16 @@ import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 're
 import { useSearchParams } from 'next/navigation'
 import { Agent } from '@/lib/agents'
 import { UserProfile } from '@/lib/auth'
-import { MessageSquare, Briefcase, Send, Loader2, Settings, Paperclip, FileText, Eye, EyeOff } from 'lucide-react'
+import { MessageSquare, Briefcase, Send, Loader2, Settings, Paperclip, FileText, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 import ThreadManager, { ThreadManagerRef } from './ThreadManager'
 import ThreadContextModal from './ThreadContextModal'
 import ThreadContextEditor from './ThreadContextEditor'
 import FileUpload, { UploadedFile } from '@/components/ui/FileUpload'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer'
+import ApprovalPrompt from './ApprovalPrompt'
+import { useApprovalRequests } from '@/hooks/useApprovalRequests'
+import ProductPreviewModal from '@/components/shopify/ProductPreviewModal'
+import { useProductPreview } from '@/hooks/useProductPreview'
 
 interface Message {
   id: string
@@ -70,6 +74,37 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
   const [showContextPanel, setShowContextPanel] = useState(false)
   const [threadAttachments, setThreadAttachments] = useState<any[]>([])
   const threadManagerRef = useRef<ThreadManagerRef>(null)
+
+  // Approval requests management
+  const {
+    approvals,
+    loading: approvalsLoading,
+    error: approvalsError,
+    approveRequest,
+    rejectRequest,
+    processingIds
+  } = useApprovalRequests({ agentId: agent.id })
+
+  // Product preview management
+  const {
+    isPreviewOpen,
+    previewData,
+    isLoading: previewLoading,
+    previewMode,
+    closePreview,
+    handleSave: handlePreviewSave,
+    handlePublish: handlePreviewPublish,
+    previewFromApprovalRequest
+  } = useProductPreview({
+    onPublish: async (productData) => {
+      // TODO: Implement actual product publishing logic
+      console.log('Publishing product:', productData)
+    },
+    onSave: async (productData) => {
+      // TODO: Implement product save logic
+      console.log('Saving product:', productData)
+    }
+  })
 
   // Initialize active tab from URL params
   useEffect(() => {
@@ -517,6 +552,44 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Approval Requests */}
+        {approvals.length > 0 && (
+          <div className="border-t border-gray-200 bg-orange-50 p-4">
+            <div className="flex items-center space-x-2 mb-3">
+              <AlertTriangle className="w-5 h-5 text-orange-600" />
+              <h3 className="font-semibold text-gray-900">
+                Pending Approvals ({approvals.length})
+              </h3>
+            </div>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {approvals.map((approval) => (
+                <ApprovalPrompt
+                  key={approval.id}
+                  request={approval}
+                  onApprove={async (requestId, reason, modifiedParams) => {
+                    try {
+                      await approveRequest(requestId, reason, modifiedParams)
+                    } catch (error) {
+                      console.error('Failed to approve request:', error)
+                    }
+                  }}
+                  onReject={async (requestId, reason) => {
+                    try {
+                      await rejectRequest(requestId, reason)
+                    } catch (error) {
+                      console.error('Failed to reject request:', error)
+                    }
+                  }}
+                  onPreview={(request) => {
+                    previewFromApprovalRequest(request)
+                  }}
+                  isLoading={processingIds.has(approval.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Input Area */}
         <div className="border-t border-gray-200">
           {/* File Upload Area */}
@@ -615,6 +688,19 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
           isOpen={showContextEditor}
           onClose={() => setShowContextEditor(false)}
           onSave={handleSaveContext}
+        />
+      )}
+
+      {/* Product Preview Modal */}
+      {isPreviewOpen && previewData && (
+        <ProductPreviewModal
+          isOpen={isPreviewOpen}
+          onClose={closePreview}
+          productData={previewData}
+          onSave={handlePreviewSave}
+          onPublish={handlePreviewPublish}
+          isLoading={previewLoading}
+          mode={previewMode}
         />
       )}
     </>

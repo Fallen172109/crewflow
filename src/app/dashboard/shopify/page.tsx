@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { handleAuthError } from '@/lib/auth-error-handler'
-import ShopifyConnectionStatus from '@/components/shopify/ShopifyConnectionStatus'
+import { ShopifyStoreProvider } from '@/contexts/ShopifyStoreContext'
+import MultiStoreManager from '@/components/shopify/MultiStoreManager'
+import StoreSelector from '@/components/shopify/StoreSelector'
+import PlanAwareFeatures from '@/components/shopify/PlanAwareFeatures'
+import ProductCreationChat from '@/components/shopify/ProductCreationChat'
+import AdvancedProductManager from '@/components/shopify/AdvancedProductManager'
 import ProductManagement from '@/components/shopify/ProductManagement'
 import OrderManagement from '@/components/shopify/OrderManagement'
 import AnalyticsDashboard from '@/components/shopify/AnalyticsDashboard'
@@ -22,7 +27,11 @@ import {
   BarChart3,
   Zap,
   Ship,
-  Anchor
+  Anchor,
+  Plus,
+  Grid3X3,
+  List,
+  Sparkles
 } from 'lucide-react'
 
 interface ShopifyStore {
@@ -47,7 +56,16 @@ interface StoreMetrics {
   averageOrderValue: number
 }
 
+// Wrapper component with ShopifyStoreProvider
 export default function ShopifyDashboard() {
+  return (
+    <ShopifyStoreProvider>
+      <ShopifyDashboardContent />
+    </ShopifyStoreProvider>
+  )
+}
+
+function ShopifyDashboardContent() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
   const [stores, setStores] = useState<ShopifyStore[]>([])
@@ -56,6 +74,7 @@ export default function ShopifyDashboard() {
   const [loading, setLoading] = useState(true)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected')
   const [showShopifyModal, setShowShopifyModal] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   useEffect(() => {
     // Check for OAuth callback parameters first
@@ -162,6 +181,7 @@ export default function ShopifyDashboard() {
 
   const tabs = [
     { id: 'overview', label: 'Command Center', icon: Anchor },
+    { id: 'create-product', label: 'AI Product Creator', icon: Sparkles },
     { id: 'products', label: 'Cargo Manifest', icon: Package },
     { id: 'orders', label: 'Ship Orders', icon: ShoppingCart },
     { id: 'customers', label: 'Crew Registry', icon: Users },
@@ -223,14 +243,37 @@ export default function ShopifyDashboard() {
           </div>
         </div>
 
-        {/* Connection Status and Store Management */}
-        <ShopifyConnectionStatus
-          stores={stores}
-          selectedStore={selectedStore}
-          onStoreSelect={setSelectedStore}
+        {/* Store Selector and Management */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Active Store</h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <StoreSelector
+                onConnect={() => setShowShopifyModal(true)}
+                className="mb-4"
+              />
+            </div>
+          </div>
+
+          <div>
+            <PlanAwareFeatures compact showSuggestion />
+          </div>
+        </div>
+
+        {/* Multi-Store Manager */}
+        <MultiStoreManager
           onConnect={() => setShowShopifyModal(true)}
-          onRefresh={loadShopifyData}
-          loading={loading}
+          className="mb-8"
         />
 
         {/* Navigation Tabs */}
@@ -320,7 +363,29 @@ export default function ShopifyDashboard() {
               </div>
             )}
 
-            {activeTab === 'products' && <ProductManagement />}
+            {activeTab === 'create-product' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">AI Product Creator</h2>
+                    <p className="text-gray-600 mt-1">
+                      Create compelling product listings with AI assistance
+                    </p>
+                  </div>
+                </div>
+
+                <ProductCreationChat
+                  className="h-[600px]"
+                  onProductCreated={(product) => {
+                    console.log('Product created:', product)
+                    // Optionally switch to products tab to show the new product
+                    // setActiveTab('products')
+                  }}
+                />
+              </div>
+            )}
+
+            {activeTab === 'products' && <AdvancedProductManager />}
             {activeTab === 'orders' && <OrderManagement />}
             {activeTab === 'analytics' && <AnalyticsDashboard />}
 

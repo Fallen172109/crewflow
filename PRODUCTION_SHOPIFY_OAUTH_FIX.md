@@ -24,7 +24,7 @@
    - Go to "App setup" → "URLs"
    - Set **Allowed redirection URL(s)** to:
      ```
-     https://crewflow.dev/api/auth/shopify/callback
+     https://crewflow.ai/api/auth/shopify/callback
      ```
    - Remove any other URLs
    - Ensure no trailing slashes
@@ -54,7 +54,7 @@ Check these are set in Vercel production:
 SHOPIFY_CLIENT_ID=1873049b3cc9829b691afd92310124cf
 SHOPIFY_CLIENT_SECRET=328b2274325dd6cfe2965b343571110e
 SHOPIFY_WEBHOOK_SECRET=CrewFlowShopifyWebhook2024!Maritime
-NEXT_PUBLIC_APP_URL=https://crewflow.dev
+NEXT_PUBLIC_APP_URL=https://crewflow.ai
 ```
 
 ### Step 3: Deploy Updated Code
@@ -70,13 +70,13 @@ git push origin main
 ### Step 4: Test the OAuth Flow
 
 1. **Test from Shopify Page**
-   - Go to https://crewflow.dev/dashboard/shopify
+   - Go to https://crewflow.ai/dashboard/shopify
    - Click "Connect Store"
    - Enter test store domain
    - Should redirect to Shopify authorization
 
 2. **Test from Integrations Page**
-   - Go to https://crewflow.dev/dashboard/integrations
+   - Go to https://crewflow.ai/dashboard/integrations
    - Find Shopify integration
    - Click "Connect"
    - Enter test store domain

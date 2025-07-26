@@ -677,6 +677,283 @@ export class ShopifyAdminAPI {
     return await this.makeGraphQLRequest(query, { customerId })
   }
 
+  // Create discount code using GraphQL
+  async createDiscountCode(discountData: {
+    code: string
+    type: 'percentage' | 'fixed_amount'
+    value: number
+    minimumRequirement?: {
+      type: 'minimum_quantity' | 'minimum_subtotal'
+      value: number
+    }
+    customerSelection?: {
+      type: 'all' | 'customer_segments' | 'customers'
+      segments?: string[]
+      customers?: string[]
+    }
+    usageLimit?: number
+    oncePerCustomer?: boolean
+    startsAt: string
+    endsAt?: string
+    appliesTo?: {
+      type: 'all_products' | 'specific_products' | 'specific_collections'
+      productIds?: string[]
+      collectionIds?: string[]
+    }
+  }): Promise<any> {
+    const mutation = `
+      mutation CreateDiscountCode($input: DiscountCodeBasicInput!) {
+        discountCodeBasicCreate(basicCodeDiscount: $input) {
+          codeDiscountNode {
+            id
+            codeDiscount {
+              ... on DiscountCodeBasic {
+                title
+                codes(first: 1) {
+                  edges {
+                    node {
+                      code
+                    }
+                  }
+                }
+                status
+                summary
+                startsAt
+                endsAt
+                usageLimit
+                appliesOncePerCustomer
+                minimumRequirement {
+                  ... on DiscountMinimumQuantity {
+                    greaterThanOrEqualToQuantity
+                  }
+                  ... on DiscountMinimumSubtotal {
+                    greaterThanOrEqualToSubtotal {
+                      amount
+                      currencyCode
+                    }
+                  }
+                }
+                customerSelection {
+                  ... on DiscountCustomerAll {
+                    allCustomers
+                  }
+                  ... on DiscountCustomerSegments {
+                    segments(first: 10) {
+                      edges {
+                        node {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                  ... on DiscountCustomers {
+                    customers(first: 10) {
+                      edges {
+                        node {
+                          id
+                          email
+                        }
+                      }
+                    }
+                  }
+                }
+                customerGets {
+                  value {
+                    ... on DiscountPercentage {
+                      percentage
+                    }
+                    ... on DiscountAmount {
+                      amount {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                  items {
+                    ... on AllDiscountItems {
+                      allItems
+                    }
+                    ... on DiscountProducts {
+                      products(first: 10) {
+                        edges {
+                          node {
+                            id
+                            title
+                          }
+                        }
+                      }
+                    }
+                    ... on DiscountCollections {
+                      collections(first: 10) {
+                        edges {
+                          node {
+                            id
+                            title
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `
+
+    // Build the input object
+    const input: any = {
+      title: `${discountData.code} Discount`,
+      code: discountData.code,
+      startsAt: discountData.startsAt,
+      combinesWith: {
+        orderDiscounts: false,
+        productDiscounts: false,
+        shippingDiscounts: false
+      }
+    }
+
+    if (discountData.endsAt) {
+      input.endsAt = discountData.endsAt
+    }
+
+    if (discountData.usageLimit) {
+      input.usageLimit = discountData.usageLimit
+    }
+
+    if (discountData.oncePerCustomer) {
+      input.appliesOncePerCustomer = discountData.oncePerCustomer
+    }
+
+    // Set customer selection
+    if (discountData.customerSelection?.type === 'all' || !discountData.customerSelection) {
+      input.customerSelection = { all: true }
+    } else if (discountData.customerSelection.type === 'customer_segments') {
+      input.customerSelection = {
+        customerSegments: {
+          add: discountData.customerSelection.segments?.map(id => `gid://shopify/CustomerSegment/${id}`) || []
+        }
+      }
+    } else if (discountData.customerSelection.type === 'customers') {
+      input.customerSelection = {
+        customers: {
+          add: discountData.customerSelection.customers?.map(id => `gid://shopify/Customer/${id}`) || []
+        }
+      }
+    }
+
+    // Set minimum requirements
+    if (discountData.minimumRequirement) {
+      if (discountData.minimumRequirement.type === 'minimum_quantity') {
+        input.minimumRequirement = {
+          quantity: {
+            greaterThanOrEqualToQuantity: discountData.minimumRequirement.value.toString()
+          }
+        }
+      } else if (discountData.minimumRequirement.type === 'minimum_subtotal') {
+        input.minimumRequirement = {
+          subtotal: {
+            greaterThanOrEqualToSubtotal: discountData.minimumRequirement.value.toString()
+          }
+        }
+      }
+    }
+
+    // Set customer gets (discount value and items)
+    input.customerGets = {
+      items: {},
+      value: {}
+    }
+
+    // Set discount value
+    if (discountData.type === 'percentage') {
+      input.customerGets.value = {
+        percentage: discountData.value / 100 // Convert to decimal
+      }
+    } else {
+      input.customerGets.value = {
+        discountAmount: {
+          amount: discountData.value.toString(),
+          appliesOnEachItem: false
+        }
+      }
+    }
+
+    // Set items the discount applies to
+    if (discountData.appliesTo?.type === 'all_products' || !discountData.appliesTo) {
+      input.customerGets.items = { all: true }
+    } else if (discountData.appliesTo.type === 'specific_products') {
+      input.customerGets.items = {
+        products: {
+          productsToAdd: discountData.appliesTo.productIds?.map(id => `gid://shopify/Product/${id}`) || []
+        }
+      }
+    } else if (discountData.appliesTo.type === 'specific_collections') {
+      input.customerGets.items = {
+        collections: {
+          collectionsToAdd: discountData.appliesTo.collectionIds?.map(id => `gid://shopify/Collection/${id}`) || []
+        }
+      }
+    }
+
+    return await this.makeGraphQLRequest(mutation, { input })
+  }
+
+  // Get discount codes
+  async getDiscountCodes(first: number = 50): Promise<any> {
+    const query = `
+      query GetDiscountCodes($first: Int!) {
+        codeDiscountNodes(first: $first) {
+          edges {
+            node {
+              id
+              codeDiscount {
+                ... on DiscountCodeBasic {
+                  title
+                  codes(first: 10) {
+                    edges {
+                      node {
+                        code
+                      }
+                    }
+                  }
+                  status
+                  summary
+                  startsAt
+                  endsAt
+                  usageLimit
+                  appliesOncePerCustomer
+                  asyncUsageCount
+                  customerGets {
+                    value {
+                      ... on DiscountPercentage {
+                        percentage
+                      }
+                      ... on DiscountAmount {
+                        amount {
+                          amount
+                          currencyCode
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `
+
+    return await this.makeGraphQLRequest(query, { first })
+  }
+
   // Test connection
   async testConnection(): Promise<boolean> {
     try {
