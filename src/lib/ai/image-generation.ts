@@ -468,3 +468,9 @@ export function validateImageRequest(request: ImageGenerationRequest): { isValid
 
   return { isValid: true }
 }
+
+// Convenience function for generating images (wrapper around service)
+export async function generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResponse> {
+  const service = createImageGenerationService()
+  return service.generateImage(request)
+}

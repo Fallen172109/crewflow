@@ -101,16 +101,20 @@ export async function POST(request: NextRequest) {
         
       case 'remove':
         // Remove store
+        console.log('🗑️ API Debug - Remove store request:', { userId: user.id, storeId, action })
+
         const { removeStore } = await import('@/lib/shopify/multi-store-manager')
-        const removeResult = await removeStore(user.id, storeId)
-        
+        const removeResult = await removeStore(user.id, storeId, supabase)
+
+        console.log('🗑️ API Debug - Remove result:', removeResult)
+
         if (!removeResult.success) {
           return NextResponse.json(
             { error: removeResult.error },
             { status: 400 }
           )
         }
-        
+
         return NextResponse.json({ success: true })
         
       default:

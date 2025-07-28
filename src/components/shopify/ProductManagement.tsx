@@ -41,7 +41,7 @@ interface Product {
     min: number
     max: number
   }
-  sales_velocity: 'high' | 'medium' | 'low'
+  sales_velocity: 'high' | 'medium' | 'low' | 'unknown'
   revenue_30d: number
 }
 
@@ -58,6 +58,7 @@ interface ProductFilters {
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<number[]>([])
   const [showFilters, setShowFilters] = useState(false)
@@ -78,70 +79,64 @@ export default function ProductManagement() {
   }, [currentPage, filters, searchQuery])
 
   const loadProducts = async () => {
+    if (!selectedStore) {
+      console.warn('No store selected')
+      return
+    }
+
     try {
       setLoading(true)
-      // TODO: Implement actual API call
-      // Mock data for demonstration
-      const mockProducts: Product[] = [
-        {
-          id: 1,
-          title: 'Maritime Navigation Compass',
-          handle: 'maritime-navigation-compass',
-          vendor: 'SeaGear Pro',
-          product_type: 'Navigation Equipment',
-          status: 'active',
-          created_at: '2024-01-15T10:00:00Z',
-          updated_at: '2024-01-20T14:30:00Z',
-          published_at: '2024-01-15T10:00:00Z',
-          tags: 'navigation, compass, maritime, professional',
-          variants_count: 3,
-          images_count: 5,
-          total_inventory: 45,
-          price_range: { min: 89.99, max: 149.99 },
-          sales_velocity: 'high',
-          revenue_30d: 4500.00
-        },
-        {
-          id: 2,
-          title: 'Anchor Chain Set - Heavy Duty',
-          handle: 'anchor-chain-set-heavy-duty',
-          vendor: 'Maritime Supply Co',
-          product_type: 'Anchoring',
-          status: 'active',
-          created_at: '2024-01-10T09:00:00Z',
-          updated_at: '2024-01-18T16:45:00Z',
-          published_at: '2024-01-10T09:00:00Z',
-          tags: 'anchor, chain, heavy-duty, marine',
-          variants_count: 5,
-          images_count: 8,
-          total_inventory: 12,
-          price_range: { min: 299.99, max: 899.99 },
-          sales_velocity: 'medium',
-          revenue_30d: 2100.00
-        },
-        {
-          id: 3,
-          title: 'Ship Rope - Premium Quality',
-          handle: 'ship-rope-premium-quality',
-          vendor: 'Ocean Supplies',
-          product_type: 'Rigging',
-          status: 'draft',
-          created_at: '2024-01-22T11:30:00Z',
-          updated_at: '2024-01-22T11:30:00Z',
-          tags: 'rope, rigging, premium, marine',
-          variants_count: 8,
-          images_count: 3,
-          total_inventory: 0,
-          price_range: { min: 25.99, max: 199.99 },
-          sales_velocity: 'low',
-          revenue_30d: 0
-        }
-      ]
+      setError(null)
 
-      setProducts(mockProducts)
-      setTotalPages(1)
+      // Fetch products from the API
+      const response = await fetch(`/api/shopify/stores/${selectedStore.id}/products`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch products')
+      }
+
+      const data = await response.json()
+
+      if (data.success && data.products) {
+        // Transform Shopify products to match our Product interface
+        const transformedProducts: Product[] = data.products.map((shopifyProduct: any) => ({
+          id: shopifyProduct.id,
+          title: shopifyProduct.title,
+          handle: shopifyProduct.handle,
+          vendor: shopifyProduct.vendor || 'Unknown',
+          product_type: shopifyProduct.product_type || 'General',
+          status: shopifyProduct.status,
+          created_at: shopifyProduct.created_at,
+          updated_at: shopifyProduct.updated_at,
+          published_at: shopifyProduct.published_at,
+          tags: shopifyProduct.tags || '',
+          variants_count: shopifyProduct.variants?.length || 0,
+          images_count: shopifyProduct.images?.length || 0,
+          total_inventory: shopifyProduct.variants?.reduce((sum: number, variant: any) =>
+            sum + (variant.inventory_quantity || 0), 0) || 0,
+          price_range: {
+            min: Math.min(...(shopifyProduct.variants?.map((v: any) => parseFloat(v.price || '0')) || [0])),
+            max: Math.max(...(shopifyProduct.variants?.map((v: any) => parseFloat(v.price || '0')) || [0]))
+          },
+          sales_velocity: 'unknown', // This would need to be calculated from analytics
+          revenue_30d: 0 // This would need to be calculated from order data
+        }))
+
+        setProducts(transformedProducts)
+      } else {
+        throw new Error('Invalid response format')
+      }
+
+        setProducts(transformedProducts)
+        setTotalPages(Math.ceil(transformedProducts.length / 10)) // Assuming 10 products per page
+      } else {
+        throw new Error('Invalid response format')
+      }
     } catch (error) {
       console.error('Failed to load products:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load products')
+      setProducts([])
     } finally {
       setLoading(false)
     }

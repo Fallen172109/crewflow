@@ -36,7 +36,7 @@ export function formatAgentResponse(
 
   let formattedResponse = response.trim()
 
-  // Apply maritime greeting logic
+  // Apply professional greeting logic (remove maritime greetings)
   if (maritimeTheming && context.agentName) {
     formattedResponse = applyMaritimeGreeting(formattedResponse, context)
   }
@@ -60,31 +60,17 @@ export function formatAgentResponse(
 }
 
 /**
- * Apply maritime greeting logic based on conversation context
+ * Apply professional greeting logic based on conversation context
  */
 function applyMaritimeGreeting(response: string, context: ConversationContext): string {
   const { isFirstMessage = false, messageCount = 0, agentName = '' } = context
 
-  // Check if response already has a full maritime greeting
-  const hasFullGreeting = /^⚓?\s*(Ahoy[^!]*!|Greetings[^!]*!|Welcome aboard[^!]*!)/i.test(response)
+  // Remove all maritime greetings and emojis for professional communication
+  const hasGreeting = /^⚓?\s*(Ahoy[^!]*!|Greetings[^!]*!|Welcome aboard[^!]*!|Aye,?\s*|Right away,?\s*|Understood,?\s*)/i.test(response)
 
-  // If it's not the first message in the thread and has a full greeting, replace with brief acknowledgment
-  if (!isFirstMessage && hasFullGreeting) {
-    // Replace full greeting with brief acknowledgment (removed emojis for better readability)
-    const briefGreetings = [
-      `Aye, `,
-      `Right away, `,
-      `Understood, `,
-      `Of course, `,
-      `Certainly, `,
-      `Absolutely, `,
-      `Indeed, `
-    ]
-
-    const randomGreeting = briefGreetings[Math.floor(Math.random() * briefGreetings.length)]
-
-    // Remove the full greeting and replace with brief one
-    response = response.replace(/^⚓?\s*(Ahoy[^!]*!|Greetings[^!]*!|Welcome aboard[^!]*!)\s*/i, randomGreeting)
+  if (hasGreeting) {
+    // Remove greeting entirely and start directly with the content
+    response = response.replace(/^⚓?\s*(Ahoy[^!]*!|Greetings[^!]*!|Welcome aboard[^!]*!|Aye,?\s*|Right away,?\s*|Understood,?\s*)\s*/i, '')
   }
 
   // Also check for and replace repetitive "I'm [Agent Name]" introductions

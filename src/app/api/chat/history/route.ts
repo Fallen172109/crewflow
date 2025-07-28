@@ -55,7 +55,10 @@ export async function GET(request: NextRequest) {
       type: msg.message_type,
       content: msg.content,
       timestamp: new Date(msg.timestamp),
-      taskType: msg.task_type
+      created_at: msg.timestamp, // Include both for compatibility
+      thread_id: msg.thread_id,
+      taskType: msg.task_type,
+      attachments: msg.attachments || []
     }))
 
     return NextResponse.json({ messages })

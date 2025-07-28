@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createShopifyAPI } from '@/lib/integrations/shopify-admin-api'
+import { requireAuth } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-    if (!user || userError) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+    const user = await requireAuth()
+    const supabase = await createSupabaseServerClient()
 
     const body = await request.json()
     const { storeId, product } = body

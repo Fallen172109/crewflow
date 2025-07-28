@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { getAgent, canUserAccessAgent } from '@/lib/agents'
 import { supabase } from '@/lib/supabase'
 import AgentInterface from '@/components/agents/AgentInterface'
+import CrewFlowDebugPanel from '@/components/debug/CrewFlowDebugPanel'
 
 interface AgentPageProps {
   params: Promise<{
@@ -149,5 +150,10 @@ export default function AgentPage({ params }: AgentPageProps) {
     )
   }
 
-  return <AgentInterface agent={agent} userProfile={profile} />
+  return (
+    <>
+      <AgentInterface agent={agent} userProfile={profile} />
+      <CrewFlowDebugPanel agentId={agentId} />
+    </>
+  )
 }

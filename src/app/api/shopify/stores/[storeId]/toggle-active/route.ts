@@ -3,7 +3,7 @@ import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { storeId: string } }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
     const supabase = await createSupabaseServerClientWithCookies()
@@ -16,7 +16,7 @@ export async function POST(
       )
     }
 
-    const { storeId } = params
+    const { storeId } = await params
     const body = await request.json()
     const { is_active } = body
 
@@ -37,9 +37,8 @@ export async function POST(
     // Update store active status
     const { data, error } = await supabase
       .from('shopify_stores')
-      .update({ 
-        is_active,
-        updated_at: new Date().toISOString()
+      .update({
+        is_active
       })
       .eq('id', storeId)
       .eq('user_id', user.id)

@@ -82,6 +82,7 @@ interface AnalyticsData {
 export default function AnalyticsDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState('30d')
   const [selectedMetric, setSelectedMetric] = useState('revenue')
 
@@ -90,103 +91,34 @@ export default function AnalyticsDashboard() {
   }, [dateRange])
 
   const loadAnalytics = async () => {
+    if (!selectedStore) {
+      console.warn('No store selected')
+      return
+    }
+
     try {
       setLoading(true)
-      // TODO: Implement actual API call
-      // Mock data for demonstration
-      const mockAnalytics: AnalyticsData = {
-        revenue: {
-          current: 45230.50,
-          previous: 38945.20,
-          change: 16.1,
-          trend: 'up'
-        },
-        orders: {
-          current: 342,
-          previous: 298,
-          change: 14.8,
-          trend: 'up'
-        },
-        customers: {
-          current: 156,
-          previous: 134,
-          change: 16.4,
-          trend: 'up'
-        },
-        conversion_rate: {
-          current: 3.2,
-          previous: 2.8,
-          change: 14.3,
-          trend: 'up'
-        },
-        average_order_value: {
-          current: 132.25,
-          previous: 130.69,
-          change: 1.2,
-          trend: 'up'
-        },
-        top_products: [
-          {
-            id: 1,
-            name: 'Maritime Navigation Compass',
-            revenue: 8950.00,
-            units_sold: 67,
-            growth: 23.5
-          },
-          {
-            id: 2,
-            name: 'Anchor Chain Set - Heavy Duty',
-            revenue: 7200.00,
-            units_sold: 12,
-            growth: 18.2
-          },
-          {
-            id: 3,
-            name: 'Ship Rope - Premium Quality',
-            revenue: 4560.00,
-            units_sold: 152,
-            growth: -5.3
-          },
-          {
-            id: 4,
-            name: 'Marine Safety Equipment Kit',
-            revenue: 3890.00,
-            units_sold: 34,
-            growth: 45.7
-          },
-          {
-            id: 5,
-            name: 'Weather Station Pro',
-            revenue: 2340.00,
-            units_sold: 8,
-            growth: 12.1
-          }
-        ],
-        sales_by_day: [
-          { date: '2024-01-15', revenue: 1250.00, orders: 8 },
-          { date: '2024-01-16', revenue: 1890.00, orders: 12 },
-          { date: '2024-01-17', revenue: 2340.00, orders: 15 },
-          { date: '2024-01-18', revenue: 1670.00, orders: 11 },
-          { date: '2024-01-19', revenue: 2890.00, orders: 18 },
-          { date: '2024-01-20', revenue: 3450.00, orders: 22 },
-          { date: '2024-01-21', revenue: 2100.00, orders: 14 }
-        ],
-        customer_segments: [
-          { segment: 'Professional Mariners', count: 89, revenue: 28450.00, percentage: 62.9 },
-          { segment: 'Recreational Boaters', count: 45, revenue: 12340.00, percentage: 27.3 },
-          { segment: 'Marine Suppliers', count: 22, revenue: 4440.50, percentage: 9.8 }
-        ],
-        traffic_sources: [
-          { source: 'Organic Search', visitors: 2340, conversions: 89, revenue: 18950.00 },
-          { source: 'Direct', visitors: 1890, conversions: 67, revenue: 14230.00 },
-          { source: 'Social Media', visitors: 1234, conversions: 34, revenue: 7890.00 },
-          { source: 'Email Marketing', visitors: 890, conversions: 45, revenue: 4160.50 }
-        ]
+      setError(null)
+
+      // For now, show empty state since we don't have analytics API yet
+      // TODO: Implement actual analytics API call when Shopify analytics integration is ready
+      const emptyAnalytics: AnalyticsData = {
+        revenue: { current: 0, previous: 0, change: 0, trend: 'neutral' },
+        orders: { current: 0, previous: 0, change: 0, trend: 'neutral' },
+        customers: { current: 0, previous: 0, change: 0, trend: 'neutral' },
+        conversion_rate: { current: 0, previous: 0, change: 0, trend: 'neutral' },
+        average_order_value: { current: 0, previous: 0, change: 0, trend: 'neutral' },
+        top_products: [],
+        sales_by_day: [],
+        customer_segments: [],
+        traffic_sources: []
       }
 
-      setAnalytics(mockAnalytics)
+      setAnalytics(emptyAnalytics)
     } catch (error) {
       console.error('Failed to load analytics:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load analytics')
+      setAnalytics(null)
     } finally {
       setLoading(false)
     }

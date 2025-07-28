@@ -64,6 +64,16 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
   }, [agent.id])
 
   const handleSendMessage = async (content: string, taskType: string = 'general', responseTaskType?: string, threadId?: string | null) => {
+    console.log('🚀 CREWFLOW DEBUG: handleSendMessage called', {
+      content: content.substring(0, 100) + '...',
+      taskType,
+      responseTaskType,
+      threadId,
+      agentId: agent.id,
+      userProfile: userProfile?.id,
+      timestamp: new Date().toISOString()
+    })
+
     setIsLoading(true)
 
     try {
@@ -164,6 +174,17 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
         }
       }
 
+      console.log('🌐 CREWFLOW DEBUG: Making API call', {
+        apiUrl,
+        requestBody: {
+          ...requestBody,
+          message: requestBody.message?.substring(0, 100) + '...'
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
       // Call the appropriate API endpoint
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -171,6 +192,13 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
+      })
+
+      console.log('📡 CREWFLOW DEBUG: API response received', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
       })
 
       // Check if response is JSON
@@ -211,7 +239,13 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
         }
       }
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('❌ CREWFLOW DEBUG: Error sending message:', error)
+      console.error('❌ CREWFLOW DEBUG: Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      })
 
       // Provide more specific error messages
       let errorMessage = 'Sorry, I encountered a connection error. Please try again.'

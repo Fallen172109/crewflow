@@ -1,4 +1,5 @@
 "use client";
+
 import FixedMaintenanceTypewriter from "@/components/ui/FixedMaintenanceTypewriter";
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
@@ -6,7 +7,6 @@ import { motion } from "framer-motion";
 export default function TypewriterEffectSmoothDemo() {
   const [password, setPassword] = useState("");
   const [showPasswordBox, setShowPasswordBox] = useState(false);
-
   const [error, setError] = useState("");
   const hasTriggeredPasswordBox = useRef(false);
 
@@ -41,35 +41,36 @@ export default function TypewriterEffectSmoothDemo() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4">
-      <div className="text-center">
-        <FixedMaintenanceTypewriter onComplete={handleTypingComplete} />
+    <div className="flex flex-col items-center justify-center h-[40rem] space-y-8">
+      <FixedMaintenanceTypewriter onComplete={handleTypingComplete} />
 
-        {showPasswordBox && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mt-8"
-          >
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  placeholder="Enter password to continue"
-                  className="w-64 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                  autoFocus
-                />
-              </div>
-              {error && (
-                <p className="text-red-400 text-sm mt-2">{error}</p>
-              )}
-            </form>
-          </motion.div>
-        )}
-      </div>
+      {showPasswordBox && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-sm"
+        >
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <input
+              type="password"
+              value={password}
+              onChange={handlePasswordChange}
+              placeholder="Enter password"
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent backdrop-blur-sm"
+            />
+            {error && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-red-400 text-sm text-center"
+              >
+                {error}
+              </motion.p>
+            )}
+          </form>
+        </motion.div>
+      )}
     </div>
   );
 }

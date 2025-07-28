@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { requireAuthAPI } from '@/lib/auth'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 
 // POST /api/images/refresh-url - Refresh expired signed URLs for attachments
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth()
+    const user = await requireAuthAPI()
     const { storagePath } = await request.json()
 
     if (!storagePath) {
@@ -14,85 +14,83 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
 
     // Verify user has access to this file
     const expectedUserPath = `user-${user.id}/`
     const isPublicPath = storagePath.startsWith('public/')
     const isUserPath = storagePath.startsWith(expectedUserPath)
-    
-    if (!isPublicPath && !isUserPath) {
-      return NextResponse.json({ 
-        error: 'Unauthorized access to file' 
+    const isChatAttachment = storagePath.startsWith('chat-attachments/') || !storagePath.includes('/')
+
+    if (!isPublicPath && !isUserPath && !isChatAttachment) {
+      return NextResponse.json({
+        error: 'Unauthorized access to file'
       }, { status: 403 })
     }
 
-    // Check if file exists in storage
+    // Determine which bucket to use based on storage path
+    let bucketName = 'generated-images'
+    let actualPath = storagePath
+
+    if (isChatAttachment) {
+      bucketName = 'chat-attachments'
+      // Remove chat-attachments/ prefix if present (for backward compatibility)
+      actualPath = storagePath.startsWith('chat-attachments/')
+        ? storagePath.replace('chat-attachments/', '')
+        : storagePath
+    }
+
+    console.log('🔄 Refreshing URL for:', { storagePath, actualPath, bucketName })
+
+    // Check if file exists in the appropriate bucket
+    const pathParts = actualPath.split('/')
+    const searchPath = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : ''
+    const fileName = pathParts[pathParts.length - 1]
+
     const { data: fileData, error: fileError } = await supabase.storage
-      .from('generated-images')
-      .list(storagePath.split('/').slice(0, -1).join('/'), {
-        search: storagePath.split('/').pop()
+      .from(bucketName)
+      .list(searchPath, {
+        search: fileName
       })
 
     if (fileError || !fileData || fileData.length === 0) {
-      // Try chat-attachments bucket if not found in generated-images
-      const { data: chatFileData, error: chatFileError } = await supabase.storage
-        .from('chat-attachments')
-        .list(storagePath.split('/').slice(0, -1).join('/'), {
-          search: storagePath.split('/').pop()
-        })
-
-      if (chatFileError || !chatFileData || chatFileData.length === 0) {
-        return NextResponse.json({ 
-          error: 'File not found in storage' 
-        }, { status: 404 })
-      }
-
-      // Create signed URL for chat-attachments bucket
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('chat-attachments')
-        .createSignedUrl(storagePath, 86400) // 24 hours
-
-      if (signedUrlError) {
-        console.error('Error creating signed URL for chat attachment:', signedUrlError)
-        return NextResponse.json({ 
-          error: 'Failed to create signed URL' 
-        }, { status: 500 })
-      }
-
-      return NextResponse.json({ 
-        url: signedUrlData.signedUrl,
-        expiresAt: new Date(Date.now() + 86400 * 1000).toISOString()
-      })
+      console.error('File not found in storage:', { storagePath, actualPath, bucketName, fileError })
+      return NextResponse.json({
+        error: 'File not found in storage'
+      }, { status: 404 })
     }
 
-    // Create signed URL for generated-images bucket (24 hours)
+    // Create signed URL for the appropriate bucket
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-      .from('generated-images')
-      .createSignedUrl(storagePath, 86400)
+      .from(bucketName)
+      .createSignedUrl(actualPath, 86400) // 24 hours
 
     if (signedUrlError) {
       console.error('Error creating signed URL:', signedUrlError)
-      
-      // Fallback to public URL if signed URL fails
-      const { data: publicUrlData } = supabase.storage
-        .from('generated-images')
-        .getPublicUrl(storagePath)
-      
-      return NextResponse.json({ 
-        url: publicUrlData.publicUrl,
-        expiresAt: null // Public URLs don't expire
-      })
+      return NextResponse.json({
+        error: 'Failed to create signed URL'
+      }, { status: 500 })
     }
 
-    return NextResponse.json({ 
+    console.log('✅ Successfully created signed URL for:', actualPath)
+    return NextResponse.json({
       url: signedUrlData.signedUrl,
       expiresAt: new Date(Date.now() + 86400 * 1000).toISOString()
     })
+
+
   } catch (error) {
     console.error('URL refresh error:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error' 
+
+    // Handle authentication errors specifically
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return NextResponse.json({
+        error: 'Authentication required'
+      }, { status: 401 })
+    }
+
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }

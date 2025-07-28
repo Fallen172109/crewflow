@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { AGENTS, getAgentsForTier } from '@/lib/agents'
+import { AGENTS, getAgentsForTier, isSimplifiedAgentSystem, getShopifyAgents } from '@/lib/agents'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
@@ -322,13 +322,30 @@ export default function DashboardPage() {
       {/* AI Agents Grid */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Your AI Crew</h2>
-          <Link
-            href="/pricing"
-            className="text-primary-500 hover:text-primary-600 text-sm font-medium"
-          >
-            Upgrade to access more agents →
-          </Link>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Your AI Crew</h2>
+            {isSimplifiedAgentSystem() && (
+              <p className="text-sm text-gray-600 mt-1">
+                🚢 Specialized Shopify-focused agents for streamlined store management
+              </p>
+            )}
+          </div>
+          <div className="flex items-center space-x-4">
+            {isSimplifiedAgentSystem() && (
+              <Link
+                href="/dashboard/shopify"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Go to Store Manager →
+              </Link>
+            )}
+            <Link
+              href="/pricing"
+              className="text-primary-500 hover:text-primary-600 text-sm font-medium"
+            >
+              Upgrade to access more agents →
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

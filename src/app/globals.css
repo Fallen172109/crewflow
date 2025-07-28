@@ -42,6 +42,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Ensure proper container boundaries */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Fix for chat and layout containers */
+.chat-container {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Prevent canvas and background elements from extending beyond viewport */
+canvas {
+  max-width: 100vw !important;
+  max-height: 100vh !important;
 }
 
 /* Maritime-themed scrollbar */

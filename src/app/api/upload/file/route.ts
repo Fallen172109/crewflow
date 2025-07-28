@@ -1,11 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/auth'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
+import { requireAuthAPI } from '@/lib/auth'
 
-// POST /api/upload/file - Upload file to storage with authentication
+// POST /api/upload/file - Upload file to storage with authentication (fixed auth v2)
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth()
+    console.log('🔄 File upload request received')
+
+    // Check if we're in maintenance mode and handle accordingly
+    const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true'
+
+    let user
+    try {
+      user = await requireAuthAPI()
+      console.log('✅ User authenticated:', user.id)
+    } catch (authError) {
+      // If in maintenance mode, provide a more helpful error message
+      if (isMaintenanceMode) {
+        console.log('❌ Authentication failed in maintenance mode')
+        return NextResponse.json({
+          error: 'Authentication required. Please log in to upload files.',
+          maintenanceMode: true,
+          code: 'AUTH_REQUIRED_MAINTENANCE'
+        }, { status: 401 })
+      }
+
+      // Re-throw the error for normal operation
+      throw authError
+    }
     
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -42,12 +64,12 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
 
     // Generate unique filename
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`
-    const filePath = `chat-attachments/${fileName}`
+    const filePath = fileName // Just the filename, bucket name is specified separately
 
     console.log('Uploading file:', file.name, 'to path:', filePath, 'for user:', user.id)
 
@@ -68,24 +90,59 @@ export async function POST(request: NextRequest) {
 
     console.log('Upload successful:', data)
 
-    // Get public URL
-    const { data: publicUrlData } = supabase.storage
-      .from('chat-attachments')
-      .getPublicUrl(filePath)
+    // Try to create a signed URL first, fallback to public URL
+    let finalUrl = ''
+
+    try {
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from('chat-attachments')
+        .createSignedUrl(filePath, 86400) // 24 hours
+
+      if (signedUrlError) {
+        console.log('Signed URL failed, using public URL:', signedUrlError)
+        const { data: publicUrlData } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(filePath)
+        finalUrl = publicUrlData.publicUrl
+      } else {
+        finalUrl = signedUrlData.signedUrl
+        console.log('Using signed URL for:', filePath)
+      }
+    } catch (error) {
+      console.log('URL generation error, using public URL:', error)
+      const { data: publicUrlData } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(filePath)
+      finalUrl = publicUrlData.publicUrl
+    }
+
+    console.log('Final image URL:', finalUrl)
 
     return NextResponse.json({
       success: true,
       path: filePath,
-      publicUrl: publicUrlData.publicUrl,
+      storagePath: filePath, // This is just the filename now
+      publicUrl: finalUrl,
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size
     })
 
   } catch (error) {
-    console.error('File upload error:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error' 
+    console.error('❌ File upload error:', error)
+
+    // Handle authentication errors specifically
+    if (error instanceof Error && error.message === 'Authentication required') {
+      console.error('❌ Authentication error')
+      return NextResponse.json({
+        error: 'Authentication required'
+      }, { status: 401 })
+    }
+
+    console.error('❌ Internal server error:', error)
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }

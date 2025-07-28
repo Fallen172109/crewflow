@@ -68,6 +68,7 @@ export default function AgentActivityDashboard() {
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedTimeframe, setSelectedTimeframe] = useState('24h')
   const [autoRefresh, setAutoRefresh] = useState(true)
 
@@ -83,135 +84,29 @@ export default function AgentActivityDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true)
-      // TODO: Implement actual API calls
-      // Mock data for demonstration
-      
-      const mockAgents: AgentActivity[] = [
-        {
-          agentId: 'anchor',
-          agentName: 'Anchor (Quartermaster)',
-          status: 'active',
-          lastActivity: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
-          actionsToday: 23,
-          successRate: 95.7,
-          pendingApprovals: 1,
-          currentTask: 'Monitoring inventory levels',
-          nextScheduledAction: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes from now
-          riskLevel: 'low',
-          permissions: { enabled: 8, total: 10 }
-        },
-        {
-          agentId: 'pearl',
-          agentName: 'Pearl (Research)',
-          status: 'active',
-          lastActivity: new Date(Date.now() - 2 * 60 * 1000), // 2 minutes ago
-          actionsToday: 12,
-          successRate: 100,
-          pendingApprovals: 0,
-          currentTask: 'Analyzing market trends',
-          nextScheduledAction: new Date(Date.now() + 45 * 60 * 1000), // 45 minutes from now
-          riskLevel: 'low',
-          permissions: { enabled: 5, total: 6 }
-        },
-        {
-          agentId: 'flint',
-          agentName: 'Flint (Marketing)',
-          status: 'idle',
-          lastActivity: new Date(Date.now() - 45 * 60 * 1000), // 45 minutes ago
-          actionsToday: 8,
-          successRate: 87.5,
-          pendingApprovals: 2,
-          riskLevel: 'medium',
-          permissions: { enabled: 6, total: 8 }
-        },
-        {
-          agentId: 'beacon',
-          agentName: 'Beacon (Support)',
-          status: 'active',
-          lastActivity: new Date(Date.now() - 1 * 60 * 1000), // 1 minute ago
-          actionsToday: 31,
-          successRate: 96.8,
-          pendingApprovals: 0,
-          currentTask: 'Processing customer inquiries',
-          riskLevel: 'low',
-          permissions: { enabled: 7, total: 7 }
-        },
-        {
-          agentId: 'splash',
-          agentName: 'Splash (Creative)',
-          status: 'paused',
-          lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-          actionsToday: 5,
-          successRate: 100,
-          pendingApprovals: 0,
-          riskLevel: 'low',
-          permissions: { enabled: 4, total: 5 }
-        },
-        {
-          agentId: 'drake',
-          agentName: 'Drake (Strategy)',
-          status: 'error',
-          lastActivity: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-          actionsToday: 3,
-          successRate: 66.7,
-          pendingApprovals: 1,
-          riskLevel: 'high',
-          permissions: { enabled: 3, total: 6 }
-        }
-      ]
+      setError(null)
 
-      const mockApprovals: PendingApproval[] = [
-        {
-          id: '1',
-          agentId: 'flint',
-          agentName: 'Flint (Marketing)',
-          actionType: 'price_update',
-          description: 'Update pricing for 5 navigation products',
-          riskLevel: 'critical',
-          requestedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
-          estimatedImpact: '5 products, ~$2,500 revenue impact'
-        },
-        {
-          id: '2',
-          agentId: 'anchor',
-          agentName: 'Anchor (Quartermaster)',
-          actionType: 'bulk_operations',
-          description: 'Bulk inventory adjustment for seasonal items',
-          riskLevel: 'high',
-          requestedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          expiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000),
-          estimatedImpact: '25 products, inventory rebalancing'
-        },
-        {
-          id: '3',
-          agentId: 'drake',
-          agentName: 'Drake (Strategy)',
-          actionType: 'marketing_campaign',
-          description: 'Launch winter promotion campaign',
-          riskLevel: 'medium',
-          requestedAt: new Date(Date.now() - 30 * 60 * 1000),
-          expiresAt: new Date(Date.now() + 5.5 * 60 * 60 * 1000),
-          estimatedImpact: '$500 budget, 30-day campaign'
-        }
-      ]
-
-      const mockMetrics: SystemMetrics = {
-        totalActions: 82,
-        successfulActions: 76,
-        failedActions: 6,
-        pendingApprovals: 3,
-        activeAgents: 3,
-        averageResponseTime: 2.4,
-        costToday: 1.23,
-        tokensUsed: 15420
+      // TODO: Implement actual API calls when agent activity tracking is ready
+      // For now, show empty state
+      const emptyAgents: AgentActivity[] = []
+      const emptyApprovals: PendingApproval[] = []
+      const emptyMetrics: SystemMetrics = {
+        totalActions: 0,
+        successfulActions: 0,
+        failedActions: 0,
+        pendingApprovals: 0,
+        activeAgents: 0,
+        averageResponseTime: 0,
+        costToday: 0,
+        tokensUsed: 0
       }
 
-      setAgents(mockAgents)
-      setPendingApprovals(mockApprovals)
-      setMetrics(mockMetrics)
+      setAgents(emptyAgents)
+      setPendingApprovals(emptyApprovals)
+      setMetrics(emptyMetrics)
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load dashboard data')
     } finally {
       setLoading(false)
     }

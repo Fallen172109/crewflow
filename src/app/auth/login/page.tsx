@@ -135,7 +135,7 @@ function LoginForm() {
               <p className="text-green-700 text-sm font-medium mb-3">{success}</p>
               <button
                 onClick={() => {
-                  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+                  const redirectTo = searchParams.get('redirectTo') || '/dashboard/shopify'
                   router.push(redirectTo)
                 }}
                 className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"

@@ -125,12 +125,12 @@ export default function StoreSelector({
             <>
               <div className="flex items-center space-x-2">
                 {getPlanIcon(selectedStore.plan_name)}
-                <span className="font-medium text-gray-900">{selectedStore.store_name}</span>
+                <span className="font-medium text-gray-900">{selectedStore.storeName}</span>
               </div>
               
               <div className="flex items-center space-x-1">
-                {getSyncStatusIcon(selectedStore.sync_status)}
-                {selectedStore.is_primary && (
+                {getSyncStatusIcon(selectedStore.syncStatus)}
+                {selectedStore.isPrimary && (
                   <span className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full font-medium">
                     Primary
                   </span>
@@ -168,23 +168,23 @@ export default function StoreSelector({
                   onClick={() => handleStoreSelect(store)}
                   className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
                     selectedStore?.id === store.id ? 'bg-orange-50 border-r-2 border-orange-500' : ''
-                  } ${!store.is_active ? 'opacity-60' : ''}`}
+                  } ${!store.isActive ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
-                        {getPlanIcon(store.plan_name)}
-                        <span className="font-medium text-gray-900">{store.store_name}</span>
+                        {getPlanIcon(store.planName)}
+                        <span className="font-medium text-gray-900">{store.storeName}</span>
                       </div>
                       
                       <div className="flex items-center space-x-1">
-                        {getSyncStatusIcon(store.sync_status)}
-                        {store.is_primary && (
+                        {getSyncStatusIcon(store.syncStatus)}
+                        {store.isPrimary && (
                           <span className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full font-medium">
                             Primary
                           </span>
                         )}
-                        {!store.is_active && (
+                        {!store.isActive && (
                           <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
                             Inactive
                           </span>

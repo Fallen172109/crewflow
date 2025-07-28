@@ -4,18 +4,18 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 interface ShopifyStore {
   id: string
-  shop_domain: string
-  store_name: string
-  store_email?: string
+  shopDomain: string
+  storeName: string
+  storeEmail?: string
   currency: string
   timezone?: string
-  plan_name?: string
-  is_active: boolean
-  is_primary: boolean
-  connected_at: string
-  last_sync_at?: string
-  sync_status: 'never' | 'syncing' | 'synced' | 'error'
-  sync_error?: string
+  planName?: string
+  isActive: boolean
+  isPrimary: boolean
+  connectedAt: string
+  lastSyncAt?: string
+  syncStatus: 'never' | 'syncing' | 'synced' | 'error'
+  syncError?: string
   metadata: {
     shop_id?: number
     country_code?: string

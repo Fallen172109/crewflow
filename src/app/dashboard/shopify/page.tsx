@@ -1,37 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { handleAuthError } from '@/lib/auth-error-handler'
 import { ShopifyStoreProvider } from '@/contexts/ShopifyStoreContext'
-import MultiStoreManager from '@/components/shopify/MultiStoreManager'
 import StoreSelector from '@/components/shopify/StoreSelector'
-import PlanAwareFeatures from '@/components/shopify/PlanAwareFeatures'
-import ProductCreationChat from '@/components/shopify/ProductCreationChat'
-import AdvancedProductManager from '@/components/shopify/AdvancedProductManager'
-import ProductManagement from '@/components/shopify/ProductManagement'
-import OrderManagement from '@/components/shopify/OrderManagement'
-import AnalyticsDashboard from '@/components/shopify/AnalyticsDashboard'
+import SimplifiedShopifyAIChat from '@/components/shopify/SimplifiedShopifyAIChat'
 import ConnectStoreModal from '@/components/shopify/ConnectStoreModal'
+import BottomManagementPanel from '@/components/shopify/BottomManagementPanel'
+// import { BeamsBackground } from '@/components/ui/beams-background' // TEMPORARILY DISABLED
 import {
   Store,
   Package,
   ShoppingCart,
   Users,
-  TrendingUp,
-  Settings,
-  AlertCircle,
-  CheckCircle,
-  Clock,
   DollarSign,
   BarChart3,
-  Zap,
-  Ship,
   Anchor,
   Plus,
-  Grid3X3,
-  List,
-  Sparkles
+  TrendingUp,
+  AlertCircle,
+  Ship
 } from 'lucide-react'
 
 interface ShopifyStore {
@@ -67,14 +56,15 @@ export default function ShopifyDashboard() {
 
 function ShopifyDashboardContent() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('overview')
   const [stores, setStores] = useState<ShopifyStore[]>([])
   const [selectedStore, setSelectedStore] = useState<ShopifyStore | null>(null)
   const [metrics, setMetrics] = useState<StoreMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected')
   const [showShopifyModal, setShowShopifyModal] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [productPreview, setProductPreview] = useState<any>(null)
+  const [isGeneratingProduct, setIsGeneratingProduct] = useState(false)
+  const chatRef = useRef<any>(null)
 
   useEffect(() => {
     // Check for OAuth callback parameters first
@@ -179,16 +169,82 @@ function ShopifyDashboardContent() {
     }
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Command Center', icon: Anchor },
-    { id: 'create-product', label: 'AI Product Creator', icon: Sparkles },
-    { id: 'products', label: 'Cargo Manifest', icon: Package },
-    { id: 'orders', label: 'Ship Orders', icon: ShoppingCart },
-    { id: 'customers', label: 'Crew Registry', icon: Users },
-    { id: 'analytics', label: 'Navigation Charts', icon: BarChart3 },
-    { id: 'automation', label: 'Auto-Pilot', icon: Zap },
-    { id: 'settings', label: 'Ship Settings', icon: Settings }
-  ]
+  // Handle quick actions from bottom panel
+  const handleQuickAction = (action: string, message: string) => {
+    // Set generating state for product creation actions
+    if (action.toLowerCase().includes('product') || action.toLowerCase().includes('listing')) {
+      setIsGeneratingProduct(true)
+      setProductPreview(null)
+    }
+
+    if (chatRef.current && chatRef.current.sendMessage) {
+      chatRef.current.sendMessage(message)
+    }
+  }
+
+  // Handle product creation from AI chat
+  const handleProductCreated = (product: any) => {
+    console.log('Product created:', product)
+    setProductPreview(product)
+    setIsGeneratingProduct(false)
+  }
+
+  // Handle publishing to Shopify
+  const handlePublishToShopify = async (product: any) => {
+    try {
+      console.log('Publishing product to Shopify:', product)
+
+      const response = await fetch('/api/shopify/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          product: {
+            title: product.title,
+            body_html: product.description,
+            vendor: selectedStore?.store_name || 'CrewFlow Store',
+            product_type: product.category || 'General',
+            tags: product.tags?.join(', ') || '',
+            variants: [{
+              price: product.price || '0.00',
+              inventory_quantity: 100,
+              inventory_management: 'shopify'
+            }]
+          }
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Product published successfully:', result)
+
+        // Clear the preview after successful publish
+        setProductPreview(null)
+
+        // Show success message in chat
+        if (chatRef.current && chatRef.current.addAgentResponse) {
+          chatRef.current.addAgentResponse(
+            `✅ Product "${product.title}" has been successfully published to your Shopify store!`,
+            'product_creation'
+          )
+        }
+      } else {
+        throw new Error(`Failed to publish product: ${response.status}`)
+      }
+    } catch (error) {
+      console.error('❌ Error publishing product:', error)
+
+      // Show error message in chat
+      if (chatRef.current && chatRef.current.addAgentResponse) {
+        chatRef.current.addAgentResponse(
+          `❌ Sorry, there was an error publishing the product to Shopify. Please try again.`,
+          'product_creation'
+        )
+      }
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -220,192 +276,80 @@ function ShopifyDashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Optimized Animated Background - TEMPORARILY DISABLED */}
+      {/* <BeamsBackground
+        intensity="medium"
+        className="absolute inset-0 z-10 pointer-events-none"
+      /> */}
+
+      <div className="relative z-20 min-h-screen flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-8 rounded-lg mb-8">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-r from-orange-600/90 to-orange-700/90 backdrop-blur-sm text-white p-6 border-b border-orange-500/20 flex-shrink-0">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                <Store className="w-8 h-8" />
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <Anchor className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Shopify Command Center</h1>
-                <p className="text-orange-100 mt-2">
-                  Navigate your e-commerce fleet with AI-powered automation
+                <h1 className="text-2xl font-bold">Store Manager</h1>
+                <p className="text-orange-100 text-sm">
+                  AI-powered Shopify management hub
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-orange-100 text-sm">Captain on Deck</div>
-              <div className="text-white font-medium">{user?.email}</div>
+            <div className="flex items-center space-x-4">
+              <StoreSelector
+                onConnect={() => setShowShopifyModal(true)}
+                className="bg-white/10 backdrop-blur-sm border-white/20"
+              />
+              <div className="text-right">
+                <div className="text-orange-100 text-xs">Captain</div>
+                <div className="text-white text-sm font-medium">{user?.email}</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Store Selector and Management */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Active Store</h2>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
-                  </button>
+        {/* Main Content Area - Central AI Chat */}
+        <div className="flex-1 max-w-7xl mx-auto w-full p-6 overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-gray-200 shadow-xl h-[calc(100vh-280px)] flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-orange-100 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">AI Store Assistant</h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Complete Shopify management through intelligent conversations
+                  </p>
                 </div>
+                {connectionStatus === 'connected' && (
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium">Store Connected</span>
+                  </div>
+                )}
               </div>
-              <StoreSelector
-                onConnect={() => setShowShopifyModal(true)}
-                className="mb-4"
+            </div>
+
+            <div className="flex-1 bg-gray-50/80 backdrop-blur-sm overflow-hidden">
+              <SimplifiedShopifyAIChat
+                ref={chatRef}
+                className="h-full"
+                onProductCreated={handleProductCreated}
               />
             </div>
           </div>
-
-          <div>
-            <PlanAwareFeatures compact showSuggestion />
-          </div>
         </div>
 
-        {/* Multi-Store Manager */}
-        <MultiStoreManager
-          onConnect={() => setShowShopifyModal(true)}
-          className="mb-8"
-        />
-
-        {/* Navigation Tabs */}
-        <div className="bg-white rounded-lg border border-gray-200 mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
-              {tabs.map((tab) => {
-                const Icon = tab.icon
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === tab.id
-                        ? 'border-orange-500 text-orange-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{tab.label}</span>
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-6">
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">Fleet Overview</h2>
-
-                {/* Metrics Grid */}
-                {metrics && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-green-100">Monthly Revenue</p>
-                          <p className="text-2xl font-bold">${metrics.totalRevenue.toLocaleString()}</p>
-                        </div>
-                        <DollarSign className="w-8 h-8 text-green-200" />
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-blue-100">Orders Today</p>
-                          <p className="text-2xl font-bold">{metrics.ordersToday}</p>
-                        </div>
-                        <ShoppingCart className="w-8 h-8 text-blue-200" />
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-purple-100">Total Products</p>
-                          <p className="text-2xl font-bold">{metrics.productsCount}</p>
-                        </div>
-                        <Package className="w-8 h-8 text-purple-200" />
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-orange-100">Customers</p>
-                          <p className="text-2xl font-bold">{metrics.customersCount}</p>
-                        </div>
-                        <Users className="w-8 h-8 text-orange-200" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="text-center py-12">
-                  <Ship className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Your Maritime Commerce Fleet Awaits
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Navigate through the tabs above to manage your Shopify operations with AI-powered automation.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'create-product' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">AI Product Creator</h2>
-                    <p className="text-gray-600 mt-1">
-                      Create compelling product listings with AI assistance
-                    </p>
-                  </div>
-                </div>
-
-                <ProductCreationChat
-                  className="h-[600px]"
-                  onProductCreated={(product) => {
-                    console.log('Product created:', product)
-                    // Optionally switch to products tab to show the new product
-                    // setActiveTab('products')
-                  }}
-                />
-              </div>
-            )}
-
-            {activeTab === 'products' && <AdvancedProductManager />}
-            {activeTab === 'orders' && <OrderManagement />}
-            {activeTab === 'analytics' && <AnalyticsDashboard />}
-
-            {['customers', 'automation', 'settings'].includes(activeTab) && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  {(() => {
-                    const TabIcon = tabs.find(t => t.id === activeTab)?.icon || Package
-                    return <TabIcon className="w-8 h-8 text-orange-600" />
-                  })()}
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {tabs.find(t => t.id === activeTab)?.label} - Coming Soon
-                </h3>
-                <p className="text-gray-600">
-                  This section is under construction. Our crew is working hard to bring you comprehensive Shopify management tools.
-                </p>
-              </div>
-            )}
-          </div>
+        {/* Bottom Management Panel with Spotlight Cards and Product Preview */}
+        <div className="flex-shrink-0">
+          <BottomManagementPanel
+            className="border-t border-white/20"
+            onQuickAction={handleQuickAction}
+            productPreview={productPreview}
+            isGeneratingProduct={isGeneratingProduct}
+            onPublishToShopify={handlePublishToShopify}
+          />
         </div>
       </div>
 
@@ -422,3 +366,4 @@ function ShopifyDashboardContent() {
     </div>
   )
 }
+

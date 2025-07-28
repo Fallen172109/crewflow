@@ -109,13 +109,13 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
       <h3 className="text-lg font-semibold text-gray-900 mb-2 mt-4" {...props}>{children}</h3>
     ),
     p: ({ children, ...props }: any) => (
-      <p className="text-gray-700 leading-extra-loose mb-3 font-chat text-base" {...props}>{children}</p>
+      <p className="text-gray-700 leading-extra-loose mb-3 font-chat text-base break-words" {...props}>{children}</p>
     ),
     ul: ({ children, ...props }: any) => (
-      <ul className="list-disc list-inside text-gray-700 mb-3 space-y-1 font-chat text-base leading-extra-loose" {...props}>{children}</ul>
+      <ul className="list-disc list-inside text-gray-700 mb-3 space-y-1 font-chat text-base leading-extra-loose break-words" {...props}>{children}</ul>
     ),
     ol: ({ children, ...props }: any) => (
-      <ol className="list-decimal list-inside text-gray-700 mb-3 space-y-1 font-chat text-base leading-extra-loose" {...props}>{children}</ol>
+      <ol className="list-decimal list-inside text-gray-700 mb-3 space-y-1 font-chat text-base leading-extra-loose break-words" {...props}>{children}</ol>
     ),
     li: ({ children, ...props }: any) => (
       <li className="text-gray-700 font-chat text-base leading-extra-loose" {...props}>{children}</li>
@@ -123,7 +123,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
   }
 
   return (
-    <div className={`prose prose-base max-w-none font-chat leading-extra-loose prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:font-chat prose-p:text-gray-700 prose-p:leading-extra-loose prose-p:font-chat prose-strong:text-gray-900 prose-strong:font-semibold prose-strong:font-chat prose-ul:text-gray-700 prose-ul:font-chat prose-ol:text-gray-700 prose-ol:font-chat prose-li:text-gray-700 prose-li:font-chat prose-code:text-orange-600 prose-code:bg-orange-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-blockquote:border-orange-500 prose-blockquote:text-gray-700 prose-blockquote:font-chat ${className}`}>
+    <div className={`prose prose-base max-w-none font-chat leading-extra-loose prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:font-chat prose-p:text-gray-700 prose-p:leading-extra-loose prose-p:font-chat prose-strong:text-gray-900 prose-strong:font-semibold prose-strong:font-chat prose-ul:text-gray-700 prose-ul:font-chat prose-ol:text-gray-700 prose-ol:font-chat prose-li:text-gray-700 prose-li:font-chat prose-code:text-orange-600 prose-code:bg-orange-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-blockquote:border-orange-500 prose-blockquote:text-gray-700 prose-blockquote:font-chat break-words overflow-wrap-anywhere ${className}`}>
       {renderContent(content)}
     </div>
   )

@@ -287,7 +287,7 @@ How can I assist you with your meal planning today?`
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ minHeight: '400px' }}>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4" style={{ minHeight: '400px' }}>
         {messages.map((message) => (
           <div
             key={message.id}
@@ -310,7 +310,7 @@ How can I assist you with your meal planning today?`
               </div>
 
               {/* Message Content */}
-              <div className={`rounded-lg px-4 py-3 ${
+              <div className={`rounded-lg px-4 py-3 break-words ${
                 message.type === 'user'
                   ? 'bg-gray-600 text-white'
                   : 'bg-gray-100 text-gray-900'

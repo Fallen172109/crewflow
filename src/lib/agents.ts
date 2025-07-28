@@ -1,4 +1,14 @@
 // Agent configurations and utilities
+// Feature flag for simplified Shopify-focused agent system
+const USE_SIMPLIFIED_AGENTS = true
+
+import {
+  SIMPLIFIED_AGENTS,
+  getSimplifiedAgentsForTier,
+  getSimplifiedAgent,
+  canUserAccessSimplifiedAgent,
+  getShopifySpecializedAgents
+} from './agents-simplified'
 
 export interface Agent {
   id: string
@@ -15,6 +25,7 @@ export interface Agent {
   costPerRequest: number
   requiresApiConnection: boolean
   optimalAiModules: string[]
+  shopifySpecialized?: boolean
 }
 
 export interface PresetAction {
@@ -26,7 +37,8 @@ export interface PresetAction {
   estimatedTime: string
 }
 
-export const AGENTS: Record<string, Agent> = {
+// Full agent system (original 14 agents)
+const FULL_AGENTS: Record<string, Agent> = {
   coral: {
     id: 'coral',
     name: 'Coral',
@@ -874,10 +886,16 @@ export const AGENTS: Record<string, Agent> = {
   }
 }
 
+// Export the appropriate agent system based on feature flag
+export const AGENTS: Record<string, Agent> = USE_SIMPLIFIED_AGENTS ? SIMPLIFIED_AGENTS : FULL_AGENTS
+
 // Get agents available for a subscription tier
 export function getAgentsForTier(tier: string | null): Agent[] {
+  if (USE_SIMPLIFIED_AGENTS) {
+    return getSimplifiedAgentsForTier(tier)
+  }
   if (!tier) return []
-  
+
   return Object.values(AGENTS).filter(agent => {
     switch (tier) {
       case 'starter':
@@ -894,17 +912,40 @@ export function getAgentsForTier(tier: string | null): Agent[] {
 
 // Get agent by ID
 export function getAgent(id: string): Agent | null {
+  if (USE_SIMPLIFIED_AGENTS) {
+    return getSimplifiedAgent(id)
+  }
   return AGENTS[id] || null
 }
 
 // Check if user can access agent
 export function canUserAccessAgent(userTier: string | null, agentId: string): boolean {
+  if (USE_SIMPLIFIED_AGENTS) {
+    return canUserAccessSimplifiedAgent(userTier, agentId)
+  }
+
   const agent = getAgent(agentId)
   if (!agent) return false
-
-  // Enterprise tier should have access to all agents
-  if (userTier === 'enterprise') return true
 
   const availableAgents = getAgentsForTier(userTier)
   return availableAgents.some(a => a.id === agentId)
 }
+
+// Get Shopify-specialized agents (only available in simplified mode)
+export function getShopifyAgents(): Agent[] {
+  if (USE_SIMPLIFIED_AGENTS) {
+    return getShopifySpecializedAgents()
+  }
+
+  // In full mode, return agents with Shopify integrations
+  return Object.values(AGENTS).filter(agent =>
+    agent.integrations.includes('shopify')
+  )
+}
+
+// Check if simplified agent system is enabled
+export function isSimplifiedAgentSystem(): boolean {
+  return USE_SIMPLIFIED_AGENTS
+}
+
+

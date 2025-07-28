@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 
 // GET /api/chat/threads - Get all threads for a user/agent/taskType
 export async function GET(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Agent name is required' }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
 
     // Fetch threads with message counts
     const { data: threads, error } = await supabase
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
 
     // Create new thread
     const { data: thread, error } = await supabase

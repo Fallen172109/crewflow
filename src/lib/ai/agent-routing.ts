@@ -4,6 +4,13 @@
  */
 
 import type { Agent } from '../agents'
+import { isSimplifiedAgentSystem } from '@/lib/agents'
+import {
+  routeToSimplifiedAgent,
+  shouldRouteToSpecialist as shouldRouteToSimplifiedSpecialist,
+  analyzeMessageDomain as analyzeSimplifiedMessageDomain,
+  generateReferralMessage as generateSimplifiedReferralMessage
+} from './simplified-agent-routing'
 
 export interface DomainAnalysis {
   primaryDomain: string
@@ -107,6 +114,10 @@ const AGENT_SPECIALIZATIONS = {
  * Analyze the domain and complexity of a user's question
  */
 export function analyzeDomain(message: string): DomainAnalysis {
+  // Use simplified routing if enabled
+  if (isSimplifiedAgentSystem()) {
+    return analyzeSimplifiedMessageDomain(message)
+  }
   const messageLower = message.toLowerCase()
   const domainScores: Record<string, number> = {}
   const foundKeywords: string[] = []
@@ -153,6 +164,19 @@ export function shouldReferToSpecialist(
   domainAnalysis: DomainAnalysis,
   availableAgents: Agent[]
 ): ReferralDecision {
+  // Use simplified routing if enabled
+  if (isSimplifiedAgentSystem()) {
+    const routingResult = shouldRouteToSimplifiedSpecialist('', currentAgent.id)
+    if (routingResult.shouldRoute && routingResult.decision) {
+      return {
+        shouldRefer: true,
+        targetAgent: routingResult.decision.targetAgent,
+        reason: routingResult.decision.reason,
+        confidence: routingResult.decision.confidence
+      }
+    }
+    return { shouldRefer: false, confidence: 0 }
+  }
   const currentAgentSpec = AGENT_SPECIALIZATIONS[currentAgent.id as keyof typeof AGENT_SPECIALIZATIONS]
   
   if (!currentAgentSpec) {
@@ -197,20 +221,30 @@ export function generateReferralResponse(
   referralDecision: ReferralDecision,
   originalMessage: string
 ): ReferralResponse {
+  // Use simplified routing if enabled
+  if (isSimplifiedAgentSystem()) {
+    const routingDecision = routeToSimplifiedAgent(originalMessage, currentAgent.id)
+    return {
+      message: generateSimplifiedReferralMessage(routingDecision),
+      targetAgent: routingDecision.targetAgent,
+      confidence: routingDecision.confidence
+    }
+  }
+
   if (!referralDecision.targetAgent || !referralDecision.reason) {
     throw new Error('Invalid referral decision')
   }
 
   const targetAgent = referralDecision.targetAgent
-  const maritimeTemplates = [
-    `Ahoy! While I can provide some guidance on this topic, our specialist **${targetAgent.name}** is your best navigator for ${referralDecision.reason}. They have the maritime skills and specialized tools designed specifically for this type of challenge. You can find ${targetAgent.name} in your crew dashboard - they'll chart the perfect course for your needs!`,
-    
-    `I can offer some initial direction, but **${targetAgent.name}** is the crew member you want for this voyage! They specialize in ${referralDecision.reason} and have the right tools to help you navigate these waters successfully. Set sail to ${targetAgent.name}'s station in your dashboard for expert guidance.`,
-    
-    `While I'm happy to help where I can, **${targetAgent.name}** is the specialist who can really anchor down the details for you. Their expertise in ${referralDecision.reason} makes them the ideal crew member for this task. Navigate to ${targetAgent.name} in your crew dashboard for comprehensive assistance!`
+  const professionalTemplates = [
+    `I can provide some guidance on this topic, but **${targetAgent.name}** specializes in ${referralDecision.reason} and has the specialized tools designed specifically for this type of challenge. You can find ${targetAgent.name} in your crew dashboard for comprehensive assistance.`,
+
+    `I can offer some initial direction, but **${targetAgent.name}** is the specialist you want for this task. They specialize in ${referralDecision.reason} and have the right tools to address your needs effectively. Access ${targetAgent.name} in your dashboard for expert guidance.`,
+
+    `While I'm happy to help where I can, **${targetAgent.name}** specializes in ${referralDecision.reason} and can provide the detailed assistance you need. Access ${targetAgent.name} in your crew dashboard for comprehensive support.`
   ]
 
-  const template = maritimeTemplates[Math.floor(Math.random() * maritimeTemplates.length)]
+  const template = professionalTemplates[Math.floor(Math.random() * professionalTemplates.length)]
 
   return {
     response: template,

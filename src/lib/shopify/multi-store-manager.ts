@@ -361,41 +361,79 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
 // Remove a store
 export async function removeStore(userId: string, storeId: string, supabaseClient?: any): Promise<{ success: boolean; error?: string }> {
   const supabase = supabaseClient || createSupabaseServerClient()
-  
+
   try {
-    // Check if user owns the store
-    const stores = await getUserStores(userId)
-    const store = stores.find(s => s.id === storeId)
-    
-    if (!store) {
+    console.log('🗑️ removeStore Debug - Starting removal:', { userId, storeId })
+
+    // First, check if the store exists in the database directly
+    const { data: storeData, error: storeError } = await supabase
+      .from('shopify_stores')
+      .select('*')
+      .eq('id', storeId)
+      .eq('user_id', userId)
+      .single()
+
+    console.log('🗑️ removeStore Debug - Store query result:', { storeData, storeError })
+
+    if (storeError || !storeData) {
+      console.log('🗑️ removeStore Debug - Store not found or access denied')
       return {
         success: false,
-        error: 'Store not found'
+        error: 'Store not found or access denied'
       }
     }
-    
+
     // If this is the primary store and there are other stores, make another one primary
-    if (store.isPrimary && stores.length > 1) {
-      const nextPrimary = stores.find(s => s.id !== storeId)
-      if (nextPrimary) {
+    if (storeData.is_primary) {
+      const { data: otherStores, error: otherStoresError } = await supabase
+        .from('shopify_stores')
+        .select('id')
+        .eq('user_id', userId)
+        .neq('id', storeId)
+        .limit(1)
+
+      console.log('🗑️ removeStore Debug - Other stores check:', { otherStores, otherStoresError })
+
+      if (otherStores && otherStores.length > 0) {
+        console.log('🗑️ removeStore Debug - Setting new primary store:', otherStores[0].id)
         await supabase
           .from('shopify_stores')
           .update({ is_primary: true })
-          .eq('id', nextPrimary.id)
+          .eq('id', otherStores[0].id)
       }
     }
-    
+
+    console.log('🗑️ removeStore Debug - Starting deletion of related data')
+
     // Remove store and related data
-    await Promise.all([
-      supabase.from('shopify_stores').delete().eq('id', storeId),
-      supabase.from('api_connections').delete().eq('store_id', storeId),
+    const deletionResults = await Promise.allSettled([
+      supabase.from('shopify_stores').delete().eq('id', storeId).eq('user_id', userId),
+      supabase.from('api_connections').delete().eq('shop_domain', storeData.shop_domain).eq('user_id', userId).eq('integration_id', 'shopify'),
       supabase.from('webhook_configs').delete().eq('store_id', storeId),
       supabase.from('webhook_events').delete().eq('store_id', storeId)
     ])
-    
+
+    console.log('🗑️ removeStore Debug - Deletion results:', deletionResults)
+
+    // Check if the main store deletion was successful
+    const storeDeleteResult = deletionResults[0]
+    if (storeDeleteResult.status === 'rejected') {
+      console.error('🗑️ removeStore Debug - Store deletion failed:', storeDeleteResult.reason)
+      throw new Error('Failed to delete store from database')
+    }
+
+    // Log any failed deletions for related data (but don't fail the whole operation)
+    deletionResults.slice(1).forEach((result, index) => {
+      const tableNames = ['api_connections', 'webhook_configs', 'webhook_events']
+      if (result.status === 'rejected') {
+        console.warn(`🗑️ removeStore Debug - Failed to delete from ${tableNames[index]}:`, result.reason)
+      }
+    })
+
+    console.log('🗑️ removeStore Debug - Store removal completed successfully')
     return { success: true }
   } catch (error) {
-    console.error('Error removing store:', error)
+    console.error('🗑️ removeStore Debug - Error removing store:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

@@ -176,15 +176,44 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
       }
 
       try {
+        console.log('📚 CREWFLOW DEBUG: Loading thread messages', {
+          agentId: agent.id,
+          threadId: activeThreadId,
+          timestamp: new Date().toISOString()
+        })
+
         // Load messages
         const messagesResponse = await fetch(`/api/chat/history?agent=${agent.id}&threadId=${activeThreadId}&limit=100`)
+
+        console.log('📚 CREWFLOW DEBUG: Messages response', {
+          status: messagesResponse.status,
+          ok: messagesResponse.ok,
+          statusText: messagesResponse.statusText
+        })
+
         if (messagesResponse.ok) {
           const messagesData = await messagesResponse.json()
           const historyMessages = messagesData.messages || []
+
+          console.log('📚 CREWFLOW DEBUG: Loaded messages', {
+            count: historyMessages.length,
+            messages: historyMessages.map((msg: any) => ({
+              id: msg.id,
+              type: msg.type,
+              content: msg.content.substring(0, 50) + '...',
+              timestamp: msg.timestamp
+            }))
+          })
+
           setThreadMessages(historyMessages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           })))
+        } else {
+          console.error('📚 CREWFLOW DEBUG: Failed to load messages', {
+            status: messagesResponse.status,
+            statusText: messagesResponse.statusText
+          })
         }
 
         // Load thread context
@@ -293,6 +322,44 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
       }
     }
 
+    // Auto-create thread if none exists
+    let threadIdToUse = activeThreadId
+    if (!activeThreadId) {
+      try {
+        console.log('📚 CREWFLOW DEBUG: Auto-creating thread for first message')
+        const response = await fetch('/api/chat/threads', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            agentName: agent.id,
+            taskType: currentTaskType,
+            title: content.trim().substring(0, 50) + (content.trim().length > 50 ? '...' : ''),
+            context: null,
+            attachments: messageAttachments.filter(att => att.uploadStatus === 'completed')
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          threadIdToUse = data.thread.id
+          setActiveThreadId(threadIdToUse)
+          console.log('📚 CREWFLOW DEBUG: Auto-created thread:', threadIdToUse)
+          // Refresh thread list to show the new thread
+          threadManagerRef.current?.refreshThreads()
+        } else {
+          console.error('Failed to create thread:', response.status, await response.text())
+          // Use temporary thread as fallback
+          threadIdToUse = `temp-${Date.now()}`
+        }
+      } catch (error) {
+        console.error('Error auto-creating thread:', error)
+        // Use temporary thread as fallback
+        threadIdToUse = `temp-${Date.now()}`
+      }
+    }
+
     // Create user message
     const userMessage: Message = {
       id: messageId,
@@ -300,11 +367,11 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
       content: messageContent,
       timestamp: new Date(),
       taskType: currentTaskType,
-      threadId: activeThreadId
+      threadId: threadIdToUse
     }
 
     // Add message to appropriate container
-    if (activeThreadId) {
+    if (threadIdToUse) {
       setThreadMessages(prev => [...prev, userMessage])
     } else {
       const targetTabId = taskType ? getTabIdFromTaskType(taskType) : activeTab
@@ -345,7 +412,7 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
     setShowFileUpload(false)
 
     // Call the parent's send message handler with thread ID
-    onSendMessage(content.trim(), currentTaskType, currentTaskType, activeThreadId)
+    onSendMessage(content.trim(), currentTaskType, currentTaskType, threadIdToUse)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -521,14 +588,14 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
         )}
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
           {(activeThreadId ? threadMessages : (messages[activeTab] || [])).map((message) => (
             <div
               key={message.id}
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                className={`max-w-[80%] rounded-lg px-4 py-2 overflow-hidden break-words ${
                   message.type === 'user'
                     ? 'bg-orange-600 text-white'
                     : 'bg-gray-100 text-gray-900'

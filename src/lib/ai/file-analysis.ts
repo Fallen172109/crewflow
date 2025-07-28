@@ -365,6 +365,32 @@ export async function getFileAttachments(
 }
 
 /**
+ * Analyze files for Shopify management (wrapper function)
+ * Converts UploadedFile format to FileAttachment and returns array format
+ */
+export async function analyzeFiles(uploadedFiles: any[]): Promise<FileAnalysisResult[]> {
+  if (!uploadedFiles || uploadedFiles.length === 0) {
+    return []
+  }
+
+  // Convert UploadedFile format to FileAttachment format
+  const fileAttachments: FileAttachment[] = uploadedFiles.map(file => ({
+    id: file.id || `file-${Date.now()}`,
+    fileName: file.fileName || file.name || 'unknown',
+    fileType: file.fileType || file.type || 'application/octet-stream',
+    fileSize: file.fileSize || file.size || 0,
+    publicUrl: file.publicUrl || file.url || '',
+    metadata: file.metadata || {}
+  }))
+
+  // Analyze the files
+  const analysisResults = await analyzeFileAttachments(fileAttachments)
+
+  // Convert to array format expected by calling code
+  return Object.values(analysisResults)
+}
+
+/**
  * Create context string from file analysis for AI agents
  */
 export function createFileContext(

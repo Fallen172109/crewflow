@@ -73,6 +73,7 @@ interface OrderFilters {
 export default function OrderManagement() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedOrders, setSelectedOrders] = useState<number[]>([])
   const [showFilters, setShowFilters] = useState(false)
@@ -91,131 +92,73 @@ export default function OrderManagement() {
   }, [filters, searchQuery])
 
   const loadOrders = async () => {
+    if (!selectedStore) {
+      console.warn('No store selected')
+      return
+    }
+
     try {
       setLoading(true)
-      // TODO: Implement actual API call
-      // Mock data for demonstration
-      const mockOrders: Order[] = [
-        {
-          id: 1001,
-          order_number: '#1001',
-          name: '#1001',
-          email: 'captain.smith@maritime.com',
-          created_at: '2024-01-20T10:30:00Z',
-          updated_at: '2024-01-20T14:15:00Z',
-          total_price: 299.99,
-          currency: 'USD',
-          financial_status: 'paid',
-          fulfillment_status: 'unfulfilled',
-          customer: {
-            id: 501,
-            first_name: 'Captain',
-            last_name: 'Smith',
-            email: 'captain.smith@maritime.com',
-            phone: '+1-555-0123'
-          },
-          shipping_address: {
-            first_name: 'Captain',
-            last_name: 'Smith',
-            address1: '123 Harbor Drive',
-            city: 'Boston',
-            province: 'MA',
-            country: 'United States',
-            zip: '02101'
-          },
-          line_items: [
-            {
-              id: 1,
-              title: 'Maritime Navigation Compass',
-              quantity: 2,
-              price: 149.99,
-              variant_title: 'Professional Grade'
-            }
-          ],
-          tags: 'priority, navigation',
-          note: 'Rush delivery requested for upcoming voyage'
-        },
-        {
-          id: 1002,
-          order_number: '#1002',
-          name: '#1002',
-          email: 'admiral.jones@fleet.com',
-          created_at: '2024-01-19T15:45:00Z',
-          updated_at: '2024-01-20T09:30:00Z',
-          total_price: 899.99,
-          currency: 'USD',
-          financial_status: 'paid',
-          fulfillment_status: 'fulfilled',
-          customer: {
-            id: 502,
-            first_name: 'Admiral',
-            last_name: 'Jones',
-            email: 'admiral.jones@fleet.com',
-            phone: '+1-555-0456'
-          },
-          shipping_address: {
-            first_name: 'Admiral',
-            last_name: 'Jones',
-            address1: '456 Wharf Street',
-            city: 'San Francisco',
-            province: 'CA',
-            country: 'United States',
-            zip: '94111'
-          },
-          line_items: [
-            {
-              id: 2,
-              title: 'Anchor Chain Set - Heavy Duty',
-              quantity: 1,
-              price: 899.99,
-              variant_title: '50ft Professional'
-            }
-          ],
-          tags: 'bulk, anchoring',
-          note: 'Corporate fleet order'
-        },
-        {
-          id: 1003,
-          order_number: '#1003',
-          name: '#1003',
-          email: 'sailor.brown@crew.com',
-          created_at: '2024-01-18T12:20:00Z',
-          updated_at: '2024-01-18T12:20:00Z',
-          total_price: 75.99,
-          currency: 'USD',
-          financial_status: 'pending',
-          fulfillment_status: 'unfulfilled',
-          customer: {
-            id: 503,
-            first_name: 'Sailor',
-            last_name: 'Brown',
-            email: 'sailor.brown@crew.com'
-          },
-          shipping_address: {
-            first_name: 'Sailor',
-            last_name: 'Brown',
-            address1: '789 Marina Boulevard',
-            city: 'Miami',
-            province: 'FL',
-            country: 'United States',
-            zip: '33101'
-          },
-          line_items: [
-            {
-              id: 3,
-              title: 'Ship Rope - Premium Quality',
-              quantity: 3,
-              price: 25.33
-            }
-          ],
-          tags: 'rigging, personal',
-          note: ''
-        }
-      ]
+      setError(null)
 
-      setOrders(mockOrders)
+      // Fetch orders from the API
+      const response = await fetch(`/api/shopify/stores/${selectedStore.id}/orders`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch orders')
+      }
+
+      const data = await response.json()
+
+      if (data.success && data.orders) {
+        // Transform Shopify orders to match our Order interface
+        const transformedOrders: Order[] = data.orders.map((shopifyOrder: any) => ({
+          id: shopifyOrder.id,
+          order_number: shopifyOrder.order_number || shopifyOrder.name,
+          name: shopifyOrder.name,
+          email: shopifyOrder.email || shopifyOrder.customer?.email || '',
+          created_at: shopifyOrder.created_at,
+          updated_at: shopifyOrder.updated_at,
+          total_price: parseFloat(shopifyOrder.total_price || '0'),
+          currency: shopifyOrder.currency || 'USD',
+          financial_status: shopifyOrder.financial_status || 'pending',
+          fulfillment_status: shopifyOrder.fulfillment_status || 'unfulfilled',
+          customer: {
+            id: shopifyOrder.customer?.id || 0,
+            first_name: shopifyOrder.customer?.first_name || '',
+            last_name: shopifyOrder.customer?.last_name || '',
+            email: shopifyOrder.customer?.email || shopifyOrder.email || '',
+            phone: shopifyOrder.customer?.phone || ''
+          },
+          shipping_address: shopifyOrder.shipping_address ? {
+            first_name: shopifyOrder.shipping_address.first_name || '',
+            last_name: shopifyOrder.shipping_address.last_name || '',
+            address1: shopifyOrder.shipping_address.address1 || '',
+            city: shopifyOrder.shipping_address.city || '',
+            province: shopifyOrder.shipping_address.province || '',
+            country: shopifyOrder.shipping_address.country || '',
+            zip: shopifyOrder.shipping_address.zip || ''
+          } : undefined,
+          line_items: shopifyOrder.line_items?.map((item: any) => ({
+            id: item.id,
+            title: item.title || item.name,
+            quantity: item.quantity || 1,
+            price: parseFloat(item.price || '0'),
+            variant_title: item.variant_title
+          })) || [],
+          tags: shopifyOrder.tags || '',
+          note: shopifyOrder.note || ''
+        }))
+
+        setOrders(transformedOrders)
+      } else {
+        throw new Error('Invalid response format')
+      }
     } catch (error) {
       console.error('Failed to load orders:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load orders')
+      setOrders([])
     } finally {
       setLoading(false)
     }

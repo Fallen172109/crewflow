@@ -36,7 +36,7 @@ function ConfirmSuccessContent() {
   }
 
   const handleGoToDashboard = () => {
-    router.push('/dashboard')
+    router.push('/dashboard/shopify')
   }
 
   // Loading state

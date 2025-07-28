@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from './supabase/server'
+import { createSupabaseServerClientWithCookies } from './supabase/server'
 import { redirect } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 
@@ -15,7 +15,7 @@ export interface UserProfile {
 }
 
 export async function getUser(): Promise<User | null> {
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClientWithCookies()
 
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
@@ -39,7 +39,7 @@ export async function getUser(): Promise<User | null> {
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClientWithCookies()
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -78,6 +78,17 @@ export async function requireAuth(): Promise<User> {
 
   if (!user) {
     redirect('/')
+  }
+
+  return user
+}
+
+// API route version that throws instead of redirecting
+export async function requireAuthAPI(): Promise<User> {
+  const user = await getUser()
+
+  if (!user) {
+    throw new Error('Authentication required')
   }
 
   return user

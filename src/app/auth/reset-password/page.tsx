@@ -112,9 +112,9 @@ function ResetPasswordForm() {
         setError(error.message)
       } else {
         setSuccess(true)
-        // Redirect to dashboard after 3 seconds
+        // Redirect to Store Manager after 3 seconds
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push('/dashboard/shopify')
         }, 3000)
       }
     } catch (err) {

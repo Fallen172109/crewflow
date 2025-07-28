@@ -1,73 +1,93 @@
-# CrewFlow 🚢 - Maritime AI Automation Platform
+# CrewFlow 🚢 - AI-Powered Shopify Store Manager
 
-CrewFlow is a cutting-edge maritime-themed multi-agent AI automation platform that brings together 10 specialized AI agents to automate various business operations. Built with Next.js 15, Supabase, and modern AI frameworks including LangChain, AutoGen, and Perplexity AI.
+CrewFlow is a streamlined AI-powered Shopify management platform that revolutionizes e-commerce operations through a unified conversational interface. Built with Next.js 15, Supabase, and specialized AI agents, CrewFlow enables merchants to manage their entire Shopify ecosystem through a single, intelligent Store Manager dashboard.
+
+## 🎯 **New Simplified Architecture (2025)**
+
+CrewFlow has been redesigned with a **unified Store Manager interface** that replaces complex multi-tab navigation with a single, AI-centric dashboard featuring:
+
+- **🎨 Central AI Chat Interface** - All Shopify operations flow through one intelligent conversation
+- **✨ Enhanced Bottom Management Panel** - Quick actions and live product preview
+- **🚢 4 Specialized AI Agents** - Focused on core Shopify management tasks
+- **📱 Responsive Glass-morphism Design** - Modern UI with maritime theming
+- **⚡ Streamlined User Experience** - No complex navigation, just intelligent assistance
 
 ## 🚢 Features
 
-### Core Platform
-- **Maritime-themed UI** with orange/black futuristic design
-- **10 Specialized AI Agents** for different business functions
-- **Dual Interaction Methods** - Chat interface + Preset actions
-- **Subscription-based Model** with 3 tiers (Starter, Professional, Enterprise)
-- **Real-time Usage Tracking** and billing
-- **Secure Authentication** with Supabase Auth
+### Core Shopify Integration
+- **Multi-Store Management** - Manage unlimited Shopify stores from one dashboard
+- **AI-Powered Product Creation** - Create products through natural language conversations
+- **Intelligent Automation** - Automate inventory, orders, and marketing tasks
+- **Plan-Aware Features** - Automatically adapts to your Shopify plan capabilities
+- **Real-time Sync** - Live synchronization with Shopify Admin API
+- **Maritime-themed UI** with professional orange/black design
 
-### 🚢 AI Agent Fleet (Maritime-Themed)
+### 🤖 Specialized AI Agents (Simplified System)
 
-#### **LangChain Framework Agents**
-1. **Sage** - Knowledge & Research Specialist (LangChain) ✅
-2. **Helm** - Navigation & Strategy Specialist (LangChain) ✅
-3. **Ledger** - Finance & Analytics Specialist (LangChain) ✅
-4. **Patch** - Problem-solving & Repair Specialist (LangChain) ✅
+#### **🛍️ Morgan - E-commerce Captain**
+- **Primary Shopify Management** - Product listings, inventory, orders, store optimization
+- **Natural Language Product Creation** - Describe products in plain English, AI handles the rest
+- **Smart Store Operations** - Automated order processing and fulfillment
+- **Performance Analytics** - Store insights and optimization recommendations
 
-#### **Perplexity AI Framework Agents**
-5. **Pearl** - Search & Discovery Specialist (Perplexity AI) ✅
+#### **⚓ Anchor - Supply Chain Admiral**
+- **Inventory Management** - Stock level monitoring and reorder alerts
+- **Supplier Relations** - Vendor performance analysis and cost optimization
+- **Logistics Coordination** - Shipping and fulfillment optimization
 
-#### **AutoGen Framework Agents**
-6. **Flint** - Communication & Coordination Specialist (AutoGen) ✅
-7. **Beacon** - Monitoring & Alerts Specialist (AutoGen) ✅
+#### **🌊 Splash - Marketing Mate**
+- **Social Media Management** - Automated content creation and campaign management
+- **Brand Promotion** - Engaging posts and marketing materials
+- **Trend Analysis** - Social media insights and optimization
 
-#### **Hybrid Framework Agents**
-8. **Splash** - Creative & Content Specialist (Hybrid) ✅
-9. **Drake** - Automation & Workflow Specialist (Hybrid) ✅
-10. **Anchor** - Supply Chain Admiral (Hybrid) ✅
+#### **💎 Pearl - Content Curator**
+- **SEO Optimization** - Product descriptions and search engine optimization
+- **Content Creation** - Compelling copy and marketing materials
+- **Competitor Research** - Market analysis and content strategy
 
-### 🛠 Maritime Skills & Daily-Use Tools
-Each agent includes universal daily-use tools with maritime theming:
-- **Meal Planning** - Crew galley management and nutrition
-- **Fitness Planning** - Crew wellness and workout routines
-- **Image Generation** - Visual content creation
-- **Personal Productivity** - Daily task optimization and organization
+#### **AI Agent Specialists**
+- **Splash** - Creative content and product description specialist
+- **Anchor** - Supply chain and inventory management expert
+- **Ledger** - Financial analytics and reporting specialist
+- **Pearl** - Market research and competitive analysis expert
 
 ### 💰 Subscription Tiers
-- **Starter ($29/month)**: Pearl + 2 LangChain agents, 500 requests each
-- **Professional ($59/month)**: All Starter + Splash, Drake, Flint (6 agents), 750 requests each
-- **Enterprise ($89/month)**: Full fleet access (10 agents), 1,000 requests each
+- **Starter ($29/month)**: Single store, basic AI features, 500 AI operations
+- **Professional ($59/month)**: Up to 5 stores, advanced automation, 1,500 AI operations
+- **Enterprise ($89/month)**: Unlimited stores, full AI suite, 5,000 AI operations
 
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 15.3.3, React 19, TypeScript
 - **Styling**: Tailwind CSS 4 with custom maritime theme
-- **Backend**: Supabase (Database, Auth, Real-time)
-- **Payments**: Stripe (Subscriptions, Webhooks)
-- **AI Frameworks**: LangChain, AutoGen, Perplexity AI
-- **Deployment**: Vercel-ready
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Shopify Integration**: Shopify Admin API, OAuth 2.0, Webhooks
+- **AI Frameworks**:
+  - OpenAI GPT-4 for intelligent product creation
+  - Anthropic Claude for content optimization
+  - Perplexity AI for market research
+  - Custom AI agents for specialized tasks
+- **Authentication**: Supabase Auth + Shopify OAuth
+- **Payments**: Stripe integration with subscription management
+- **Deployment**: Vercel with automatic deployments
+- **Database**: PostgreSQL with Row Level Security (RLS)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Supabase account
-- Stripe account
+- Node.js 18+ and npm
+- Supabase account and project
+- Shopify Partner account and app
+- Stripe account (for subscriptions)
 - OpenAI API key
+- Anthropic API key
 - Perplexity API key
 
 ### Installation
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/Fallen172109/crewflow.git
 cd crewflow
 ```
 
@@ -84,29 +104,34 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# Stripe Configuration
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+# Shopify Configuration
+CREWFLOW_SHOPIFY_CLIENT_ID=your_shopify_app_client_id
+CREWFLOW_SHOPIFY_CLIENT_SECRET=your_shopify_app_client_secret
 
 # AI API Keys
 OPENAI_API_KEY=your_openai_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
 PERPLEXITY_API_KEY=your_perplexity_api_key
 
+# Stripe Configuration
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
+
 # App Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_nextauth_secret
+NEXT_PUBLIC_APP_URL=https://crewflow.ai
 ```
 
-4. **Set up Supabase Database**
-- Create a new Supabase project
-- Run the SQL schema from `database/schema.sql` in your Supabase SQL editor
-- Enable Row Level Security (RLS) policies
+4. **Set up the database**
+```bash
+# Run Supabase migrations
+npx supabase db reset
+```
 
-5. **Configure Stripe**
-- Create products for each subscription tier
-- Set up webhook endpoints
-- Add price IDs to environment variables
+5. **Configure Shopify App**
+- Create a Shopify Partner account
+- Create a new app with proper scopes
+- Set up OAuth redirect URLs
+- Configure webhook endpoints
 
 6. **Run the development server**
 ```bash
@@ -122,40 +147,43 @@ src/
 ├── app/                    # Next.js 15 App Router
 │   ├── auth/              # Authentication pages
 │   ├── dashboard/         # Protected dashboard
+│   │   └── shopify/       # Shopify management interface
 │   ├── pricing/           # Subscription plans
 │   └── api/               # API routes
+│       ├── shopify/       # Shopify API integrations
+│       └── agents/        # AI agent endpoints
 ├── components/            # Reusable components
-│   ├── agents/           # Agent-specific components
+│   ├── shopify/          # Shopify-specific components
+│   ├── agents/           # AI agent components
 │   └── dashboard/        # Dashboard components
 ├── lib/                  # Utility libraries
-│   ├── agents.ts         # Agent configurations
-│   ├── auth.ts           # Authentication helpers
-│   ├── stripe.ts         # Stripe integration
-│   └── supabase.ts       # Database client
-└── database/             # Database schema
+│   ├── integrations/     # Third-party integrations
+│   ├── agents/           # AI agent configurations
+│   ├── shopify/          # Shopify utilities
+│   └── supabase/         # Database client
+└── database/             # Database schema and migrations
 ```
 
-## 🎯 Current Implementation Status
+## 🎯 Implementation Status
 
-### ✅ Completed (Phase 1)
-- [x] Project setup with Next.js 15 and Tailwind CSS
-- [x] Maritime-themed UI design system
-- [x] Supabase database schema and authentication
-- [x] Stripe subscription integration
-- [x] Landing page with agent showcase
-- [x] Pricing page with 3 subscription tiers
-- [x] Dashboard layout with navigation
-- [x] Agent interface with chat and preset actions
-- [x] Basic API routes for chat and webhooks
-- [x] User authentication flow
-- [x] Usage tracking system
+### ✅ Completed Features
+- [x] **Shopify OAuth Integration** - Seamless store connection
+- [x] **Multi-Store Management** - Manage unlimited Shopify stores
+- [x] **AI Product Creation** - Natural language product creation
+- [x] **Product Management** - Advanced product editing and optimization
+- [x] **Plan-Aware Features** - Automatic Shopify plan detection
+- [x] **Real-time Sync** - Live data synchronization with Shopify
+- [x] **Maritime UI** - Professional orange/black design system
+- [x] **Subscription System** - Stripe-powered billing
+- [x] **Usage Tracking** - AI operation monitoring and limits
+- [x] **Security** - Row Level Security and data protection
 
-### 🚧 Next Steps (Phase 2)
-- [ ] Real AI agent implementations
-- [ ] API integrations (Shopify, CRM, etc.)
-- [ ] Advanced analytics dashboard
-- [ ] Settings and billing management
-- [ ] Email notifications
+### 🚧 Upcoming Features
+- [ ] **Inventory Automation** - Smart stock management and alerts
+- [ ] **Order Processing** - Automated fulfillment workflows
+- [ ] **Marketing Automation** - AI-powered campaigns
+- [ ] **Analytics Dashboard** - Advanced store performance insights
+- [ ] **Bulk Operations** - Mass product and order management
 
 ## 🔧 Development
 
@@ -221,9 +249,25 @@ CrewFlow implements systematic maintenance procedures to ensure codebase quality
 - **.gitignore**: Comprehensive exclusions for clean repository
 - **Automated Cleanup**: Regular removal of obsolete test files
 
+## 🎯 Business Focus
+
+CrewFlow has evolved from a general multi-agent AI platform to a **specialized Shopify management solution**. Our platform now focuses exclusively on helping e-commerce merchants manage their Shopify stores through intelligent AI automation.
+
+### Why Shopify?
+- **Market Opportunity**: 4.6M+ Shopify stores worldwide need better management tools
+- **AI Integration Gap**: Most Shopify tools lack sophisticated AI capabilities
+- **Scalability**: Merchants need solutions that grow with their business
+- **Efficiency**: Manual store management is time-consuming and error-prone
+
+### Our Competitive Advantage
+- **Natural Language Interface**: Manage your entire store through conversation
+- **Multi-Store Support**: Handle unlimited stores from one dashboard
+- **AI-Powered Automation**: Intelligent product creation, inventory management, and marketing
+- **Plan-Aware Features**: Automatically adapts to your Shopify plan capabilities
+
 ## 🌐 Domain Information
 
-**Primary Domain**: [crewflow.ai](https://crewflow.ai) - The official CrewFlow platform
+**Primary Domain**: [crewflow.ai](https://crewflow.ai) - The official CrewFlow Shopify management platform
 
 ### Domain Migration (January 2025)
 CrewFlow has migrated from `crewflow.dev` to `crewflow.ai` as our primary domain. All traffic from the old domain is automatically redirected to ensure seamless access.
@@ -235,23 +279,23 @@ CrewFlow has migrated from `crewflow.dev` to `crewflow.ai` as our primary domain
 
 ## 🚀 Deployment Status
 
-**Latest Update**: January 22, 2025 - Production deployment with security audit and domain migration!
+**Latest Update**: January 26, 2025 - Major Shopify integration deployment!
 
-### ✅ Recent Improvements (v2.2.0)
+### ✅ Recent Improvements (v3.0.0)
+- 🛍️ **Shopify Integration**: Complete AI-powered Shopify management system
+- 🤖 **AI Product Creation**: Natural language product creation and editing
+- 🏪 **Multi-Store Management**: Unlimited store support with centralized dashboard
 - 🔒 **Security Audit**: Comprehensive pre-deployment security review completed
-- 🌐 **Domain Migration**: Full transition from crewflow.dev to crewflow.ai
-- 🧹 **Code Cleanup**: Removed development-only test routes and debugging artifacts
-- 📚 **Documentation Updates**: Enhanced deployment guides and API documentation
-- 🎨 **Chat System Fixes**: Improved image generation security and response formatting
-- 🛠 **Production Ready**: Repository optimized for public viewing and interviews
+- 📚 **Documentation Updates**: Updated to reflect Shopify focus and capabilities
+- 🛠 **Production Ready**: Repository optimized for public viewing and professional review
 
-### ✅ Core Platform Features
-- ✅ All 10 AI agents implemented with specialized frameworks
-- ✅ Complete admin system with user management and audit logging
-- ✅ OAuth integration hub with 14+ third-party service connections
-- ✅ Advanced analytics and monitoring systems
-- ✅ Production-ready build system with Vercel deployment
-- ✅ Systematic maintenance and cleanup procedures
+### ✅ Core Shopify Features
+- ✅ Shopify OAuth integration with seamless store connection
+- ✅ AI-powered product creation through natural language
+- ✅ Multi-store management with unlimited store support
+- ✅ Plan-aware features that adapt to Shopify plan capabilities
+- ✅ Real-time synchronization with Shopify Admin API
+- ✅ Advanced product editing and optimization tools
 
 ---
 

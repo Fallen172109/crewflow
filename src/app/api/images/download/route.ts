@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/auth'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
+import { requireAuthAPI } from '@/lib/auth'
 
 // GET /api/images/download - Secure image download with authentication
 export async function GET(request: NextRequest) {
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 // POST /api/images/download - Get secure download URL
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth()
+    const user = await requireAuthAPI()
     const { imagePath } = await request.json()
 
     if (!imagePath) {
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
 
     // Create a signed URL for secure download (valid for 1 hour)
     const { data, error } = await supabase.storage

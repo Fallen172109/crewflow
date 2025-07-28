@@ -166,13 +166,13 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`flex space-x-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+            <div className={`flex space-x-3 max-w-[80%] overflow-hidden ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
               {/* Avatar */}
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 ${
                 message.type === 'user' ? 'bg-primary-500' : ''
@@ -181,7 +181,7 @@ export default function ChatInterface({ agent, messages, onSendMessage, isLoadin
               </div>
 
               {/* Message Content */}
-              <div className={`rounded-lg p-3 ${
+              <div className={`rounded-lg p-3 break-words ${
                 message.type === 'user'
                   ? 'bg-primary-500 text-white'
                   : 'bg-gray-50 text-gray-900 border border-gray-200'

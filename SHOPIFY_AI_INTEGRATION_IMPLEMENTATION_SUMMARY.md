@@ -119,10 +119,12 @@ CREATE TABLE shopify_activity_log (
 ## 🎨 UI/UX Enhancements
 
 ### Dashboard Integration
-- **New Tab**: "AI Product Creator" in Shopify dashboard
+- **Simplified Interface**: Single-page Store Manager dashboard (no tabs)
+- **Central AI Chat**: Primary interaction point for all Shopify operations
 - **Store Context**: All components aware of selected store
 - **Plan Indicators**: Visual plan badges and feature availability
 - **Maritime Theme**: Consistent with CrewFlow's nautical design
+- **Spotlight Cards**: Interactive bottom management panel with quick actions
 
 ### Chat Interface
 - **File Upload**: Drag-and-drop image upload

@@ -61,6 +61,7 @@ export default function BusinessIntelligenceDashboard() {
   const [forecasts, setForecasts] = useState<ForecastData[]>([])
   const [insights, setInsights] = useState<BusinessInsight[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedTimeframe, setSelectedTimeframe] = useState('30d')
   const [selectedView, setSelectedView] = useState('overview')
 
@@ -71,164 +72,38 @@ export default function BusinessIntelligenceDashboard() {
   const loadBusinessIntelligence = async () => {
     try {
       setLoading(true)
-      // TODO: Implement actual API calls
-      // Mock data for demonstration
-      
-      const mockKPIs: KPIMetric[] = [
-        {
-          id: 'revenue',
-          name: 'Total Revenue',
-          value: 125430,
-          change: 12.5,
-          trend: 'up',
-          target: 150000,
-          format: 'currency',
-          period: '30 days'
-        },
-        {
-          id: 'orders',
-          name: 'Total Orders',
-          value: 342,
-          change: 8.3,
-          trend: 'up',
-          target: 400,
-          format: 'number',
-          period: '30 days'
-        },
-        {
-          id: 'conversion_rate',
-          name: 'Conversion Rate',
-          value: 3.2,
-          change: -0.5,
-          trend: 'down',
-          target: 4.0,
-          format: 'percentage',
-          period: '30 days'
-        },
-        {
-          id: 'avg_order_value',
-          name: 'Average Order Value',
-          value: 367,
-          change: 15.2,
-          trend: 'up',
-          target: 400,
-          format: 'currency',
-          period: '30 days'
-        },
-        {
-          id: 'customer_lifetime_value',
-          name: 'Customer LTV',
-          value: 1250,
-          change: 5.8,
-          trend: 'up',
-          format: 'currency',
-          period: '30 days'
-        },
-        {
-          id: 'inventory_turnover',
-          name: 'Inventory Turnover',
-          value: 4.2,
-          change: 2.1,
-          trend: 'up',
-          target: 5.0,
-          format: 'number',
-          period: '30 days'
-        }
-      ]
+      setError(null)
 
-      const mockForecasts: ForecastData[] = [
-        {
-          metric: 'Revenue',
-          current: 125430,
-          forecast: [130000, 135000, 142000, 148000, 155000, 162000, 170000],
-          confidence: 0.85,
-          timeframe: 'Next 7 weeks'
-        },
-        {
-          metric: 'Orders',
-          current: 342,
-          forecast: [355, 368, 382, 395, 410, 425, 440],
-          confidence: 0.78,
-          timeframe: 'Next 7 weeks'
-        },
-        {
-          metric: 'New Customers',
-          current: 89,
-          forecast: [92, 95, 98, 102, 105, 109, 113],
-          confidence: 0.72,
-          timeframe: 'Next 7 weeks'
-        }
-      ]
+      // TODO: Implement actual business intelligence API calls
+      // For now, show empty state
+      const emptyKPIs: KPIMetric[] = []
+      const emptyForecasts: ForecastData[] = []
+      const emptyInsights: BusinessInsight[] = []
 
-      const mockInsights: BusinessInsight[] = [
-        {
-          id: '1',
-          type: 'opportunity',
-          title: 'High-Performing Product Category',
-          description: 'Navigation equipment is showing 45% higher conversion rates than average',
-          impact: 'high',
-          actionRequired: true,
-          recommendations: [
-            'Increase inventory for navigation products',
-            'Expand marketing budget for this category',
-            'Consider adding complementary products'
-          ],
-          data: { category: 'Navigation', conversion_rate: 4.6, average_rate: 3.2 }
-        },
-        {
-          id: '2',
-          type: 'warning',
-          title: 'Declining Customer Retention',
-          description: 'Customer retention rate has dropped 8% over the past month',
-          impact: 'medium',
-          actionRequired: true,
-          recommendations: [
-            'Implement loyalty program',
-            'Improve customer service response times',
-            'Send personalized follow-up emails'
-          ],
-          data: { retention_rate: 68, previous_rate: 76 }
-        },
-        {
-          id: '3',
-          type: 'success',
-          title: 'Mobile Conversion Improvement',
-          description: 'Mobile conversion rate increased 22% after recent optimizations',
-          impact: 'medium',
-          actionRequired: false,
-          recommendations: [
-            'Continue mobile optimization efforts',
-            'Analyze successful changes for other platforms'
-          ],
-          data: { mobile_conversion: 2.8, improvement: 22 }
-        },
-        {
-          id: '4',
-          type: 'info',
-          title: 'Seasonal Trend Detected',
-          description: 'Winter maritime equipment sales typically increase 35% in Q4',
-          impact: 'medium',
-          actionRequired: true,
-          recommendations: [
-            'Prepare winter inventory early',
-            'Plan seasonal marketing campaigns',
-            'Adjust pricing strategy for peak season'
-          ],
-          data: { seasonal_increase: 35, peak_months: ['Oct', 'Nov', 'Dec'] }
-        }
-      ]
-
-      setKpis(mockKPIs)
-      setForecasts(mockForecasts)
-      setInsights(mockInsights)
+      setKpis(emptyKPIs)
+      setForecasts(emptyForecasts)
+      setInsights(emptyInsights)
     } catch (error) {
       console.error('Failed to load business intelligence:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load business intelligence')
     } finally {
       setLoading(false)
     }
-  }
 
   const formatValue = (value: number, format: string) => {
+    switch (format) {
+      case 'currency':
+        return `$${value.toLocaleString()}`
+      case 'percentage':
+        return `${value.toFixed(1)}%`
+      case 'number':
+        return value.toLocaleString()
+      default:
+        return value.toString()
+    }
+  }
+
+  const getTrendIcon = (trend: 'up' | 'down' | 'neutral') => {
     switch (format) {
       case 'currency':
         return `$${value.toLocaleString()}`

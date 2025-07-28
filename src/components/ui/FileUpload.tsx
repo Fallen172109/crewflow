@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X, File, Image, FileText, AlertCircle, CheckCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth-context'
+import AuthRequiredMessage from './AuthRequiredMessage'
 
 interface FileUploadProps {
   onFileUpload: (file: UploadedFile) => void
@@ -19,9 +20,14 @@ interface FileUploadProps {
 export interface UploadedFile {
   id: string
   name: string
+  fileName: string // For compatibility with image analysis
   type: string
+  fileType: string // For compatibility with image analysis
   size: number
+  fileSize: number // For compatibility with image analysis
   url?: string
+  publicUrl?: string // For compatibility with image analysis
+  storagePath?: string // Storage path for URL refresh
   uploadStatus: 'uploading' | 'completed' | 'failed'
   error?: string
   preview?: string // For image previews
@@ -40,7 +46,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const [files, setFiles] = useState<UploadedFile[]>(existingFiles)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Use auth context to get authentication state
+  const { user, loading } = useAuth()
+  const isAuthenticated = !!user && !loading
 
   const getFileIcon = (type: string) => {
     if (!type) return <File className="w-5 h-5" />
@@ -89,7 +100,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     return null
   }
 
-  const uploadFileToStorage = async (file: File): Promise<{ url: string; path: string } | null> => {
+  const uploadFileToStorage = async (file: File): Promise<{ url: string; path: string; storagePath: string } | null> => {
     try {
       console.log('Starting file upload:', file.name)
 
@@ -105,6 +116,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json()
+
+        // Handle maintenance mode authentication error specifically
+        if (errorData.code === 'AUTH_REQUIRED_MAINTENANCE') {
+          setAuthError('Please log in to upload files. You may need to sign in to your CrewFlow account.')
+          throw new Error('Please log in to upload files. You may need to sign in to your CrewFlow account.')
+        }
+
         throw new Error(errorData.error || `Upload failed with status ${response.status}`)
       }
 
@@ -113,10 +131,23 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       return {
         url: data.publicUrl,
-        path: data.path
+        path: data.path,
+        storagePath: data.storagePath || data.path
       }
     } catch (error) {
       console.error('Upload error:', error)
+
+      // Handle network errors (Failed to fetch)
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        setAuthError('Network error: Unable to connect to server. Please check your connection and try again.')
+        throw new Error('Network error: Unable to connect to server. Please check your connection and try again.')
+      }
+
+      // Handle authentication errors
+      if (error instanceof Error && error.message.includes('Authentication required')) {
+        setAuthError('Please log in to upload files.')
+      }
+
       throw error
     }
   }
@@ -127,8 +158,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
       const errorFile: UploadedFile = {
         id: `error-${Date.now()}`,
         name: file.name,
+        fileName: file.name,
         type: file.type,
+        fileType: file.type,
         size: file.size,
+        fileSize: file.size,
         uploadStatus: 'failed',
         error: validationError
       }
@@ -139,8 +173,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
     const uploadingFile: UploadedFile = {
       id: `uploading-${Date.now()}`,
       name: file.name,
+      fileName: file.name, // For compatibility
       type: file.type,
+      fileType: file.type, // For compatibility
       size: file.size,
+      fileSize: file.size, // For compatibility
       uploadStatus: 'uploading'
     }
 
@@ -165,6 +202,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
       const completedFile: UploadedFile = {
         ...uploadingFile,
         url: uploadResult.url,
+        publicUrl: uploadResult.url, // For compatibility with image analysis
+        storagePath: uploadResult.storagePath,
         uploadStatus: 'completed'
       }
 
@@ -196,17 +235,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragOver(false)
-    
-    if (disabled) return
-    
+
+    if (disabled || !isAuthenticated) return
+
     const droppedFiles = e.dataTransfer.files
     handleFiles(droppedFiles)
-  }, [disabled, files.length])
+  }, [disabled, isAuthenticated, files.length])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    if (!disabled) setIsDragOver(true)
-  }, [disabled])
+    if (!disabled && isAuthenticated) setIsDragOver(true)
+  }, [disabled, isAuthenticated])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -227,19 +266,37 @@ const FileUpload: React.FC<FileUploadProps> = ({
   }
 
   const openFileDialog = () => {
-    if (!disabled && fileInputRef.current) {
+    if (!disabled && isAuthenticated && fileInputRef.current) {
       fileInputRef.current.click()
     }
   }
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Authentication Check */}
+      {!loading && !isAuthenticated && (
+        <AuthRequiredMessage
+          message="You need to be signed in to upload files."
+          className="mb-4"
+        />
+      )}
+
+      {/* Auth Error Message */}
+      {authError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <p className="text-sm text-red-800">{authError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Upload Area */}
       <div
         className={`
           border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
           ${isDragOver ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+          ${disabled || !isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}
         `}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -261,7 +318,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           accept={acceptedTypes.join(',')}
           onChange={handleFileInputChange}
           className="hidden"
-          disabled={disabled}
+          disabled={disabled || !isAuthenticated}
         />
       </div>
 

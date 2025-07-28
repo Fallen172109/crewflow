@@ -460,7 +460,7 @@ export function useRequireAuth() {
   return { user, loading }
 }
 
-export function useRedirectIfAuthenticated(redirectTo: string = '/dashboard') {
+export function useRedirectIfAuthenticated(redirectTo: string = '/dashboard/shopify') {
   const { user, loading } = useAuth()
   const router = useRouter()
 

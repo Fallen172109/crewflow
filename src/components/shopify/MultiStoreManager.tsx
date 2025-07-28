@@ -27,21 +27,38 @@ import {
   Calendar
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import StoreSettingsModal from './StoreSettingsModal'
+
+// Utility function to format Shopify store URL
+const formatShopifyStoreUrl = (shopDomain: string): string | null => {
+  if (!shopDomain) return null
+
+  // Remove any existing protocol
+  let domain = shopDomain.replace(/^https?:\/\//, '')
+
+  // Ensure it's a valid Shopify domain format
+  if (!domain.includes('.myshopify.com') && !domain.includes('.shopify.com')) {
+    console.warn('Invalid Shopify domain format:', shopDomain)
+    return null
+  }
+
+  return `https://${domain}`
+}
 
 interface ShopifyStore {
   id: string
-  shop_domain: string
-  store_name: string
-  store_email?: string
+  shopDomain: string
+  storeName: string
+  storeEmail?: string
   currency: string
   timezone?: string
-  plan_name?: string
-  is_active: boolean
-  is_primary: boolean
-  connected_at: string
-  last_sync_at?: string
-  sync_status: 'never' | 'syncing' | 'synced' | 'error'
-  sync_error?: string
+  planName?: string
+  isActive: boolean
+  isPrimary: boolean
+  connectedAt: string
+  lastSyncAt?: string
+  syncStatus: 'never' | 'syncing' | 'synced' | 'error'
+  syncError?: string
   metadata: {
     shop_id?: number
     country_code?: string
@@ -88,6 +105,9 @@ export default function MultiStoreManager({
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
+  const [removingStoreId, setRemovingStoreId] = useState<string | null>(null)
+  const [settingsStore, setSettingsStore] = useState<ShopifyStore | null>(null)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
 
   useEffect(() => {
     loadStores()
@@ -142,14 +162,61 @@ export default function MultiStoreManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !isActive })
       })
-      
+
       if (!response.ok) {
-        throw new Error('Failed to toggle store status')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.error || `Failed to toggle store status (${response.status})`
+        console.error('API Error:', errorMessage)
+        throw new Error(errorMessage)
       }
-      
+
       await loadStores()
     } catch (err) {
       console.error('Error toggling store status:', err)
+      // You could add a toast notification here to show the error to the user
+      setError(err instanceof Error ? err.message : 'Failed to toggle store status')
+    }
+  }
+
+  const handleRemoveStore = async (storeId: string, storeName: string) => {
+    // Prevent removing primary store
+    const store = stores.find(s => s.id === storeId)
+    if (store?.is_primary && stores.length > 1) {
+      alert('Cannot remove the primary store. Please set another store as primary first.')
+      return
+    }
+
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to remove "${storeName}"?\n\nThis will permanently delete all store data, connections, and configurations. This action cannot be undone.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setRemovingStoreId(storeId)
+
+      const response = await fetch('/api/shopify/stores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'remove',
+          storeId
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to remove store')
+      }
+
+      // Reload stores after successful removal
+      await loadStores()
+    } catch (err) {
+      console.error('Error removing store:', err)
+      alert(`Failed to remove store: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally {
+      setRemovingStoreId(null)
     }
   }
 
@@ -188,9 +255,24 @@ export default function MultiStoreManager({
     }).format(amount)
   }
 
-  const filteredStores = showInactive ? stores : stores.filter(store => store.is_active)
-  const activeStores = stores.filter(store => store.is_active)
-  const inactiveStores = stores.filter(store => !store.is_active)
+  const handleOpenSettings = (store: ShopifyStore) => {
+    setSettingsStore(store)
+    setShowSettingsModal(true)
+  }
+
+  const handleCloseSettings = () => {
+    setShowSettingsModal(false)
+    setSettingsStore(null)
+  }
+
+  const handleSettingsSave = async (updatedSettings: Partial<ShopifyStore>) => {
+    // Refresh the stores list to reflect changes
+    await loadStores()
+  }
+
+  const filteredStores = showInactive ? stores : stores.filter(store => store.isActive)
+  const activeStores = stores.filter(store => store.isActive)
+  const inactiveStores = stores.filter(store => !store.isActive)
 
   if (loading) {
     return (
@@ -295,9 +377,11 @@ export default function MultiStoreManager({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   className={`border rounded-lg p-4 transition-all duration-200 cursor-pointer ${
-                    selectedStore?.id === store.id
+                    removingStoreId === store.id
+                      ? 'border-gray-200 bg-gray-50 opacity-50 pointer-events-none'
+                      : selectedStore?.id === store.id
                       ? 'border-orange-500 bg-orange-50'
-                      : store.is_active
+                      : store.isActive
                       ? 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                       : 'border-gray-200 bg-gray-50 opacity-75'
                   }`}
@@ -308,14 +392,14 @@ export default function MultiStoreManager({
                       {/* Store Header */}
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="flex items-center space-x-2">
-                          {getPlanIcon(store.plan_name)}
-                          <h3 className="font-semibold text-gray-900">{store.store_name}</h3>
-                          {store.is_primary && (
+                          {getPlanIcon(store.planName)}
+                          <h3 className="font-semibold text-gray-900">{store.storeName}</h3>
+                          {store.isPrimary && (
                             <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-medium">
                               Primary
                             </span>
                           )}
-                          {!store.is_active && (
+                          {!store.isActive && (
                             <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
                               Inactive
                             </span>
@@ -323,8 +407,8 @@ export default function MultiStoreManager({
                         </div>
                         
                         <div className="flex items-center space-x-2">
-                          {getSyncStatusIcon(store.sync_status)}
-                          <span className="text-xs text-gray-500 capitalize">{store.sync_status}</span>
+                          {getSyncStatusIcon(store.syncStatus)}
+                          <span className="text-xs text-gray-500 capitalize">{store.syncStatus}</span>
                         </div>
                       </div>
 
@@ -332,7 +416,7 @@ export default function MultiStoreManager({
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                         <div className="flex items-center space-x-2">
                           <Globe className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">{store.shop_domain}</span>
+                          <span className="text-gray-600">{store.shopDomain}</span>
                         </div>
                         
                         <div className="flex items-center space-x-2">
@@ -381,23 +465,60 @@ export default function MultiStoreManager({
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          window.open(`https://${store.shop_domain}`, '_blank')
+                          const storeUrl = formatShopifyStoreUrl(store.shopDomain)
+                          if (storeUrl) {
+                            window.open(storeUrl, '_blank')
+                          } else {
+                            console.error('Invalid store domain:', store.shopDomain)
+                            // You could add a toast notification here
+                          }
                         }}
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Open store"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </button>
-                      
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          // TODO: Open store settings modal
+                          handleToggleActive(store.id, store.isActive)
+                        }}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title={store.isActive ? "Deactivate store" : "Activate store"}
+                      >
+                        {store.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleOpenSettings(store)
                         }}
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Store settings"
                       >
                         <Settings className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveStore(store.id, store.storeName)
+                        }}
+                        disabled={removingStoreId === store.id}
+                        className={`p-2 rounded-lg transition-colors ${
+                          removingStoreId === store.id
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                        }`}
+                        title={removingStoreId === store.id ? "Removing store..." : "Remove store"}
+                      >
+                        {removingStoreId === store.id ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -407,6 +528,14 @@ export default function MultiStoreManager({
           </div>
         )}
       </div>
+
+      {/* Store Settings Modal */}
+      <StoreSettingsModal
+        isOpen={showSettingsModal}
+        onClose={handleCloseSettings}
+        store={settingsStore}
+        onSave={handleSettingsSave}
+      />
     </div>
   )
 }

@@ -39,6 +39,7 @@
     "langchain": "^0.1.25",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.460.0",
+    "motion": "^12.23.9",
     "next": "15.3.3",
     "node-fetch": "^3.3.2",
     "openai": "^5.5.1",
