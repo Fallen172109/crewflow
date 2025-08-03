@@ -61,6 +61,7 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
   const [messages, setMessages] = useState<Record<string, Message[]>>({})
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // Thread management state
@@ -159,7 +160,9 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    }
   }
 
   useEffect(() => {
@@ -588,7 +591,7 @@ const TabbedChatInterface = forwardRef<TabbedChatInterfaceRef, TabbedChatInterfa
         )}
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
           {(activeThreadId ? threadMessages : (messages[activeTab] || [])).map((message) => (
             <div
               key={message.id}

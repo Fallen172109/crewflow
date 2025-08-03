@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createImageGenerationService, type ImageGenerationRequest } from '@/lib/ai/image-generation'
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  createValidationErrorResponse,
+  withStandardErrorHandling,
+  ERROR_CODES,
+  HTTP_STATUS
+} from '@/lib/api/response-formatter'
 
-export async function POST(request: NextRequest) {
-  try {
-    const { prompt, style, aspectRatio, quality, userId } = await request.json()
+export const POST = withStandardErrorHandling(async (request: NextRequest) => {
+  const { prompt, style, aspectRatio, quality, userId } = await request.json()
 
-    if (!prompt || !prompt.trim()) {
-      return NextResponse.json(
-        { error: 'Image description is required' },
-        { status: 400 }
-      )
-    }
+  if (!prompt || !prompt.trim()) {
+    return createValidationErrorResponse([{
+      field: 'prompt',
+      message: 'Image description is required'
+    }])
+  }
 
     // Verify user authentication if userId provided
     let userProfile = null
@@ -77,8 +84,7 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        return NextResponse.json({
-          success: true,
+        return createSuccessResponse({
           imageUrl: imageResult.imageUrl,
           revisedPrompt: imageResult.revisedPrompt,
           tokensUsed: imageResult.tokensUsed,
@@ -92,9 +98,13 @@ export async function POST(request: NextRequest) {
             quality: imageRequest.quality,
             supabaseStored: imageResult.metadata?.supabaseStored || false
           }
-        })
+        }, 'Image generated successfully')
       } else {
-        throw new Error(imageResult.error || 'Image generation failed')
+        return createErrorResponse(
+          ERROR_CODES.AI_SERVICE_ERROR,
+          'Image generation failed',
+          imageResult.error
+        )
       }
     } catch (imageError) {
       console.error('Image generation error:', imageError)
@@ -123,31 +133,21 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      return NextResponse.json({
-        success: false,
-        error: imageError instanceof Error ? imageError.message : 'Image generation failed',
-        tokensUsed: 0,
-        latency: Date.now() - startTime,
-        model: 'dall-e-3'
-      }, { status: 500 })
+      return createErrorResponse(
+        ERROR_CODES.AI_SERVICE_ERROR,
+        imageError instanceof Error ? imageError.message : 'Image generation failed',
+        {
+          tokensUsed: 0,
+          latency: Date.now() - startTime,
+          model: 'dall-e-3'
+        }
+      )
     }
-
-  } catch (error) {
-    console.error('Crew abilities image generation API error:', error)
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
-  }
-}
+})
 
 // Health check endpoint
 export async function GET() {
-  return NextResponse.json({
+  return createSuccessResponse({
     service: 'crew-abilities-image-generation',
     status: 'active',
     description: 'Standalone image generation service for general crew abilities',
@@ -173,5 +173,5 @@ export async function GET() {
       'Landscape (4:3)',
       'Wide (16:9)'
     ]
-  })
+  }, 'Image generation service is active and ready')
 }

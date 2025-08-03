@@ -4,6 +4,7 @@
 import axios from 'axios'
 import { getAIConfig, AI_ERROR_CONFIG } from './config'
 import { createImageGenerationService, type ImageGenerationRequest } from './image-generation'
+import { withAICache } from './response-cache'
 import type { Agent } from '../agents'
 
 export interface PerplexityResponse {
@@ -40,20 +41,53 @@ export class PerplexityAgent {
 
   async processMessage(message: string, context?: string): Promise<PerplexityResponse> {
     const startTime = Date.now()
-    
+
     try {
       const systemPrompt = this.buildSystemPrompt()
-      const response = await this.callPerplexityAPI(message, systemPrompt, context)
-      
-      return {
-        response: response.choices[0].message.content,
-        tokensUsed: response.usage?.total_tokens || 0,
-        latency: Date.now() - startTime,
-        model: response.model,
-        success: true,
-        sources: this.extractSources(response),
-        apiResponse: response // Include the full API response for real usage tracking
-      }
+
+      // Use AI caching for Perplexity responses
+      const cachedResponse = await withAICache(
+        {
+          message: message,
+          agent: this.config.agent,
+          systemPrompt: systemPrompt,
+          modelConfig: {
+            model: this.config.model,
+            temperature: this.config.temperature,
+            maxTokens: this.config.maxTokens
+          },
+          userContext: {
+            userId: this.config.userId,
+            context: context
+          }
+        },
+        async () => {
+          console.log('🔄 PERPLEXITY: Cache miss, calling API')
+          const response = await this.callPerplexityAPI(message, systemPrompt, context)
+
+          return {
+            response: response.choices[0].message.content,
+            tokensUsed: response.usage?.total_tokens || 0,
+            latency: Date.now() - startTime,
+            model: response.model,
+            success: true,
+            sources: this.extractSources(response),
+            framework: 'perplexity'
+          }
+        },
+        {
+          // Perplexity responses are often time-sensitive due to real-time web data
+          queryType: 'time_sensitive'
+        }
+      )
+
+      console.log('✅ PERPLEXITY: Response ready', {
+        cached: cachedResponse.cachedAt ? true : false,
+        tokensUsed: cachedResponse.tokensUsed,
+        sources: cachedResponse.sources?.length || 0
+      })
+
+      return cachedResponse
     } catch (error) {
       console.error('Perplexity AI error:', error)
 

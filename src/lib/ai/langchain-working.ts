@@ -5,6 +5,7 @@ import { createImageGenerationService, type ImageGenerationRequest, type ImageGe
 import { createMealPlanningService, type MealPlanRequest } from './meal-planning'
 import { createFitnessPlanningService, type FitnessPlanRequest } from './fitness-planning'
 import { createProductivityPlanningService, type ProductivityPlanRequest } from './productivity-planning'
+import { withAICache } from './response-cache'
 import type { Agent } from '../agents'
 
 export interface LangChainResponse {
@@ -61,27 +62,50 @@ export class LangChainAgent {
     try {
       const systemMessage = this.buildSystemPrompt()
       const contextStr = this.formatContext(context)
-
-      // Use the correct format for ChatOpenAI - it expects a string input
       const fullPrompt = `${systemMessage}\n\nUser: ${contextStr}${message}\n\nAssistant:`
 
-      console.log('Sending prompt to LangChain:', fullPrompt)
-      const response = await this.llm.invoke(fullPrompt)
-      console.log('LangChain response:', response)
-      const responseText = response.content as string
+      // Use AI caching to avoid duplicate API calls
+      const cachedResponse = await withAICache(
+        {
+          message: message,
+          agent: this.agent,
+          systemPrompt: systemMessage,
+          modelConfig: {
+            model: this.llm.model,
+            temperature: this.llm.temperature,
+            maxTokens: this.llm.maxTokens
+          },
+          userContext: {
+            userId: this.userId,
+            context: contextStr
+          }
+        },
+        async () => {
+          console.log('🔄 LANGCHAIN: Cache miss, calling API')
+          const response = await this.llm.invoke(fullPrompt)
+          const responseText = response.content as string
 
-      // Enhanced response processing for customer support
-      const metadata = this.agent.id === 'coral' ? this.analyzeCustomerMessage(message, responseText) : undefined
+          // Enhanced response processing for customer support
+          const metadata = this.agent.id === 'coral' ? this.analyzeCustomerMessage(message, responseText) : undefined
 
-      return {
-        response: responseText,
-        tokensUsed: response.usage?.totalTokens || 0,
-        latency: Date.now() - startTime,
-        model: this.llm.model,
-        success: true,
-        metadata,
-        apiResponse: response // Include the full API response for real usage tracking
-      }
+          return {
+            response: responseText,
+            tokensUsed: response.usage?.totalTokens || 0,
+            latency: Date.now() - startTime,
+            model: this.llm.model,
+            success: true,
+            metadata,
+            framework: 'langchain'
+          }
+        }
+      )
+
+      console.log('✅ LANGCHAIN: Response ready', {
+        cached: cachedResponse.cachedAt ? true : false,
+        tokensUsed: cachedResponse.tokensUsed
+      })
+
+      return cachedResponse
     } catch (error) {
       console.error('LangChain error:', error)
       return {

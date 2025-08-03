@@ -1,15 +1,41 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function RootPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Redirect to dashboard for authenticated users, or let maintenance wrapper handle it
+    // Check if this is a Shopify OAuth request
+    const shop = searchParams.get('shop')
+    const hmac = searchParams.get('hmac')
+    const timestamp = searchParams.get('timestamp')
+    const host = searchParams.get('host')
+
+    // Detect Shopify requests by multiple parameters
+    const isShopifyRequest = shop && (hmac || timestamp || host)
+
+    if (isShopifyRequest) {
+      // This is a Shopify OAuth request - redirect to install endpoint
+      console.log('Detected Shopify OAuth request on root page:', {
+        shop,
+        hasHmac: !!hmac,
+        hasTimestamp: !!timestamp,
+        hasHost: !!host
+      })
+
+      // Preserve all Shopify parameters and redirect to install endpoint
+      const installUrl = `/api/auth/shopify/install?${searchParams.toString()}`
+      console.log('Redirecting to:', installUrl)
+      window.location.href = installUrl
+      return
+    }
+
+    // Normal redirect to dashboard for regular users (will be handled by maintenance wrapper)
     router.push('/dashboard')
-  }, [router])
+  }, [router, searchParams])
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">

@@ -5,6 +5,7 @@ import { Agent } from '@/lib/agents'
 import { UserProfile } from '@/lib/auth'
 import TabbedChatInterface, { TabbedChatInterfaceRef } from './TabbedChatInterface'
 import PresetActions from './PresetActions'
+import { getChatClient, ChatError } from '@/lib/chat/client'
 
 // Helper function to get framework badge styling
 const getFrameworkBadge = (framework: string) => {
@@ -162,30 +163,73 @@ export default function AgentInterface({ agent, userProfile }: AgentInterfacePro
         }
       }
 
-      // IMPORTANT: Always use the chat API for thread-based conversations to ensure context is loaded
-      // Only use the direct agent API for specific actions or non-threaded requests
+      // Use unified chat API for thread-based conversations
       if (threadId && !isCrewAbilityAction && !isImageGenerationRequest) {
-        apiUrl = `/api/agents/${agent.id}/chat`
-        requestBody = {
-          message: content,
-          taskType: taskType,
-          userId: userProfile?.id,
-          threadId: threadId
+        console.log('🌐 CREWFLOW DEBUG: Using unified chat API', {
+          agentId: agent.id,
+          taskType,
+          threadId,
+          messageLength: content.length
+        })
+
+        try {
+          const chatClient = getChatClient()
+          const chatResponse = await chatClient.sendAgentMessage(agent.id, content, {
+            taskType,
+            threadId
+          })
+
+          console.log('🌐 CREWFLOW DEBUG: Unified chat response received', {
+            success: chatResponse.success,
+            responseLength: chatResponse.response?.length || 0,
+            agentId: chatResponse.agent?.id
+          })
+
+          // Convert to expected format for the rest of the component
+          const data = {
+            response: chatResponse.response,
+            usage: chatResponse.usage,
+            limit: chatResponse.limit,
+            agent: chatResponse.agent,
+            success: chatResponse.success
+          }
+
+          if (chatInterfaceRef.current) {
+            chatInterfaceRef.current.addAgentResponse(data.response, responseTaskType || taskType)
+          }
+
+          return // Exit early since we handled the unified chat API call
+        } catch (error) {
+          console.error('🌐 CREWFLOW DEBUG: Unified chat API error:', error)
+
+          let errorMessage = 'Sorry, I encountered a connection error. Please try again.'
+          if (error instanceof ChatError) {
+            errorMessage = error.message
+          } else if (error instanceof Error) {
+            if (error.message.includes('non-JSON response')) {
+              errorMessage = 'There was a server error. Please refresh the page and try again.'
+            } else if (error.message.includes('Failed to fetch')) {
+              errorMessage = 'Unable to connect to the server. Please check your internet connection.'
+            }
+          }
+
+          if (chatInterfaceRef.current) {
+            chatInterfaceRef.current.addAgentResponse(errorMessage, responseTaskType || taskType)
+          }
+          return
         }
       }
 
-      console.log('🌐 CREWFLOW DEBUG: Making API call', {
+      // Fallback to direct API for specific actions
+      console.log('🌐 CREWFLOW DEBUG: Using direct agent API', {
         apiUrl,
         requestBody: {
           ...requestBody,
           message: requestBody.message?.substring(0, 100) + '...'
-        },
-        headers: {
-          'Content-Type': 'application/json'
         }
       })
 
-      // Call the appropriate API endpoint
+      // Call the direct agent API endpoint
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {

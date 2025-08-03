@@ -31,6 +31,15 @@ interface BottomManagementPanelProps {
   productPreview?: ProductPreview | null
   isGeneratingProduct?: boolean
   onPublishToShopify?: (product: ProductPreview) => void
+  // Enhanced orchestrator integration
+  selectedAgent?: any
+  agentSuggestions?: any[]
+  onAgentAction?: (actionId: string, parameters: any) => void
+  maritimePersonality?: {
+    shouldIntroduce: boolean
+    personalityMessage?: string
+    agentSwitchMessage?: string
+  }
 }
 
 interface EssentialAction {
@@ -53,7 +62,11 @@ export default function BottomManagementPanel({
   onQuickAction,
   productPreview,
   isGeneratingProduct = false,
-  onPublishToShopify
+  onPublishToShopify,
+  selectedAgent,
+  agentSuggestions = [],
+  onAgentAction,
+  maritimePersonality
 }: BottomManagementPanelProps) {
   const { selectedStore } = useShopifyStore()
   const [recentProducts, setRecentProducts] = useState<any[]>([])
@@ -156,6 +169,10 @@ export default function BottomManagementPanel({
     onQuickAction?.(action, message)
   }
 
+  const handleAgentAction = (actionId: string, parameters: any) => {
+    onAgentAction?.(actionId, parameters)
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'text-green-600'
@@ -192,8 +209,32 @@ export default function BottomManagementPanel({
     <div className={`p-6 bg-gray-50 overflow-hidden ${className}`}>
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h2 className="text-gray-900 text-xl font-bold mb-2">Essential Store Setup</h2>
-          <p className="text-gray-600">Focus on getting your store operational with {selectedStore.storeName}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-gray-900 text-xl font-bold mb-2">Essential Store Setup</h2>
+              <p className="text-gray-600">
+                {selectedAgent ?
+                  `⚓ ${selectedAgent.name} (${selectedAgent.title}) is navigating your store operations` :
+                  `Focus on getting your store operational with ${selectedStore.storeName}`
+                }
+              </p>
+            </div>
+            {selectedAgent && (
+              <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">{selectedAgent.name} Active</span>
+              </div>
+            )}
+          </div>
+
+          {/* Maritime Personality Messages */}
+          {maritimePersonality?.agentSwitchMessage && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm text-blue-800" dangerouslySetInnerHTML={{
+                __html: maritimePersonality.agentSwitchMessage.replace(/\n/g, '<br/>')
+              }} />
+            </div>
+          )}
         </div>
 
         {/* Main Content Grid: Essential Actions (Left) + Product Preview (Right) */}
@@ -287,6 +328,46 @@ export default function BottomManagementPanel({
             )
           })}
             </div>
+
+            {/* Agent Suggestions Section */}
+            {agentSuggestions.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Zap className="w-5 h-5 text-orange-600 mr-2" />
+                  Maritime Agent Suggestions
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {agentSuggestions.slice(0, 4).map((suggestion, index) => (
+                    <motion.div
+                      key={suggestion.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-4 bg-white border border-gray-200 rounded-lg hover:border-orange-300 hover:shadow-md transition-all cursor-pointer"
+                      onClick={() => handleAgentAction(suggestion.id, suggestion.parameters)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 mb-1">{suggestion.title}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{suggestion.description}</p>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              suggestion.priority === 'high' ? 'bg-red-100 text-red-700' :
+                              suggestion.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              {suggestion.priority} priority
+                            </span>
+                            <span className="text-xs text-gray-500">{suggestion.type}</span>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-gray-400 ml-2" />
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Side - Product Preview Panel */}

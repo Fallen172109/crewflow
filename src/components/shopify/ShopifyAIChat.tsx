@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { 
-  Send, 
-  Image as ImageIcon, 
-  Package, 
-  Sparkles, 
+import {
+  Send,
+  Image as ImageIcon,
+  Package,
+  Sparkles,
   Upload,
   X,
   CheckCircle,
@@ -29,6 +29,11 @@ import FileUpload, { UploadedFile } from '@/components/ui/FileUpload'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer'
 import ThreadManager, { ThreadManagerRef } from '@/components/agents/ThreadManager'
 import FeedbackCollector from '@/components/ai/FeedbackCollector'
+import { getChatClient, ChatError } from '@/lib/chat/client'
+import { actionDetector } from '@/lib/ai/action-detection'
+import { ShopifyAction, ActionResult } from '@/lib/ai/shopify-action-executor'
+import ActionExecutionPanel from './ActionExecutionPanel'
+import { createSupabaseClient } from '@/lib/supabase/client'
 
 import { Agent } from '@/lib/agents'
 
@@ -114,13 +119,26 @@ const ShopifyAIChat = forwardRef<ShopifyAIChatRef, ShopifyAIChatProps>(({
   const [newThreadTitle, setNewThreadTitle] = useState('')
   const [newThreadContext, setNewThreadContext] = useState('')
   const [currentThreadContext, setCurrentThreadContext] = useState<string | null>(null)
-  
+  const [detectedActions, setDetectedActions] = useState<ShopifyAction[]>([])
+  const [showActionPanel, setShowActionPanel] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const threadManagerRef = useRef<ThreadManagerRef>(null)
-  
+
   const { selectedStore } = useShopifyStore()
   const { canManageProducts } = useStorePermissions()
+
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const supabase = createSupabaseClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -425,49 +443,84 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
         requestType
       }
 
-      // Route to appropriate API based on request type
+      // Use unified chat API
+      const chatClient = getChatClient()
+      let response: any
+
+      console.log('🛍️ SHOPIFY DEBUG: Using unified chat API', {
+        requestType,
+        threadId: threadIdToUse,
+        messageLength: userMessage.content.length,
+        attachmentsCount: userMessage.attachments?.length || 0
+      })
+
+      // Route to appropriate handler based on request type
       switch (requestType) {
         case 'product_creation':
-          apiEndpoint = '/api/agents/splash/product-creation'
+          // Still use direct agent endpoint for product creation
+          response = await fetch('/api/agents/splash/product-creation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              message: userMessage.content,
+              attachments: userMessage.attachments,
+              storeId: selectedStore?.id,
+              storeCurrency: selectedStore?.currency,
+              storePlan: selectedStore?.plan_name
+            })
+          })
           break
+
         case 'inventory_management':
         case 'order_management':
         case 'customer_service':
         case 'analytics':
         case 'general_management':
         default:
-          // Use the thread-based AI Store Manager chat endpoint for proper history persistence
-          console.log('🔄 Using thread-based AI Store Manager chat endpoint for history persistence...')
-
-          // Use the thread ID we determined earlier (either existing or newly created)
+          // Use unified chat API for AI Store Manager
           const threadId = threadIdToUse || `temp-${Date.now()}`
 
-          apiEndpoint = '/api/agents/ai-store-manager/chat'
-          requestBody = {
-            message: userMessage.content,
-            taskType: 'business_automation',
-            threadId: threadId,
-            attachments: userMessage.attachments || []
+          try {
+            const chatResponse = await chatClient.sendStoreManagerMessage(
+              userMessage.content,
+              {
+                threadId,
+                attachments: userMessage.attachments || []
+              }
+            )
+
+            // Convert to fetch response format for compatibility
+            response = {
+              ok: chatResponse.success,
+              status: chatResponse.success ? 200 : 500,
+              json: async () => ({
+                response: chatResponse.response,
+                threadId: chatResponse.threadId,
+                messageId: chatResponse.messageId,
+                usage: chatResponse.usage
+              })
+            }
+          } catch (error) {
+            console.error('🛍️ SHOPIFY DEBUG: Unified chat API error:', error)
+
+            if (error instanceof ChatError) {
+              response = {
+                ok: false,
+                status: error.statusCode,
+                json: async () => ({
+                  error: error.message,
+                  details: error.details
+                })
+              }
+            } else {
+              throw error
+            }
           }
           break
       }
-
-      console.log('🛍️ SHOPIFY DEBUG: Making API call', {
-        apiEndpoint,
-        requestBody: {
-          ...requestBody,
-          message: requestBody.message?.substring(0, 100) + '...'
-        }
-      })
-
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify(requestBody)
-      })
 
       console.log('🛍️ SHOPIFY DEBUG: API response received', {
         status: response.status,
@@ -504,6 +557,27 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
         setThreadMessages(prev => [...prev, agentMessage])
       } else {
         setMessages(prev => [...prev, agentMessage])
+      }
+
+      // Detect actions in the AI response
+      const actionDetectionResult = actionDetector.detectActions(data.response, {
+        storeId: selectedStore?.id,
+        userId: user?.id,
+        context: { requestType, threadId: threadIdToUse }
+      })
+
+      if (actionDetectionResult.hasActions) {
+        console.log('⚡ SHOPIFY AI CHAT: Actions detected in response', {
+          actionsCount: actionDetectionResult.detectedActions.length,
+          actions: actionDetectionResult.detectedActions.map(a => ({
+            id: a.action.id,
+            type: a.action.type,
+            confidence: a.confidence
+          }))
+        })
+
+        setDetectedActions(actionDetectionResult.detectedActions.map(a => a.action))
+        setShowActionPanel(true)
       }
 
       // Handle product preview
@@ -550,6 +624,99 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       }
     }
   }), [activeThreadId])
+
+  // Action execution handlers
+  const handleExecuteAction = async (action: ShopifyAction, confirmed: boolean): Promise<ActionResult> => {
+    try {
+      console.log('⚡ SHOPIFY AI CHAT: Executing action', {
+        actionId: action.id,
+        actionType: action.type,
+        confirmed
+      })
+
+      const response = await fetch('/api/shopify/actions/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action,
+          storeId: selectedStore?.id,
+          confirmed
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Action execution failed: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || 'Action execution failed')
+      }
+
+      console.log('⚡ SHOPIFY AI CHAT: Action executed successfully', {
+        actionId: action.id,
+        result: data.result
+      })
+
+      return data.result
+
+    } catch (error) {
+      console.error('⚡ SHOPIFY AI CHAT: Action execution error:', error)
+      return {
+        success: false,
+        actionId: action.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        maritimeMessage: '⚠️ **Action Failed** - Unable to execute the requested action.'
+      }
+    }
+  }
+
+  const handlePreviewAction = async (action: ShopifyAction): Promise<any> => {
+    try {
+      console.log('🔍 SHOPIFY AI CHAT: Previewing action', {
+        actionId: action.id,
+        actionType: action.type
+      })
+
+      const response = await fetch('/api/shopify/actions/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action,
+          storeId: selectedStore?.id,
+          preview: true
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Action preview failed: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || 'Action preview failed')
+      }
+
+      console.log('🔍 SHOPIFY AI CHAT: Action preview generated', {
+        actionId: action.id,
+        preview: data.preview
+      })
+
+      return data.preview
+
+    } catch (error) {
+      console.error('🔍 SHOPIFY AI CHAT: Action preview error:', error)
+      throw error
+    }
+  }
 
   const currentMessages = activeThreadId ? threadMessages : messages
 
@@ -768,6 +935,26 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Action Execution Panel */}
+      {showActionPanel && detectedActions.length > 0 && (
+        <div className="border-t border-gray-200 p-4 bg-gray-50">
+          <ActionExecutionPanel
+            actions={detectedActions}
+            onExecuteAction={handleExecuteAction}
+            onPreviewAction={handlePreviewAction}
+            className="mb-4"
+          />
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowActionPanel(false)}
+              className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Hide Actions
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* File Upload Area */}
       {showFileUpload && (
         <div className="border-t border-gray-200 p-4 bg-gray-50">
@@ -836,6 +1023,26 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
             >
               <Upload className="w-5 h-5" />
             </button>
+
+            {/* Action Panel Toggle */}
+            {detectedActions.length > 0 && (
+              <button
+                onClick={() => setShowActionPanel(!showActionPanel)}
+                className={`p-2 rounded-lg transition-colors relative ${
+                  showActionPanel
+                    ? 'text-orange-600 bg-orange-50'
+                    : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                }`}
+                title={`${showActionPanel ? 'Hide' : 'Show'} Detected Actions`}
+              >
+                <Sparkles className="w-5 h-5" />
+                {detectedActions.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-600 text-white text-xs rounded-full flex items-center justify-center">
+                    {detectedActions.length}
+                  </span>
+                )}
+              </button>
+            )}
 
             <button
               onClick={handleSendMessage}

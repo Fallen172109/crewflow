@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { isUserAdmin, logAdminAction } from '@/lib/admin-auth'
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  createAuthErrorResponse,
+  createAuthorizationErrorResponse,
+  withStandardErrorHandling,
+  ERROR_CODES,
+  HTTP_STATUS
+} from '@/lib/api/response-formatter'
+import { handleDatabaseError } from '@/lib/api/error-handlers'
 
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createSupabaseServerClient()
-    
-    // Check if user is admin
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+export const GET = withStandardErrorHandling(async (request: NextRequest) => {
+  const supabase = await createSupabaseServerClient()
 
-    const isAdmin = await isUserAdmin(user.id)
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    }
+  // Check if user is admin
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return createAuthErrorResponse()
+  }
+
+  const isAdmin = await isUserAdmin(user.id)
+  if (!isAdmin) {
+    return createAuthorizationErrorResponse('Admin access required')
+  }
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -64,33 +73,28 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .range(from, to)
 
-    if (error) {
-      console.error('Error fetching users:', error)
-      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
-    }
-
-    // Log admin action
-    await logAdminAction(user.id, 'VIEW_USERS', undefined, {
-      filters: { role, subscription, status, search },
-      page,
-      limit
-    }, request)
-
-    return NextResponse.json({
-      users: users || [],
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit)
-      }
-    })
-
-  } catch (error) {
-    console.error('Error in admin users API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  if (error) {
+    console.error('Error fetching users:', error)
+    return handleDatabaseError(error)
   }
-}
+
+  // Log admin action
+  await logAdminAction(user.id, 'VIEW_USERS', undefined, {
+    filters: { role, subscription, status, search },
+    page,
+    limit
+  }, request)
+
+  return createSuccessResponse({
+    users: users || [],
+    pagination: {
+      page,
+      limit,
+      total: count || 0,
+      totalPages: Math.ceil((count || 0) / limit)
+    }
+  }, 'Users retrieved successfully')
+})
 
 export async function PATCH(request: NextRequest) {
   try {

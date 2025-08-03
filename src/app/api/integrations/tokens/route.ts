@@ -5,6 +5,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withOAuthSecurity } from '@/lib/integrations/middleware'
 import { getTokenManager } from '@/lib/integrations/token-manager'
 import { getIntegration } from '@/lib/integrations/config'
+import {
+  createSuccessResponse,
+  createAuthErrorResponse,
+  createErrorResponse,
+  ERROR_CODES
+} from '@/lib/api/response-formatter'
 
 // Get token status and statistics
 export async function GET(request: NextRequest) {
@@ -13,7 +19,7 @@ export async function GET(request: NextRequest) {
     async (request: NextRequest, userId?: string) => {
       try {
         if (!userId) {
-          return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+          return createAuthErrorResponse()
         }
 
         const searchParams = request.nextUrl.searchParams
@@ -25,34 +31,39 @@ export async function GET(request: NextRequest) {
         switch (action) {
           case 'health':
             const healthStatus = await tokenManager.getHealthStatus()
-            return NextResponse.json({
-              health: healthStatus,
-              timestamp: new Date().toISOString()
-            })
+            return createSuccessResponse(
+              { health: healthStatus },
+              'Token service health status retrieved'
+            )
 
           case 'stats':
             const stats = tokenManager.getStats()
-            return NextResponse.json({
-              stats,
-              serviceRunning: tokenManager.isServiceRunning(),
-              nextMaintenance: tokenManager.getNextMaintenanceTime(),
-              timestamp: new Date().toISOString()
-            })
+            return createSuccessResponse(
+              {
+                stats,
+                serviceRunning: tokenManager.isServiceRunning(),
+                nextMaintenance: tokenManager.getNextMaintenanceTime()
+              },
+              'Token service statistics retrieved'
+            )
 
           default:
-            return NextResponse.json({
-              stats: tokenManager.getStats(),
-              serviceRunning: tokenManager.isServiceRunning(),
-              timestamp: new Date().toISOString()
-            })
+            return createSuccessResponse(
+              {
+                stats: tokenManager.getStats(),
+                serviceRunning: tokenManager.isServiceRunning()
+              },
+              'Token service status retrieved'
+            )
         }
 
       } catch (error) {
         console.error('Token management API error:', error)
-        return NextResponse.json({ 
-          error: 'Failed to get token information',
-          code: 'TOKEN_INFO_ERROR'
-        }, { status: 500 })
+        return createErrorResponse(
+          ERROR_CODES.EXTERNAL_SERVICE_ERROR,
+          'Failed to get token information',
+          error
+        )
       }
     },
     {

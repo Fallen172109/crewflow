@@ -3,6 +3,7 @@
 
 import OpenAI from 'openai'
 import { getAIConfig, AI_ERROR_CONFIG } from './config'
+import { withAICache } from './response-cache'
 import type { Agent } from '../agents'
 
 export interface AutoGenResponse {
@@ -53,18 +54,51 @@ export class AutoGenAgent {
   async processMessage(message: string, context?: string): Promise<AutoGenResponse> {
     const startTime = Date.now()
     this.agentSteps = []
-    
+
     try {
-      const response = await this.executeMultiAgentWorkflow(message, context)
-      
-      return {
-        response,
-        tokensUsed: this.calculateTokenUsage(),
-        latency: Date.now() - startTime,
-        model: this.config.model || 'gpt-4-turbo-preview',
-        success: true,
-        agentSteps: this.agentSteps
-      }
+      // Use AI caching for AutoGen multi-agent workflows
+      const cachedResponse = await withAICache(
+        {
+          message: message,
+          agent: this.config.agent,
+          systemPrompt: this.config.systemPrompt,
+          modelConfig: {
+            model: this.config.model || 'gpt-4-turbo-preview',
+            temperature: this.config.temperature,
+            maxTokens: this.config.maxTokens,
+            maxRounds: this.config.maxRounds
+          },
+          userContext: {
+            context: context
+          }
+        },
+        async () => {
+          console.log('🔄 AUTOGEN: Cache miss, executing multi-agent workflow')
+          const response = await this.executeMultiAgentWorkflow(message, context)
+
+          return {
+            response,
+            tokensUsed: this.calculateTokenUsage(),
+            latency: Date.now() - startTime,
+            model: this.config.model || 'gpt-4-turbo-preview',
+            success: true,
+            agentSteps: this.agentSteps,
+            framework: 'autogen'
+          }
+        },
+        {
+          // AutoGen workflows are complex and can be cached longer
+          queryType: 'general'
+        }
+      )
+
+      console.log('✅ AUTOGEN: Response ready', {
+        cached: cachedResponse.cachedAt ? true : false,
+        tokensUsed: cachedResponse.tokensUsed,
+        agentSteps: cachedResponse.agentSteps?.length || 0
+      })
+
+      return cachedResponse
     } catch (error) {
       console.error('AutoGen error:', error)
       return {

@@ -7,6 +7,15 @@ import { createShopifyAPI } from '@/lib/integrations/shopify-admin-api'
 import { analyzeFiles } from '@/lib/ai/file-analysis'
 import { UploadedFile } from '@/components/ui/FileUpload'
 import { analyzeShopifyRequest, createShopifyIntelligentRouter } from '@/lib/ai/shopify-intelligent-routing'
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  createAuthErrorResponse,
+  withStandardErrorHandling,
+  ERROR_CODES,
+  HTTP_STATUS
+} from '@/lib/api/response-formatter'
+import { handleShopifyError } from '@/lib/api/error-handlers'
 
 interface ShopifyManagementRequest {
   message: string
@@ -287,16 +296,16 @@ function getRoutingSuggestions(requestType: string, message: string): string | n
 
 // GET endpoint for health check
 export async function GET() {
-  return NextResponse.json({
+  return createSuccessResponse({
     status: 'active',
     service: 'Shopify AI Management',
     capabilities: [
       'product_creation',
-      'inventory_management', 
+      'inventory_management',
       'order_management',
       'customer_service',
       'analytics',
       'general_management'
     ]
-  })
+  }, 'Shopify AI Management service is active and ready')
 }

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --port 3000",
+    "dev:shopify": "node scripts/start-shopify-dev.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -11,9 +12,11 @@
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "test:shopify": "node scripts/test-shopify-integration.js",
+    "test:actions": "node scripts/test-action-execution.js",
+    "test:actions:info": "node scripts/test-action-execution.js --info",
     "test:quick": "bash scripts/quick-test.sh",
     "test:unit": "jest",
-    "test:integration": "npm run test:shopify && npm run test",
+    "test:integration": "npm run test:shopify && npm run test:actions && npm run test",
     "cleanup:quick": "bash scripts/quick-cleanup.sh",
     "cleanup:deep": "bash scripts/deep-cleanup.sh"
   },

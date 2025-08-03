@@ -1,6 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 
 export function createSupabaseServerClient() {
   // For API routes, we'll use a simpler approach without async cookies
@@ -21,6 +20,8 @@ export function createSupabaseServerClient() {
 // Alternative function for when we need cookie-based auth
 export async function createSupabaseServerClientWithCookies() {
   try {
+    // Dynamically import cookies only when needed to avoid client-side bundling issues
+    const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
 
     return createServerClient(

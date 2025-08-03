@@ -46,7 +46,7 @@ export async function GET(
     console.log('✅ Permission validated for products read access')
 
     // Fetch products from Shopify using the Admin API
-    const shopifyAPI = await createShopifyAPI(userId)
+    const shopifyAPI = await createShopifyAPI(user.id)
     if (!shopifyAPI) {
       return NextResponse.json(
         {

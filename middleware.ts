@@ -10,8 +10,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Skip middleware for Shopify auth routes to prevent interference
-  if (pathname.startsWith('/api/auth/shopify/')) {
+  // Skip middleware for ALL OAuth routes to prevent interference with third-party integrations
+  if (pathname.startsWith('/api/auth/')) {
+    return NextResponse.next()
+  }
+
+  // Skip middleware for Shopify webhooks and API endpoints
+  if (pathname.startsWith('/api/shopify/') || pathname.startsWith('/api/webhooks/shopify/')) {
     return NextResponse.next()
   }
 

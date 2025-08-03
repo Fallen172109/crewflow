@@ -7,6 +7,7 @@ import { createAutoGenAgent } from '@/lib/ai/autogen'
 import { getAgentTool } from '@/lib/agent-tools'
 import { trackDetailedUsage } from '@/lib/usage-analytics'
 import { handleShopifyAction, getAvailableShopifyActions, hasShopifyConnection } from '@/lib/agents/shopify-actions'
+import { withAICache } from '@/lib/ai/response-cache'
 import axios from 'axios'
 
 export async function POST(request: NextRequest) {
@@ -731,36 +732,65 @@ export async function GET() {
 // Direct API call functions to bypass framework issues
 async function callPerplexityDirectly(message: string, context?: string) {
   const startTime = Date.now()
+  const anchor = getAgent('anchor')
 
   try {
     const systemPrompt = `You are Anchor, a Supply Chain specialist AI assistant focusing on business automation and software integrations. You help users make intelligent decisions about which software to connect with their CrewFlow application for automation purposes. Communicate in a direct, professional manner without emojis or excessive formatting. Provide specific, actionable recommendations with clear explanations.`
 
-    const response = await axios.post('https://api.perplexity.ai/chat/completions', {
-      model: process.env.PERPLEXITY_MODEL || 'llama-3.1-sonar-large-128k-online',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: context ? `Context: ${context}\n\nQuestion: ${message}` : message }
-      ],
-      max_tokens: 1000,
-      temperature: 0.7,
-      stream: false
-    }, {
-      headers: {
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json'
+    // Use AI caching for direct Perplexity calls
+    const cachedResponse = await withAICache(
+      {
+        message: message,
+        agent: anchor!,
+        systemPrompt: systemPrompt,
+        modelConfig: {
+          model: process.env.PERPLEXITY_MODEL || 'llama-3.1-sonar-large-128k-online',
+          temperature: 0.7,
+          maxTokens: 1000
+        },
+        userContext: {
+          context: context
+        }
       },
-      timeout: 30000
+      async () => {
+        console.log('🔄 ANCHOR PERPLEXITY: Cache miss, calling API')
+        const response = await axios.post('https://api.perplexity.ai/chat/completions', {
+          model: process.env.PERPLEXITY_MODEL || 'llama-3.1-sonar-large-128k-online',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: context ? `Context: ${context}\n\nQuestion: ${message}` : message }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7,
+          stream: false
+        }, {
+          headers: {
+            'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        })
+
+        return {
+          response: response.data.choices[0].message.content,
+          tokensUsed: response.data.usage.total_tokens,
+          latency: Date.now() - startTime,
+          model: response.data.model,
+          success: true,
+          framework: 'perplexity'
+        }
+      },
+      {
+        queryType: 'time_sensitive' // Supply chain info can be time-sensitive
+      }
+    )
+
+    console.log('✅ ANCHOR PERPLEXITY: Response ready', {
+      cached: cachedResponse.cachedAt ? true : false,
+      tokensUsed: cachedResponse.tokensUsed
     })
 
-    const latency = Date.now() - startTime
-
-    return {
-      response: response.data.choices[0].message.content,
-      tokensUsed: response.data.usage.total_tokens,
-      latency,
-      model: response.data.model,
-      success: true
-    }
+    return cachedResponse
   } catch (error) {
     console.error('Direct Perplexity API error:', error)
     throw error
@@ -769,35 +799,64 @@ async function callPerplexityDirectly(message: string, context?: string) {
 
 async function callOpenAIDirectly(message: string, context?: string) {
   const startTime = Date.now()
+  const anchor = getAgent('anchor')
 
   try {
     const systemPrompt = `You are Anchor, a Supply Chain specialist AI assistant focusing on business automation and workflow optimization. You help users understand how to automate their business processes and integrate different systems. Communicate in a direct, professional manner without emojis or excessive formatting. Provide specific, actionable guidance with clear implementation steps.`
 
-    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: context ? `Context: ${context}\n\nQuestion: ${message}` : message }
-      ],
-      max_tokens: 1000,
-      temperature: 0.7
-    }, {
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
+    // Use AI caching for direct OpenAI calls
+    const cachedResponse = await withAICache(
+      {
+        message: message,
+        agent: anchor!,
+        systemPrompt: systemPrompt,
+        modelConfig: {
+          model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
+          temperature: 0.7,
+          maxTokens: 1000
+        },
+        userContext: {
+          context: context
+        }
       },
-      timeout: 30000
+      async () => {
+        console.log('🔄 ANCHOR OPENAI: Cache miss, calling API')
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+          model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: context ? `Context: ${context}\n\nQuestion: ${message}` : message }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        }, {
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        })
+
+        return {
+          response: response.data.choices[0].message.content,
+          tokensUsed: response.data.usage.total_tokens,
+          latency: Date.now() - startTime,
+          model: response.data.model,
+          success: true,
+          framework: 'openai'
+        }
+      },
+      {
+        queryType: 'general' // Workflow automation advice can be cached longer
+      }
+    )
+
+    console.log('✅ ANCHOR OPENAI: Response ready', {
+      cached: cachedResponse.cachedAt ? true : false,
+      tokensUsed: cachedResponse.tokensUsed
     })
 
-    const latency = Date.now() - startTime
-
-    return {
-      response: response.data.choices[0].message.content,
-      tokensUsed: response.data.usage.total_tokens,
-      latency,
-      model: response.data.model,
-      success: true
-    }
+    return cachedResponse
   } catch (error) {
     console.error('Direct OpenAI API error:', error)
     throw error

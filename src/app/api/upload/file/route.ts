@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { requireAuthAPI } from '@/lib/auth'
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  createAuthErrorResponse,
+  withStandardErrorHandling,
+  ERROR_CODES,
+  HTTP_STATUS
+} from '@/lib/api/response-formatter'
+import { handleFileUploadError } from '@/lib/api/error-handlers'
 
 // POST /api/upload/file - Upload file to storage with authentication (fixed auth v2)
 export async function POST(request: NextRequest) {
@@ -18,11 +27,9 @@ export async function POST(request: NextRequest) {
       // If in maintenance mode, provide a more helpful error message
       if (isMaintenanceMode) {
         console.log('❌ Authentication failed in maintenance mode')
-        return NextResponse.json({
-          error: 'Authentication required. Please log in to upload files.',
-          maintenanceMode: true,
-          code: 'AUTH_REQUIRED_MAINTENANCE'
-        }, { status: 401 })
+        return createAuthErrorResponse(
+          'Authentication required. Please log in to upload files.'
+        )
       }
 
       // Re-throw the error for normal operation
@@ -33,17 +40,23 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
     
     if (!file) {
-      return NextResponse.json({ 
-        error: 'No file provided' 
-      }, { status: 400 })
+      return createErrorResponse(
+        ERROR_CODES.MISSING_REQUIRED_FIELD,
+        'No file provided',
+        { field: 'file' },
+        { status: HTTP_STATUS.BAD_REQUEST }
+      )
     }
 
     // Validate file size (25MB limit)
     const maxSize = 25 * 1024 * 1024
     if (file.size > maxSize) {
-      return NextResponse.json({ 
-        error: 'File size exceeds 25MB limit' 
-      }, { status: 400 })
+      return createErrorResponse(
+        ERROR_CODES.FILE_TOO_LARGE,
+        'File size exceeds 25MB limit',
+        { maxSize: '25MB', actualSize: `${Math.round(file.size / 1024 / 1024)}MB` },
+        { status: HTTP_STATUS.BAD_REQUEST }
+      )
     }
 
     // Validate file type

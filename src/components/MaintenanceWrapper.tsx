@@ -26,7 +26,32 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
     '/admin-setup'
   ]
 
-  const shouldBypassMaintenance = bypassRoutes.some(route => pathname.startsWith(route))
+  // Check if this is a Shopify-related request that should bypass maintenance
+  const isShopifyRequest = () => {
+    // Check for Shopify OAuth routes
+    if (pathname.startsWith('/api/auth/shopify/') ||
+        pathname.startsWith('/api/shopify/') ||
+        pathname.startsWith('/api/webhooks/shopify/')) {
+      return true
+    }
+
+    // Check for Shopify parameters in URL (for root page Shopify requests)
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const shop = urlParams.get('shop')
+      const hmac = urlParams.get('hmac')
+      const timestamp = urlParams.get('timestamp')
+
+      // If we have Shopify parameters, this is a Shopify request
+      if (shop && (hmac || timestamp)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  const shouldBypassMaintenance = bypassRoutes.some(route => pathname.startsWith(route)) || isShopifyRequest()
 
   useEffect(() => {
     // Check maintenance mode status from API

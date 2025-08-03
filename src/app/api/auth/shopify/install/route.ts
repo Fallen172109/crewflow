@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getBaseUrl, getOAuthRedirectUri } from '@/lib/utils/environment'
 import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
@@ -19,6 +20,10 @@ export async function GET(request: NextRequest) {
       timestamp,
       hasHmac: !!hmac,
       appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      baseUrl: getBaseUrl(),
+      redirectUri: getOAuthRedirectUri('shopify'),
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV,
       clientId: process.env.SHOPIFY_CLIENT_ID ? 'Present' : 'Missing',
       clientSecret: process.env.SHOPIFY_CLIENT_SECRET ? 'Present' : 'Missing'
     })
@@ -42,8 +47,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // For embedded apps, we need to handle the installation differently
-    if (embedded === '1') {
+    // Handle embedded app installation (default for Shopify Partner apps)
+    // Most Shopify Partner apps should be embedded unless specifically configured otherwise
+    const isEmbeddedApp = embedded === '1' || !embedded // Default to embedded if not specified
+
+    if (isEmbeddedApp) {
       console.log('Handling embedded app installation for shop:', shop)
 
       // Generate state parameter for security
@@ -62,15 +70,38 @@ export async function GET(request: NextRequest) {
         expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
       })
 
-      // Return HTML that will handle the embedded app installation with App Bridge
-      const installationHtml = generateEmbeddedInstallationPage(shop, state)
-      return new NextResponse(installationHtml, {
-        headers: {
-          'Content-Type': 'text/html',
-          'X-Frame-Options': 'ALLOWALL',
-          'Content-Security-Policy': "frame-ancestors 'self' https://*.shopify.com https://admin.shopify.com"
-        }
+      // For embedded apps, we need to redirect to the Shopify admin grant page
+      // This is what Shopify expects: https://admin.shopify.com/store/{shop}/app/grant
+      const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
+      const redirectUri = getOAuthRedirectUri('shopify')
+
+      const scopes = [
+        'read_products',
+        'write_products',
+        'read_orders',
+        'write_orders',
+        'read_customers',
+        'read_analytics',
+        'read_inventory',
+        'write_inventory',
+        'read_fulfillments',
+        'write_fulfillments'
+      ].join(',')
+
+      // Build the OAuth URL that will redirect to the grant page
+      const authUrl = new URL(`https://${shop}/admin/oauth/authorize`)
+      authUrl.searchParams.set('client_id', clientId!)
+      authUrl.searchParams.set('scope', scopes)
+      authUrl.searchParams.set('redirect_uri', redirectUri)
+      authUrl.searchParams.set('state', state)
+
+      console.log('Redirecting to Shopify OAuth for embedded app:', {
+        authUrl: authUrl.toString(),
+        expectedGrantUrl: `https://admin.shopify.com/store/${shop.replace('.myshopify.com', '')}/app/grant`
       })
+
+      // Redirect to Shopify OAuth - this should lead to the grant page
+      return NextResponse.redirect(authUrl.toString())
     }
 
     // For non-embedded apps, redirect to standard OAuth flow
@@ -113,8 +144,8 @@ export async function GET(request: NextRequest) {
       'write_fulfillments'
     ].join(',')
 
-    // Build Shopify OAuth URL
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/shopify/callback`
+    // Build Shopify OAuth URL with environment-aware redirect URI
+    const redirectUri = getOAuthRedirectUri('shopify')
     const authUrl = new URL(`https://${shop}/admin/oauth/authorize`)
 
     authUrl.searchParams.set('client_id', clientId)
@@ -194,7 +225,7 @@ function validateShopifyRequest(searchParams: URLSearchParams): boolean {
 // Generate HTML for embedded app installation with proper App Bridge integration
 function generateEmbeddedInstallationPage(shop: string, state: string): string {
   const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/shopify/callback`
+  const redirectUri = getOAuthRedirectUri('shopify')
 
   const scopes = [
     'read_products',

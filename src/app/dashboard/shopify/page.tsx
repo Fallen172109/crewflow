@@ -20,7 +20,9 @@ import {
   Plus,
   TrendingUp,
   AlertCircle,
-  Ship
+  Ship,
+  CheckCircle,
+  Clock
 } from 'lucide-react'
 
 interface ShopifyStore {
@@ -179,6 +181,13 @@ function ShopifyDashboardContent() {
 
     if (chatRef.current && chatRef.current.sendMessage) {
       chatRef.current.sendMessage(message)
+    }
+  }
+
+  // Refresh chat threads
+  const refreshChatThreads = () => {
+    if (chatRef.current && chatRef.current.refreshThreads) {
+      chatRef.current.refreshThreads()
     }
   }
 
