@@ -4,25 +4,18 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { handleAuthError } from '@/lib/auth-error-handler'
 import { ShopifyStoreProvider } from '@/contexts/ShopifyStoreContext'
-import StoreSelector from '@/components/shopify/StoreSelector'
+import EnhancedStoreManager from '@/components/shopify/EnhancedStoreManager'
 import SimplifiedShopifyAIChat from '@/components/shopify/SimplifiedShopifyAIChat'
 import ConnectStoreModal from '@/components/shopify/ConnectStoreModal'
 import BottomManagementPanel from '@/components/shopify/BottomManagementPanel'
 // import { BeamsBackground } from '@/components/ui/beams-background' // TEMPORARILY DISABLED
 import {
-  Store,
-  Package,
-  ShoppingCart,
-  Users,
-  DollarSign,
-  BarChart3,
   Anchor,
   Plus,
-  TrendingUp,
-  AlertCircle,
-  Ship,
   CheckCircle,
-  Clock
+  Clock,
+  AlertCircle,
+  Ship
 } from 'lucide-react'
 
 interface ShopifyStore {
@@ -308,10 +301,13 @@ function ShopifyDashboardContent() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <StoreSelector
-                onConnect={() => setShowShopifyModal(true)}
-                className="bg-white/10 backdrop-blur-sm border-white/20"
-              />
+              <button
+                onClick={() => setShowShopifyModal(true)}
+                className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Connect Store</span>
+              </button>
               <div className="text-right">
                 <div className="text-orange-100 text-xs">Captain</div>
                 <div className="text-white text-sm font-medium">{user?.email}</div>
@@ -320,9 +316,17 @@ function ShopifyDashboardContent() {
           </div>
         </div>
 
+        {/* Store Management Section */}
+        <div className="max-w-7xl mx-auto w-full px-6 pb-4">
+          <EnhancedStoreManager
+            onConnect={() => setShowShopifyModal(true)}
+            className="bg-white/90 backdrop-blur-md rounded-xl border border-gray-200 shadow-lg"
+          />
+        </div>
+
         {/* Main Content Area - Central AI Chat */}
-        <div className="flex-1 max-w-7xl mx-auto w-full p-6 overflow-hidden">
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-gray-200 shadow-xl h-[calc(100vh-280px)] flex flex-col overflow-hidden">
+        <div className="flex-1 max-w-7xl mx-auto w-full px-6 overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-gray-200 shadow-xl h-[calc(100vh-360px)] flex flex-col overflow-hidden">
             <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-orange-100 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
