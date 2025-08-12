@@ -13,10 +13,21 @@ export function getBaseUrl(): string {
     return window.location.origin
   }
 
-  // Check for ngrok development URL (for Shopify testing)
+  // Priority order for server-side URL detection:
+
+  // 1. Explicit ngrok URL for Shopify development testing
   if (process.env.NGROK_URL) {
-    console.log('Using ngrok URL for development:', process.env.NGROK_URL)
-    return process.env.NGROK_URL
+    // Ensure ngrok URL is properly formatted
+    const ngrokUrl = process.env.NGROK_URL.replace(/\/$/, '') // Remove trailing slash
+    console.log('Using ngrok URL for Shopify development:', ngrokUrl)
+    return ngrokUrl
+  }
+
+  // 2. Vercel deployment URLs
+  if (process.env.VERCEL_URL) {
+    const vercelUrl = `https://${process.env.VERCEL_URL}`
+    console.log('Using Vercel URL:', vercelUrl)
+    return vercelUrl
   }
 
   // In server environment - prioritize production detection
@@ -58,4 +69,23 @@ export function isProduction(): boolean {
 export function getOAuthRedirectUri(provider: string, endpoint: string = 'callback'): string {
   const baseUrl = getBaseUrl()
   return `${baseUrl}/api/auth/${provider}/${endpoint}`
+}
+
+/**
+ * Generate Shopify embedded app URL
+ * Format: https://admin.shopify.com/store/{shop_id}/apps/{api_key}/
+ */
+export function getShopifyEmbeddedAppUrl(shop: string, apiKey: string): string {
+  const shopId = shop.replace('.myshopify.com', '')
+  return `https://admin.shopify.com/store/${shopId}/apps/${apiKey}/`
+}
+
+/**
+ * Check if the current request is from Shopify embedded context
+ */
+export function isShopifyEmbeddedRequest(searchParams: URLSearchParams): boolean {
+  return !!(
+    searchParams.get('shop') &&
+    (searchParams.get('hmac') || searchParams.get('host') || searchParams.get('embedded'))
+  )
 }

@@ -25,9 +25,41 @@ export default function ShopifySetupPage() {
   const handleContinueToApp = async () => {
     setIsLoading(true)
 
-    // Redirect to login/signup with the shop connection info
-    const returnUrl = encodeURIComponent(`/dashboard/shopify?shop=${shop}&token=${connectionToken}`)
-    router.push(`/auth/login?returnUrl=${returnUrl}&message=Complete your account setup to manage ${shop}`)
+    try {
+      // If we have a connection token, try to complete the store connection
+      if (connectionToken) {
+        // Call API to complete the store connection
+        const response = await fetch('/api/shopify/complete-installation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            shop,
+            connectionToken
+          })
+        })
+
+        if (response.ok) {
+          // Connection completed successfully, redirect to dashboard
+          router.push(`/dashboard/shopify?success=store_connected&shop=${encodeURIComponent(shop)}`)
+          return
+        } else {
+          console.error('Failed to complete store connection')
+        }
+      }
+
+      // Fallback: redirect to login/signup with the shop connection info
+      const returnUrl = encodeURIComponent(`/dashboard/shopify?shop=${shop}&token=${connectionToken}`)
+      router.push(`/auth/login?returnUrl=${returnUrl}&message=Complete your account setup to manage ${shop}`)
+    } catch (error) {
+      console.error('Error completing installation:', error)
+      // Fallback to login flow
+      const returnUrl = encodeURIComponent(`/dashboard/shopify?shop=${shop}&token=${connectionToken}`)
+      router.push(`/auth/login?returnUrl=${returnUrl}&message=Complete your account setup to manage ${shop}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleConfigureLater = () => {

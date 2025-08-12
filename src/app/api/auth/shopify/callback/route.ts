@@ -37,8 +37,9 @@ export async function GET(request: NextRequest) {
     if (isAppInstallation) {
       console.log('Handling Shopify app installation without user authentication')
 
-      // For app installations, we'll complete the OAuth flow and redirect to a setup page
-      // This satisfies Shopify's requirement that apps don't immediately require authentication
+      // For app installations, we need to handle two scenarios:
+      // 1. Initial app installation from App Store - redirect to setup page
+      // 2. Embedded app access - redirect to embedded admin URL
 
       // Exchange code for access token first
       const accessToken = await exchangeCodeForToken(code, shop)
@@ -49,22 +50,41 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // For now, we'll use URL parameters to pass the connection info
-      // In production, you'd want to store this securely in a database
-      const connectionData = {
-        shop,
-        timestamp: Date.now(),
-        // Don't include access token in URL for security
+      // Check if this is an embedded app request
+      const isEmbeddedRequest = embedded === '1' || embedded === 'true'
+
+      if (isEmbeddedRequest) {
+        // For embedded app access, redirect to the embedded admin URL
+        const shopId = shop.replace('.myshopify.com', '')
+        const apiKey = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
+
+        if (!apiKey) {
+          console.error('Missing Shopify API key for embedded app URL')
+          return NextResponse.redirect(
+            `${getBaseUrl()}/shopify/setup?error=missing_api_key&shop=${encodeURIComponent(shop)}`
+          )
+        }
+
+        // Construct the embedded app URL that Shopify expects
+        const embeddedAppUrl = `https://admin.shopify.com/store/${shopId}/apps/${apiKey}/`
+
+        console.log('Redirecting to embedded app URL:', embeddedAppUrl)
+        return NextResponse.redirect(embeddedAppUrl)
+      } else {
+        // For initial app installation, redirect to setup page
+        // Store the access token temporarily for the setup page
+        const connectionToken = Buffer.from(JSON.stringify({
+          shop,
+          accessToken,
+          timestamp: Date.now()
+        })).toString('base64')
+
+        console.log('App installation completed, redirecting to setup page')
+
+        return NextResponse.redirect(
+          `${getBaseUrl()}/shopify/setup?shop=${encodeURIComponent(shop)}&token=${connectionToken}&success=app_installed`
+        )
       }
-
-      // Encode the connection data
-      const connectionToken = Buffer.from(JSON.stringify(connectionData)).toString('base64')
-
-      // Redirect to app setup page instead of requiring immediate authentication
-      // This satisfies Shopify's automated checks
-      return NextResponse.redirect(
-        `${getBaseUrl()}/shopify/setup?shop=${encodeURIComponent(shop)}&token=${connectionToken}&success=app_installed`
-      )
     }
     
     // Verify state parameter - handle both user-initiated and app installation flows

@@ -17,6 +17,9 @@
     "test:quick": "bash scripts/quick-test.sh",
     "test:unit": "jest",
     "test:integration": "npm run test:shopify && npm run test:actions && npm run test",
+    "test:shopify-review": "node scripts/test-shopify-app-review-fixes.js",
+    "test:local-setup": "node scripts/test-local-setup.js",
+    "validate:shopify": "node scripts/validate-shopify-config.js",
     "cleanup:quick": "bash scripts/quick-cleanup.sh",
     "cleanup:deep": "bash scripts/deep-cleanup.sh"
   },

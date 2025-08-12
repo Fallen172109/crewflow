@@ -3,24 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import crypto from 'crypto'
-
-// Validate Shopify webhook HMAC signature
-function validateShopifyWebhook(body: string, signature: string, secret: string): boolean {
-  try {
-    const hmac = crypto.createHmac('sha256', secret)
-    hmac.update(body, 'utf8')
-    const calculatedSignature = hmac.digest('base64')
-
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'base64'),
-      Buffer.from(calculatedSignature, 'base64')
-    )
-  } catch (error) {
-    console.error('HMAC validation error:', error)
-    return false
-  }
-}
+import { requireValidWebhook } from '@/lib/security/webhook-validator'
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,20 +12,13 @@ export async function POST(request: NextRequest) {
     const shopifyShopDomain = headersList.get('x-shopify-shop-domain')
     const shopifyHmacSha256 = headersList.get('x-shopify-hmac-sha256')
 
-    // Get raw body for signature verification
-    const body = await request.text()
-
-    // Validate webhook signature - REQUIRED for Shopify compliance
-    const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET || process.env.CREWFLOW_SHOPIFY_WEBHOOK_SECRET
-
-    if (!shopifyHmacSha256 || !webhookSecret) {
-      console.error('Missing HMAC signature or webhook secret')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const isValid = validateShopifyWebhook(body, shopifyHmacSha256, webhookSecret)
-    if (!isValid) {
-      console.error('Invalid Shopify webhook signature for customer redact')
+    // Validate webhook signature using secure timing-safe comparison
+    let body: string
+    try {
+      body = await requireValidWebhook(request)
+      console.log('✅ Customer redact webhook signature validated')
+    } catch (error: any) {
+      console.error('❌ Invalid webhook signature for customer redact:', error.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

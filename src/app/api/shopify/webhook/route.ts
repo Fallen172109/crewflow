@@ -3,9 +3,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { validateShopifyWebhook } from '@/lib/integrations/shopify-admin-api'
+import { requireValidWebhook } from '@/lib/security/webhook-validator'
 import { headers } from 'next/headers'
-import crypto from 'crypto'
 
 interface ShopifyWebhookEvent {
   topic: string
@@ -55,20 +54,32 @@ export async function POST(request: NextRequest) {
       bodyLength: body.length
     })
 
-    // Verify webhook signature if we have all required components
+    // Verify webhook signature using secure timing-safe comparison
     if (shopifyHmacSha256) {
       const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET || process.env.CREWFLOW_SHOPIFY_WEBHOOK_SECRET
       if (webhookSecret) {
-        const isValid = validateShopifyWebhook(body, shopifyHmacSha256, webhookSecret)
-        if (!isValid) {
-          console.error('Invalid Shopify webhook signature')
-          return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+        try {
+          // Use secure validation with timing-safe comparison
+          const { validateShopifyWebhook } = await import('@/lib/security/webhook-validator')
+          const validation = validateShopifyWebhook(body, shopifyHmacSha256, webhookSecret)
+
+          if (!validation.isValid) {
+            console.error('❌ Invalid Shopify webhook signature:', validation.error)
+            return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+          }
+
+          console.log('✅ Webhook signature validated successfully')
+        } catch (error) {
+          console.error('❌ Webhook validation error:', error)
+          return NextResponse.json({ error: 'Signature validation failed' }, { status: 401 })
         }
       } else {
-        console.warn('Webhook secret not configured - skipping signature verification')
+        console.warn('⚠️ Webhook secret not configured - this is insecure for production')
+        return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
       }
     } else {
-      console.warn('No HMAC signature provided - skipping verification (test mode)')
+      console.warn('⚠️ No HMAC signature provided - rejecting webhook')
+      return NextResponse.json({ error: 'Missing HMAC signature' }, { status: 401 })
     }
 
     // Parse webhook payload

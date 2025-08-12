@@ -26,6 +26,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Shopify App Bridge Scripts - Load from CDN for embedded apps */}
+        <script
+          src="https://unpkg.com/@shopify/app-bridge@3"
+          defer
+        />
+        <script
+          src="https://unpkg.com/@shopify/app-bridge-utils@3"
+          defer
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

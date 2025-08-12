@@ -1,50 +1,62 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
 
-export default function RootPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+export default async function RootPage({ searchParams }: PageProps) {
+  // Await searchParams for Next.js 15 compatibility
+  const params = await searchParams
 
-  useEffect(() => {
-    // Check if this is a Shopify OAuth request
-    const shop = searchParams.get('shop')
-    const hmac = searchParams.get('hmac')
-    const timestamp = searchParams.get('timestamp')
-    const host = searchParams.get('host')
+  // Check if this is a Shopify request
+  const shop = params.shop as string
+  const hmac = params.hmac as string
+  const timestamp = params.timestamp as string
+  const host = params.host as string
+  const embedded = params.embedded as string
 
-    // Detect Shopify requests by multiple parameters
-    const isShopifyRequest = shop && (hmac || timestamp || host)
+  // Detect Shopify requests by shop parameter + any Shopify-specific parameter
+  const isShopifyRequest = shop && (hmac || timestamp || host || embedded)
 
-    if (isShopifyRequest) {
-      // This is a Shopify OAuth request - redirect to install endpoint
-      console.log('Detected Shopify OAuth request on root page:', {
-        shop,
-        hasHmac: !!hmac,
-        hasTimestamp: !!timestamp,
-        hasHost: !!host
+  console.log('Root page - server-side detection:', {
+    shop,
+    hasHmac: !!hmac,
+    hasTimestamp: !!timestamp,
+    hasHost: !!host,
+    hasEmbedded: !!embedded,
+    isShopifyRequest
+  })
+
+  if (isShopifyRequest) {
+    // Check if this is an embedded app request (already installed)
+    const isEmbeddedApp = embedded === '1' || embedded === 'true' || !!host
+
+    if (isEmbeddedApp && !hmac) {
+      // This is likely an embedded app access, redirect to embedded page
+      console.log('Embedded app access detected, redirecting to embedded page')
+      const urlParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) {
+          urlParams.set(key, Array.isArray(value) ? value[0] : value)
+        }
+      })
+      redirect(`/embedded?${urlParams.toString()}`)
+    } else {
+      // This is an app installation or OAuth flow
+      const urlParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) {
+          urlParams.set(key, Array.isArray(value) ? value[0] : value)
+        }
       })
 
-      // Preserve all Shopify parameters and redirect to install endpoint
-      const installUrl = `/api/auth/shopify/install?${searchParams.toString()}`
-      console.log('Redirecting to:', installUrl)
-      window.location.href = installUrl
-      return
+      console.log('Server-side redirect to install endpoint')
+      redirect(`/api/auth/shopify/install?${urlParams.toString()}`)
     }
+  }
 
-    // Normal redirect to dashboard for regular users (will be handled by maintenance wrapper)
-    router.push('/dashboard')
-  }, [router, searchParams])
-
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-white text-center">
-        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p>Loading...</p>
-      </div>
-    </div>
-  )
+  // Normal redirect to dashboard for regular users
+  redirect('/dashboard')
 }
 
 

@@ -3,24 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import crypto from 'crypto'
-
-// Validate Shopify webhook HMAC signature
-function validateShopifyWebhook(body: string, signature: string, secret: string): boolean {
-  try {
-    const hmac = crypto.createHmac('sha256', secret)
-    hmac.update(body, 'utf8')
-    const calculatedSignature = hmac.digest('base64')
-
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'base64'),
-      Buffer.from(calculatedSignature, 'base64')
-    )
-  } catch (error) {
-    console.error('HMAC validation error:', error)
-    return false
-  }
-}
+import { requireValidWebhook } from '@/lib/security/webhook-validator'
 
 export async function POST(request: NextRequest) {
   try {

@@ -47,12 +47,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Handle embedded app installation (default for Shopify Partner apps)
-    // Most Shopify Partner apps should be embedded unless specifically configured otherwise
-    const isEmbeddedApp = embedded === '1' || !embedded // Default to embedded if not specified
+    // For automated checks, we need to redirect immediately to Shopify OAuth
+    // This ensures the checker sees the expected grant URL
 
-    if (isEmbeddedApp) {
-      console.log('Handling embedded app installation for shop:', shop)
+    console.log('Handling Shopify app installation for shop:', shop)
 
       // Generate state parameter for security
       const state = crypto.randomUUID()
@@ -100,68 +98,8 @@ export async function GET(request: NextRequest) {
         expectedGrantUrl: `https://admin.shopify.com/store/${shop.replace('.myshopify.com', '')}/app/grant`
       })
 
-      // Redirect to Shopify OAuth - this should lead to the grant page
+      // Redirect to Shopify OAuth
       return NextResponse.redirect(authUrl.toString())
-    }
-
-    // For non-embedded apps, redirect to standard OAuth flow
-    const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
-    if (!clientId) {
-      return NextResponse.json(
-        { error: 'Shopify app not configured' },
-        { status: 500 }
-      )
-    }
-
-    // Generate state parameter for security
-    const state = crypto.randomUUID()
-    
-    // Store OAuth state (if user is authenticated)
-    const supabase = createSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (user) {
-      await supabase.from('oauth_states').insert({
-        user_id: user.id,
-        state,
-        shop_domain: shop,
-        created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
-      })
-    }
-
-    // Required Shopify scopes
-    const scopes = [
-      'read_products',
-      'write_products',
-      'read_orders',
-      'write_orders',
-      'read_customers',
-      'read_analytics',
-      'read_inventory',
-      'write_inventory',
-      'read_fulfillments',
-      'write_fulfillments'
-    ].join(',')
-
-    // Build Shopify OAuth URL with environment-aware redirect URI
-    const redirectUri = getOAuthRedirectUri('shopify')
-    const authUrl = new URL(`https://${shop}/admin/oauth/authorize`)
-
-    authUrl.searchParams.set('client_id', clientId)
-    authUrl.searchParams.set('scope', scopes)
-    authUrl.searchParams.set('redirect_uri', redirectUri)
-    authUrl.searchParams.set('state', state)
-
-    console.log('Shopify OAuth redirect details:', {
-      redirectUri,
-      authUrl: authUrl.toString(),
-      shop,
-      clientId: clientId.substring(0, 8) + '...'
-    })
-
-    // Redirect to Shopify OAuth
-    return NextResponse.redirect(authUrl.toString())
 
   } catch (error) {
     console.error('Shopify installation error:', error)
