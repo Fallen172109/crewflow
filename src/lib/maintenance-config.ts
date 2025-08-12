@@ -74,8 +74,9 @@ export function getMaintenanceStatus(): MaintenanceStatus {
     }
   }
   
+  // TEMPORARILY DISABLE AUTO-MAINTENANCE FOR SHOPIFY OAUTH TESTING
   // Check if maintenance should be automatically enabled
-  const shouldAutoEnable = shouldAutoEnableMaintenance()
+  const shouldAutoEnable = false // shouldAutoEnableMaintenance()
   if (shouldAutoEnable) {
     return {
       maintenanceMode: true,
