@@ -2,7 +2,7 @@
 // Provides analytics and statistics for the predictive response system
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/server'
+import { requireAuthAPI } from '@/lib/auth'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { responsePreloader } from '@/lib/ai/response-preloader'
 import { predictiveJobProcessor } from '@/lib/ai/predictive-job-processor'
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     console.log('📊 PREDICTIVE STATS API: Request received')
 
     // Authenticate user
-    const user = await requireAuth()
+    const user = await requireAuthAPI()
     console.log('📊 PREDICTIVE STATS API: User authenticated:', user.id)
 
     const { searchParams } = new URL(request.url)
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
     console.log('📊 PREDICTIVE STATS API: Analytics trigger request received')
 
     // Authenticate user
-    const user = await requireAuth()
+    const user = await requireAuthAPI()
     
     const body = await request.json()
     const { action, timeRange = 24 } = body
@@ -249,7 +249,7 @@ export async function PUT(request: NextRequest) {
     console.log('📊 PREDICTIVE STATS API: Threshold update request received')
 
     // Authenticate user (admin only for threshold updates)
-    const user = await requireAuth()
+    const user = await requireAuthAPI()
     
     const body = await request.json()
     const { similarityThreshold, confidenceThreshold } = body
