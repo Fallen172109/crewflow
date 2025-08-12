@@ -62,10 +62,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import crypto from 'crypto'
-
 // Validate Shopify webhook HMAC signature
 function validateShopifyWebhook(body: string, signature: string, secret: string): boolean {
   try {
