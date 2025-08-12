@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from './supabase/server'
+import { createSupabaseServerClient, createSupabaseServerClientWithCookies } from './supabase/server'
 import { createSupabaseAdminClient } from './supabase'
 import { redirect } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
@@ -22,7 +22,7 @@ export interface AdminUser {
 
 // Get current admin user (server-side)
 export async function getAdminUser(): Promise<AdminUser | null> {
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClientWithCookies()
 
   try {
     // Debug: Check what cookies are available
@@ -98,15 +98,28 @@ export async function requireAdminAuth(): Promise<AdminUser> {
 
 // Check if user is admin (server-side)
 export async function isUserAdmin(userId?: string): Promise<boolean> {
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClientWithCookies()
 
   try {
     let targetUserId = userId
+    let userEmail = null
 
     if (!targetUserId) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return false
       targetUserId = user.id
+      userEmail = user.email
+    } else {
+      // Get user email for the provided userId
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && user.id === targetUserId) {
+        userEmail = user.email
+      }
+    }
+
+    // Check if user is the specific admin email
+    if (userEmail === 'borzeckikamil7@gmail.com') {
+      return true
     }
 
     const { data, error } = await supabase
