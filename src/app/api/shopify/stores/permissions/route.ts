@@ -14,8 +14,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get all connected Shopify stores for the user
-    const { data: stores, error: storesError } = await supabase
+    // Check if user is admin (borzeckikamil7@gmail.com)
+    const isAdmin = user.email === 'borzeckikamil7@gmail.com'
+
+    // Get connected Shopify stores
+    let storesQuery = supabase
       .from('shopify_stores')
       .select(`
         id,
@@ -25,9 +28,17 @@ export async function GET(request: NextRequest) {
         connected_at,
         permissions,
         agent_access,
-        metadata
+        metadata,
+        user_id,
+        users!inner(email)
       `)
-      .eq('user_id', user.id)
+
+    // If admin, get all stores; otherwise, only user's stores
+    if (!isAdmin) {
+      storesQuery = storesQuery.eq('user_id', user.id)
+    }
+
+    const { data: stores, error: storesError } = await storesQuery
       .order('connected_at', { ascending: false })
 
     if (storesError) {
@@ -52,7 +63,7 @@ export async function GET(request: NextRequest) {
     // Combine store data with connection status
     const storesWithPermissions = stores?.map(store => {
       const connection = connections?.find(conn => conn.store_id === store.id)
-      
+
       return {
         id: store.id,
         shopDomain: store.shop_domain,
@@ -62,7 +73,9 @@ export async function GET(request: NextRequest) {
         connectionStatus: connection?.status || 'unknown',
         permissions: store.permissions || {},
         agentAccess: store.agent_access || {},
-        metadata: store.metadata || {}
+        metadata: store.metadata || {},
+        userId: store.user_id,
+        userEmail: store.users?.email || 'Unknown'
       }
     }) || []
 
@@ -84,6 +97,11 @@ export async function GET(request: NextRequest) {
       success: true,
       stores: storesWithPermissions,
       requestedScopes,
+      isAdmin,
+      currentUser: {
+        id: user.id,
+        email: user.email
+      },
       summary: {
         totalStores: storesWithPermissions.length,
         activeStores: storesWithPermissions.filter(s => s.isActive).length,

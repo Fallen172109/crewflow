@@ -16,12 +16,19 @@ interface StorePermissions {
   permissions: Record<string, boolean>
   agentAccess: Record<string, any>
   metadata: Record<string, any>
+  userId?: string
+  userEmail?: string
 }
 
 interface PermissionsData {
   success: boolean
   stores: StorePermissions[]
   requestedScopes: string[]
+  isAdmin: boolean
+  currentUser: {
+    id: string
+    email: string
+  }
   summary: {
     totalStores: number
     activeStores: number
@@ -115,10 +122,23 @@ export default function ShopifyPermissionsPage() {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">My Shopify Store Permissions</h1>
+          <h1 className="text-3xl font-bold">
+            {data?.isAdmin ? 'All Shopify Store Permissions (Admin View)' : 'My Shopify Store Permissions'}
+          </h1>
           <p className="text-gray-600 mt-2">
-            View API permissions for your connected Shopify stores
+            {data?.isAdmin
+              ? 'View API permissions for all connected Shopify stores across CrewFlow'
+              : 'View API permissions for your connected Shopify stores'
+            }
           </p>
+          {data?.isAdmin && (
+            <div className="mt-2 flex items-center">
+              <Badge variant="destructive" className="mr-2">ADMIN</Badge>
+              <span className="text-sm text-gray-500">
+                Viewing as: {data.currentUser.email}
+              </span>
+            </div>
+          )}
         </div>
         <Button onClick={fetchPermissions} variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -158,6 +178,11 @@ export default function ShopifyPermissionsPage() {
               <div>
                 <CardTitle className="text-xl">{store.storeName}</CardTitle>
                 <p className="text-gray-600">{store.shopDomain}</p>
+                {data?.isAdmin && store.userEmail && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    Owner: {store.userEmail}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {getStatusBadge(store.connectionStatus, store.isActive)}

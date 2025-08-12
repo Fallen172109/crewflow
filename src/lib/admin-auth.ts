@@ -58,9 +58,17 @@ export async function getAdminUser(): Promise<AdminUser | null> {
 
     console.log('User profile found:', { email: profile.email, role: profile.role })
 
-    if (profile.role !== 'admin') {
-      console.log('User is not an admin:', profile.role)
+    // Check if user has admin role OR is the specific admin email
+    const isSpecificAdmin = user.email === 'borzeckikamil7@gmail.com'
+    if (profile.role !== 'admin' && !isSpecificAdmin) {
+      console.log('User is not an admin:', profile.role, 'email:', user.email)
       return null
+    }
+
+    // If specific admin email but not admin role, temporarily grant admin access
+    if (isSpecificAdmin && profile.role !== 'admin') {
+      console.log('Granting temporary admin access to:', user.email)
+      profile.role = 'admin'
     }
 
     return {
