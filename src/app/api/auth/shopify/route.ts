@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
-import { getOAuthRedirectUri } from '@/lib/utils/environment'
+import { getBaseUrl } from '@/lib/env'
 import crypto from 'crypto'
 import {
   createErrorResponse,
@@ -99,8 +99,8 @@ export const GET = withStandardErrorHandling(async (request: NextRequest) => {
     'write_fulfillments'
   ].join(',')
 
-  // Build Shopify OAuth URL with environment-aware redirect URI
-  const redirectUri = getOAuthRedirectUri('shopify')
+  // Build Shopify OAuth URL with EXACT redirect URI
+  const redirectUri = `${getBaseUrl()}/api/auth/shopify/callback`
   const authUrl = new URL(`https://${shop}/admin/oauth/authorize`)
 
   authUrl.searchParams.set('client_id', clientId)
@@ -108,6 +108,9 @@ export const GET = withStandardErrorHandling(async (request: NextRequest) => {
   authUrl.searchParams.set('redirect_uri', redirectUri)
   authUrl.searchParams.set('state', state)
   authUrl.searchParams.set('grant_options[]', 'per-user')
+
+  console.log('[OAuth] redirect_uri ->', redirectUri)
+  console.log('[OAuth] authorize URL ->', authUrl.toString())
 
   // Redirect to Shopify OAuth
   return NextResponse.redirect(authUrl.toString())

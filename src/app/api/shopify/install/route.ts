@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getBaseUrl, getOAuthRedirectUri } from '@/lib/utils/environment'
+import { getBaseUrl } from '@/lib/env'
 import crypto from 'crypto'
 
 /**
@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
       'write_fulfillments'
     ].join(',')
 
-    // Build Shopify OAuth URL with environment-aware redirect URI
-    const redirectUri = getOAuthRedirectUri('shopify')
+    // Build Shopify OAuth URL with EXACT redirect URI
+    const redirectUri = `${getBaseUrl()}/api/auth/shopify/callback`
     const authUrl = new URL(`https://${shop}/admin/oauth/authorize`)
 
     authUrl.searchParams.set('client_id', clientId)

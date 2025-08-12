@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processWebhook } from '@/lib/webhooks/shopify-webhook-manager'
+import { validateShopifyWebhook } from '@/lib/shopify/webhook-validator'
 
 export async function POST(
   request: NextRequest,
@@ -7,7 +8,7 @@ export async function POST(
 ) {
   try {
     const { userId, storeId } = params
-    
+
     // Get webhook topic from headers
     const topic = request.headers.get('x-shopify-topic')
     if (!topic) {
@@ -16,15 +17,34 @@ export async function POST(
         { status: 400 }
       )
     }
-    
+
+    // Get raw body for HMAC validation
+    const body = await request.text()
+    const signature = request.headers.get('x-shopify-hmac-sha256')
+
+    // Validate HMAC signature
+    const validation = validateShopifyWebhook(body, signature)
+    if (!validation.isValid) {
+      console.error('Invalid webhook signature:', validation.error)
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+
     // Get all headers
     const headers: Record<string, string> = {}
     request.headers.forEach((value, key) => {
       headers[key] = value
     })
-    
-    // Get payload
-    const payload = await request.json()
+
+    // Parse payload
+    let payload
+    try {
+      payload = JSON.parse(body)
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Invalid JSON payload' },
+        { status: 400 }
+      )
+    }
     
     console.log(`Received Shopify webhook: ${topic} for user ${userId}, store ${storeId}`)
     

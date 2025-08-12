@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { getBaseUrl, getOAuthRedirectUri } from '@/lib/utils/environment'
+import { getBaseUrl } from '@/lib/env'
 import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       // For embedded apps, we need to redirect to the Shopify admin grant page
       // This is what Shopify expects: https://admin.shopify.com/store/{shop}/app/grant
       const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
-      const redirectUri = getOAuthRedirectUri('shopify')
+      const redirectUri = `${getBaseUrl()}/api/auth/shopify/callback`
 
       const scopes = [
         'read_products',
@@ -163,7 +163,7 @@ function validateShopifyRequest(searchParams: URLSearchParams): boolean {
 // Generate HTML for embedded app installation with proper App Bridge integration
 function generateEmbeddedInstallationPage(shop: string, state: string): string {
   const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.CREWFLOW_SHOPIFY_CLIENT_ID
-  const redirectUri = getOAuthRedirectUri('shopify')
+  const redirectUri = `${getBaseUrl()}/api/auth/shopify/callback`
 
   const scopes = [
     'read_products',

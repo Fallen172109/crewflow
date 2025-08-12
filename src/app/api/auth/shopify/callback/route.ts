@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { addStore } from '@/lib/shopify/multi-store-manager'
-import { getBaseUrl } from '@/lib/utils/environment'
+import { getBaseUrl } from '@/lib/env'
 import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
