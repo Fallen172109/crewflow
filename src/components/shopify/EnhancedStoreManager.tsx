@@ -26,12 +26,20 @@ interface EnhancedStoreManagerProps {
   className?: string
 }
 
-export default function EnhancedStoreManager({ 
-  onConnect, 
-  className = '' 
+interface StoreAction {
+  type: 'remove' | 'settings' | 'setPrimary' | 'sync'
+  storeId: string
+  storeName: string
+}
+
+export default function EnhancedStoreManager({
+  onConnect,
+  className = ''
 }: EnhancedStoreManagerProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState<StoreAction | null>(null)
   
   const { 
     stores, 
@@ -46,6 +54,56 @@ export default function EnhancedStoreManager({
     setIsLoading(true)
     await refreshStores()
     setIsLoading(false)
+  }
+
+  const handleStoreAction = async (action: StoreAction) => {
+    setActionLoading(action.storeId)
+
+    try {
+      const response = await fetch('/api/shopify/stores', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: action.type,
+          storeId: action.storeId,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Action failed')
+      }
+
+      // Refresh stores after successful action
+      await refreshStores()
+
+      // Show success message (you can add a toast notification here)
+      console.log(`✅ ${action.type} action completed successfully for ${action.storeName}`)
+
+    } catch (error) {
+      console.error(`❌ Failed to ${action.type} store:`, error)
+      // Show error message (you can add a toast notification here)
+      alert(`Failed to ${action.type} store: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setActionLoading(null)
+      setShowConfirmDialog(null)
+    }
+  }
+
+  const handleRemoveStore = (storeId: string, storeName: string) => {
+    setShowConfirmDialog({
+      type: 'remove',
+      storeId,
+      storeName
+    })
+  }
+
+  const handleStoreSettings = (storeId: string, storeName: string) => {
+    // For now, we'll just show an alert. You can implement a proper settings modal later
+    alert(`Store settings for ${storeName} - Feature coming soon!`)
   }
 
   const getPlanIcon = (planName?: string) => {
@@ -207,12 +265,28 @@ export default function EnhancedStoreManager({
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              // Handle store settings
+                              handleStoreSettings(store.id, store.storeName)
                             }}
                             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                             title="Store settings"
+                            disabled={actionLoading === store.id}
                           >
                             <Settings className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveStore(store.id, store.storeName)
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Remove store"
+                            disabled={actionLoading === store.id}
+                          >
+                            {actionLoading === store.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
                       </div>
@@ -235,6 +309,55 @@ export default function EnhancedStoreManager({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Remove Store</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to remove <strong>{showConfirmDialog.storeName}</strong>?
+              This will disconnect the store and remove all associated data.
+            </p>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowConfirmDialog(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                disabled={actionLoading !== null}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleStoreAction(showConfirmDialog)}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                disabled={actionLoading !== null}
+              >
+                {actionLoading === showConfirmDialog.storeId ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Removing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Remove Store</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
