@@ -4,10 +4,13 @@ import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 Permissions API called')
+
     const supabase = await createSupabaseServerClientWithCookies()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (!user || userError) {
+      console.error('❌ Authentication failed:', userError?.message)
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -16,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Check if user is admin (borzeckikamil7@gmail.com)
     const isAdmin = user.email === 'borzeckikamil7@gmail.com'
+    console.log('👤 User:', user.email, 'isAdmin:', isAdmin)
 
     // Get connected Shopify stores
     let storesQuery = supabase
@@ -29,8 +33,7 @@ export async function GET(request: NextRequest) {
         permissions,
         agent_access,
         metadata,
-        user_id,
-        users!inner(email)
+        user_id
       `)
 
     // If admin, get all stores; otherwise, only user's stores
@@ -42,12 +45,18 @@ export async function GET(request: NextRequest) {
       .order('connected_at', { ascending: false })
 
     if (storesError) {
-      console.error('Error fetching stores:', storesError)
+      console.error('❌ Error fetching stores:', storesError)
       return NextResponse.json(
-        { error: 'Failed to fetch stores' },
+        {
+          success: false,
+          error: 'Failed to fetch stores',
+          details: storesError.message
+        },
         { status: 500 }
       )
     }
+
+    console.log('📊 Found stores:', stores?.length || 0)
 
     // Get API connections to check access tokens
     const { data: connections, error: connectionsError } = await supabase
@@ -58,6 +67,23 @@ export async function GET(request: NextRequest) {
 
     if (connectionsError) {
       console.error('Error fetching connections:', connectionsError)
+    }
+
+    // Get user emails for admin view
+    let userEmails: Record<string, string> = {}
+    if (isAdmin && stores && stores.length > 0) {
+      const userIds = [...new Set(stores.map(store => store.user_id))]
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, email')
+        .in('id', userIds)
+
+      if (users) {
+        userEmails = users.reduce((acc, user) => {
+          acc[user.id] = user.email
+          return acc
+        }, {} as Record<string, string>)
+      }
     }
 
     // Combine store data with connection status
@@ -75,7 +101,7 @@ export async function GET(request: NextRequest) {
         agentAccess: store.agent_access || {},
         metadata: store.metadata || {},
         userId: store.user_id,
-        userEmail: store.users?.email || 'Unknown'
+        userEmail: isAdmin ? (userEmails[store.user_id] || 'Unknown') : undefined
       }
     }) || []
 
@@ -110,9 +136,13 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error checking store permissions:', error)
+    console.error('❌ Error in permissions API:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        success: false,
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
