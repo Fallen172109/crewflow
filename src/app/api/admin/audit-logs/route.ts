@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { isUserAdmin, logAdminAction } from '@/lib/admin-auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient()
-    
+    const supabase = await createSupabaseServerClientWithCookies()
+
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {

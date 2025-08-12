@@ -46,6 +46,12 @@ const navigation = [
     description: 'System configuration'
   },
   {
+    name: 'Shopify Permissions',
+    href: '/admin/shopify-permissions',
+    icon: '🛍️',
+    description: 'Store permissions overview'
+  },
+  {
     name: 'Audit Logs',
     href: '/admin/audit-logs',
     icon: '📋',
