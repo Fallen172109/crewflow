@@ -55,8 +55,8 @@ export default async function RootPage({ searchParams }: PageProps) {
     }
   }
 
-  // Normal redirect to dashboard for regular users
-  redirect('/dashboard')
+  // Normal redirect to landing page for regular users (not dashboard to avoid auth loops)
+  redirect('/auth/login')
 }
 
 
