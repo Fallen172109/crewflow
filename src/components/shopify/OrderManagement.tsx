@@ -23,6 +23,8 @@ import {
   Ship,
   Anchor
 } from 'lucide-react'
+import { useShopifyStore, useStorePermissions } from '@/contexts/ShopifyStoreContext'
+import { fetchOrders } from '@/lib/api/shopify-client'
 
 interface Order {
   id: number
@@ -71,6 +73,9 @@ interface OrderFilters {
 }
 
 export default function OrderManagement() {
+  const { selectedStore } = useShopifyStore()
+  const { canViewOrders, canManageOrders } = useStorePermissions()
+
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -97,17 +102,25 @@ export default function OrderManagement() {
       return
     }
 
+    if (!canViewOrders) {
+      setError('You do not have permission to view orders for this store')
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
 
-      // Fetch orders from the API
-      const response = await fetch(`/api/shopify/stores/${selectedStore.id}/orders`)
+      console.log('🔄 Loading orders for store:', selectedStore.id)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch orders')
-      }
+      // Use authenticated API client
+      const response = await fetchOrders(selectedStore.id, {
+        limit: 50,
+        status: filters.financial_status !== 'all' ? filters.financial_status : undefined
+      })
+
+      if (response.success && response.data?.orders) {
 
       const data = await response.json()
 

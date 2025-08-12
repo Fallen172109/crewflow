@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Package, 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit3, 
-  Trash2, 
-  Eye, 
+import {
+  Package,
+  Plus,
+  Search,
+  Filter,
+  Edit3,
+  Trash2,
+  Eye,
   DollarSign,
   Tag,
   Image as ImageIcon,
@@ -22,6 +22,8 @@ import {
   TrendingDown,
   Anchor
 } from 'lucide-react'
+import { useShopifyStore, useStorePermissions } from '@/contexts/ShopifyStoreContext'
+import { fetchProducts } from '@/lib/api/shopify-client'
 
 interface Product {
   id: number
@@ -56,6 +58,9 @@ interface ProductFilters {
 }
 
 export default function ProductManagement() {
+  const { selectedStore } = useShopifyStore()
+  const { canViewProducts, canManageProducts } = useStorePermissions()
+
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -88,19 +93,15 @@ export default function ProductManagement() {
       setLoading(true)
       setError(null)
 
-      // Fetch products from the API
-      const response = await fetch(`/api/shopify/stores/${selectedStore.id}/products`)
+      // Use authenticated API client
+      const response = await fetchProducts(selectedStore.id, {
+        limit: 50,
+        status: filters.status !== 'all' ? filters.status : undefined
+      })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch products')
-      }
-
-      const data = await response.json()
-
-      if (data.success && data.products) {
+      if (response.success && response.data?.products) {
         // Transform Shopify products to match our Product interface
-        const transformedProducts: Product[] = data.products.map((shopifyProduct: any) => ({
+        const transformedProducts: Product[] = response.data.products.map((shopifyProduct: any) => ({
           id: shopifyProduct.id,
           title: shopifyProduct.title,
           handle: shopifyProduct.handle,
@@ -124,14 +125,10 @@ export default function ProductManagement() {
         }))
 
         setProducts(transformedProducts)
-      } else {
-        throw new Error('Invalid response format')
-      }
-
-        setProducts(transformedProducts)
         setTotalPages(Math.ceil(transformedProducts.length / 10)) // Assuming 10 products per page
+        console.log('✅ Products loaded successfully:', transformedProducts.length)
       } else {
-        throw new Error('Invalid response format')
+        throw new Error(response.error || 'No products returned')
       }
     } catch (error) {
       console.error('Failed to load products:', error)
