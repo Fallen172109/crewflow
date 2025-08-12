@@ -30,8 +30,6 @@ interface PermissionsData {
 }
 
 export default function ShopifyPermissionsPage() {
-  // This page is in /admin/ so it requires admin access
-  // If you're getting redirected, you might not have admin role
   const [data, setData] = useState<PermissionsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -117,9 +115,9 @@ export default function ShopifyPermissionsPage() {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Shopify Store Permissions</h1>
+          <h1 className="text-3xl font-bold">My Shopify Store Permissions</h1>
           <p className="text-gray-600 mt-2">
-            View API permissions for all connected Shopify stores
+            View API permissions for your connected Shopify stores
           </p>
         </div>
         <Button onClick={fetchPermissions} variant="outline">
