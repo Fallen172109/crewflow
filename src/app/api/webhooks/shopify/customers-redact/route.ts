@@ -1,4 +1,4 @@
-// src/app/api/webhooks/shopify/shop-data-erasure/route.ts
+// src/app/api/webhooks/shopify/customers-redact/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { validHmac } from '@/lib/shopify/webhook-validator';
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
-  // TODO: enqueue shop redact handling
+  // TODO: handle customers/redact
   return NextResponse.json({ ok: true });
 }
 
