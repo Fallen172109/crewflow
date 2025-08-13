@@ -1,6 +1,6 @@
 // src/app/api/auth/shopify/callback/route.ts
 import { NextResponse } from 'next/server';
-import { getBaseUrl } from '@/src/lib/env';
+import { getBaseUrl } from '@/lib/env';
 
 async function exchangeCodeForToken(shop: string, code: string) {
   const r = await fetch(`https://${shop}/admin/oauth/access_token`, {

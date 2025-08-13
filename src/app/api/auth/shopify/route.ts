@@ -1,7 +1,7 @@
 // src/app/api/auth/shopify/route.ts
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
-import { getBaseUrl } from '@/src/lib/env';
+import { getBaseUrl } from '@/lib/env';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
