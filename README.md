@@ -33,10 +33,7 @@ CrewFlow's unified AI system provides comprehensive Shopify management through n
 - **Analytics & Insights** - Performance tracking, trend analysis, and growth recommendations
 - **Customer Support** - AI-powered customer service and query resolution
 
-### 💰 Subscription Plans
-- **Starter ($29/month)**: Single store, essential AI features, 500 AI operations
-- **Professional ($59/month)**: Up to 5 stores, advanced automation, 1,500 AI operations
-- **Enterprise ($89/month)**: Unlimited stores, full AI suite, 5,000 AI operations
+
 
 ## 🛠 Technology Stack
 
