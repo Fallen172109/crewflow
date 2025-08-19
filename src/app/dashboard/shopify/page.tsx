@@ -1,43 +1,73 @@
-'use client'
-
-import { useState, useEffect, useRef } from 'react'
+"use client";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from '@/lib/auth-context'
-import { handleAuthError } from '@/lib/auth-error-handler'
-import { ShopifyStoreProvider } from '@/contexts/ShopifyStoreContext'
-import EnhancedStoreManager from '@/components/shopify/EnhancedStoreManager'
-import SimplifiedShopifyAIChat from '@/components/shopify/SimplifiedShopifyAIChat'
+import { ShopifyStoreProvider, useShopifyStore } from '@/contexts/ShopifyStoreContext'
+import StoreSelector from "@/components/assistant/StoreSelector";
+import ThreadsSidebar from "@/components/assistant/ThreadsSidebar";
+import QuickActionsBar from "@/components/assistant/QuickActionsBar";
+import ProductPreviewDock, { ProductDraft, ProductPreviewDockRef } from "@/components/assistant/ProductPreviewDock";
+import StoreChatPanel from "@/components/assistant/StoreChatPanel";
 import ConnectStoreModal from '@/components/shopify/ConnectStoreModal'
-import BottomManagementPanel from '@/components/shopify/BottomManagementPanel'
-// import { BeamsBackground } from '@/components/ui/beams-background' // TEMPORARILY DISABLED
 import {
   Anchor,
-  Plus,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  Ship
+  Plus
 } from 'lucide-react'
 
-interface ShopifyStore {
-  id: string
-  shop_domain: string
-  store_name: string
-  currency: string
-  status: 'active' | 'inactive' | 'suspended'
-  total_products: number
-  total_orders: number
-  total_customers: number
-  monthly_revenue: number
-  last_sync: string
+/** Unified chat API integration */
+async function sendStoreManagerMessage(message: string, opts?: any) {
+  try {
+    const requestBody = {
+      message,
+      chatType: "ai-store-manager",
+      taskType: "business_automation",
+      attachments: opts?.attachments || [],
+      threadId: opts?.threadId || `temp-${Date.now()}`,
+      context: {
+        storeId: opts?.context?.storeId,
+        ...opts?.context
+      },
+    };
+
+    console.log('🔍 Sending chat request:', requestBody);
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('🚨 Chat API Error:', res.status, errorText);
+      throw new Error(`Chat API failed: ${res.status} ${errorText}`);
+    }
+
+    const data = await res.json();
+    console.log('🔍 Chat API Response:', data);
+    return data;
+  } catch (error) {
+    console.error('🚨 sendStoreManagerMessage Error:', error);
+    throw error;
+  }
 }
 
-interface StoreMetrics {
-  totalRevenue: number
-  ordersToday: number
-  productsCount: number
-  customersCount: number
-  conversionRate: number
-  averageOrderValue: number
+/** Thread creation with store context */
+async function createThread(storeId: string): Promise<string> {
+  const res = await fetch("/api/chat/threads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      agentName: 'ai_store_manager',
+      taskType: 'business_automation',
+      title: `AI Store Manager - ${new Date().toLocaleDateString()}`,
+      context: `Managing Shopify store: ${storeId}`
+    }),
+  });
+  if (res.ok) {
+    const json = await res.json();
+    return json?.thread?.id || json?.threadId || json?.id || crypto.randomUUID();
+  }
+  return crypto.randomUUID();
 }
 
 // Wrapper component with ShopifyStoreProvider
@@ -51,318 +81,204 @@ export default function ShopifyDashboard() {
 
 function ShopifyDashboardContent() {
   const { user } = useAuth()
-  const [stores, setStores] = useState<ShopifyStore[]>([])
-  const [selectedStore, setSelectedStore] = useState<ShopifyStore | null>(null)
-  const [metrics, setMetrics] = useState<StoreMetrics | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected')
+  const { stores, selectedStore, setSelectedStore, hasStores } = useShopifyStore()
+  const [threadId, setThreadId] = useState<string | undefined>(undefined)
+  const [pendingPrompt, setPendingPrompt] = useState<string>("")
   const [showShopifyModal, setShowShopifyModal] = useState(false)
-  const [productPreview, setProductPreview] = useState<any>(null)
-  const [isGeneratingProduct, setIsGeneratingProduct] = useState(false)
-  const chatRef = useRef<any>(null)
+  const productPreviewRef = useRef<ProductPreviewDockRef>(null)
 
+  // Auto-create thread when store is selected
   useEffect(() => {
-    // Check for OAuth callback parameters first
+    if (selectedStore && !threadId) {
+      createThread(selectedStore.id).then(newThreadId => {
+        console.log('🧵 Auto-created thread for store:', selectedStore.id, 'Thread ID:', newThreadId)
+        setThreadId(newThreadId)
+      }).catch(error => {
+        console.error('Failed to auto-create thread:', error)
+        // Fallback to temporary thread ID
+        setThreadId(`temp-${Date.now()}`)
+      })
+    }
+  }, [selectedStore, threadId])
+
+  // Handle OAuth callback parameters
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const success = urlParams.get('success')
     const error = urlParams.get('error')
     const store = urlParams.get('store')
-    const details = urlParams.get('details')
 
     if (success === 'store_connected' && store) {
-      // Show success message
       console.log(`✅ Successfully connected store: ${store}`)
-      // Clear URL parameters
       window.history.replaceState({}, '', window.location.pathname)
-      // Load data after successful connection
-      setTimeout(() => loadShopifyData(), 1000) // Small delay to ensure backend processing is complete
     } else if (error) {
-      // Show error message
-      console.error(`❌ OAuth error: ${error}`, details ? `Details: ${details}` : '')
-      // Clear URL parameters
+      console.error(`❌ OAuth error: ${error}`)
       window.history.replaceState({}, '', window.location.pathname)
-      // Load data anyway to show current state
-      loadShopifyData()
-    } else {
-      // Normal page load
-      loadShopifyData()
     }
   }, [])
 
-  const loadShopifyData = async () => {
-    try {
-      setLoading(true)
-      console.log('🔄 Loading Shopify data...')
-
-      // Load real Shopify stores from API
-      const response = await fetch('/api/shopify/stores')
-      if (response.ok) {
-        const data = await response.json()
-        const stores = data.stores || []
-        console.log('✅ Shopify stores loaded:', { count: stores.length, stores: stores.map((s: any) => ({ id: s.id, name: s.store_name, domain: s.shop_domain })) })
-
-        // Transform API data to component format
-        const transformedStores: ShopifyStore[] = stores.map((store: any) => ({
-          id: store.id,
-          shop_domain: store.shop_domain,
-          store_name: store.store_name,
-          currency: store.currency,
-          status: store.is_active ? 'active' : 'inactive',
-          total_products: store.sync_data?.products || 0,
-          total_orders: store.sync_data?.orders || 0,
-          total_customers: store.sync_data?.customers || 0,
-          monthly_revenue: store.sync_data?.revenue || 0,
-          last_sync: store.last_sync_at || store.connected_at
-        }))
-
-        setStores(transformedStores)
-        setSelectedStore(transformedStores.find(s => s.status === 'active') || transformedStores[0] || null)
-
-        // Calculate metrics from stores
-        if (transformedStores.length > 0) {
-          const totalRevenue = transformedStores.reduce((sum, store) => sum + store.monthly_revenue, 0)
-          const totalProducts = transformedStores.reduce((sum, store) => sum + store.total_products, 0)
-          const totalOrders = transformedStores.reduce((sum, store) => sum + store.total_orders, 0)
-          const totalCustomers = transformedStores.reduce((sum, store) => sum + store.total_customers, 0)
-
-          const metrics: StoreMetrics = {
-            totalRevenue,
-            ordersToday: Math.floor(totalOrders * 0.05), // Estimate 5% of orders are today
-            productsCount: totalProducts,
-            customersCount: totalCustomers,
-            conversionRate: totalOrders > 0 ? (totalOrders / totalCustomers) * 100 : 0,
-            averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0
-          }
-
-          setMetrics(metrics)
-          setConnectionStatus('connected')
-        } else {
-          setMetrics(null)
-          setConnectionStatus('disconnected')
-        }
-      } else {
-        console.error('❌ Failed to load stores:', response.status, response.statusText)
-        // Try to get error details
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('❌ Error details:', errorData)
-
-        setStores([])
-        setMetrics(null)
-        setConnectionStatus(response.status === 401 ? 'disconnected' : 'error')
-      }
-    } catch (error) {
-      console.error('Failed to load Shopify data:', error)
-
-      // Handle auth errors gracefully
-      await handleAuthError(error)
-
-      setStores([])
-      setMetrics(null)
-      setConnectionStatus('error')
-    } finally {
-      setLoading(false)
-    }
+  const sendPrompt = async (prompt: string) => {
+    setPendingPrompt(prompt)
   }
 
-  // Handle quick actions from bottom panel
-  const handleQuickAction = (action: string, message: string) => {
-    // Set generating state for product creation actions
-    if (action.toLowerCase().includes('product') || action.toLowerCase().includes('listing')) {
-      setIsGeneratingProduct(true)
-      setProductPreview(null)
-    }
-
-    if (chatRef.current && chatRef.current.sendMessage) {
-      chatRef.current.sendMessage(message)
-    }
+  const handleNewDraft = (draft: ProductDraft) => {
+    productPreviewRef.current?.addDraft(draft)
   }
 
-  // Refresh chat threads
-  const refreshChatThreads = () => {
-    if (chatRef.current && chatRef.current.refreshThreads) {
-      chatRef.current.refreshThreads()
-    }
-  }
-
-  // Handle product creation from AI chat
-  const handleProductCreated = (product: any) => {
-    console.log('Product created:', product)
-    setProductPreview(product)
-    setIsGeneratingProduct(false)
-  }
-
-  // Handle publishing to Shopify
-  const handlePublishToShopify = async (product: any) => {
-    try {
-      console.log('Publishing product to Shopify:', product)
-
-      const response = await fetch('/api/shopify/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          product: {
-            title: product.title,
-            body_html: product.description,
-            vendor: selectedStore?.store_name || 'CrewFlow Store',
-            product_type: product.category || 'General',
-            tags: product.tags?.join(', ') || '',
-            variants: [{
-              price: product.price || '0.00',
-              inventory_quantity: 100,
-              inventory_management: 'shopify'
-            }]
-          }
-        })
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Product published successfully:', result)
-
-        // Clear the preview after successful publish
-        setProductPreview(null)
-
-        // Show success message in chat
-        if (chatRef.current && chatRef.current.addAgentResponse) {
-          chatRef.current.addAgentResponse(
-            `✅ Product "${product.title}" has been successfully published to your Shopify store!`,
-            'product_creation'
-          )
-        }
-      } else {
-        throw new Error(`Failed to publish product: ${response.status}`)
-      }
-    } catch (error) {
-      console.error('❌ Error publishing product:', error)
-
-      // Show error message in chat
-      if (chatRef.current && chatRef.current.addAgentResponse) {
-        chatRef.current.addAgentResponse(
-          `❌ Sorry, there was an error publishing the product to Shopify. Please try again.`,
-          'product_creation'
-        )
-      }
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected': return 'text-green-600 bg-green-100'
-      case 'disconnected': return 'text-gray-600 bg-gray-100'
-      case 'error': return 'text-red-600 bg-red-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'connected': return CheckCircle
-      case 'disconnected': return Clock
-      case 'error': return AlertCircle
-      default: return Clock
-    }
-  }
-
-  if (loading) {
+  // Show no stores message if needed
+  if (!hasStores) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Ship className="w-12 h-12 text-orange-600 animate-pulse mx-auto mb-4" />
-          <p className="text-gray-600">Loading your maritime commerce command center...</p>
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Anchor className="w-8 h-8 text-orange-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to CrewFlow Store Manager</h2>
+          <p className="text-gray-600 mb-6">
+            Connect your Shopify store to start managing your e-commerce operations with AI-powered assistance.
+          </p>
+          <button
+            onClick={() => setShowShopifyModal(true)}
+            className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 mx-auto"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Connect Your First Store</span>
+          </button>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Optimized Animated Background - TEMPORARILY DISABLED */}
-      {/* <BeamsBackground
-        intensity="medium"
-        className="absolute inset-0 z-10 pointer-events-none"
-      /> */}
+  // Get current store ID for components
+  const currentStoreId = selectedStore?.id || stores[0]?.id || 'no-store'
 
-      <div className="relative z-20 min-h-screen flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600/90 to-orange-700/90 backdrop-blur-sm text-white p-6 border-b border-orange-500/20 flex-shrink-0">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                <Anchor className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">Store Manager</h1>
-                <p className="text-orange-100 text-sm">
-                  AI-powered Shopify management hub
-                </p>
-              </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-orange-600/90 to-orange-700/90 backdrop-blur-sm text-white p-6 border-b border-orange-500/20">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <Anchor className="w-6 h-6" />
             </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setShowShopifyModal(true)}
-                className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Connect Store</span>
-              </button>
-              <div className="text-right">
-                <div className="text-orange-100 text-xs">Captain</div>
-                <div className="text-white text-sm font-medium">{user?.email}</div>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold">Store Manager</h1>
+              <p className="text-orange-100 text-sm">
+                AI-powered Shopify management hub
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowShopifyModal(true)}
+              className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Connect Store</span>
+            </button>
+            <div className="text-right">
+              <div className="text-orange-100 text-xs">Captain</div>
+              <div className="text-white text-sm font-medium">{user?.email}</div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Store Management Section */}
-        <div className="max-w-7xl mx-auto w-full px-6 pb-4">
-          <EnhancedStoreManager
-            onConnect={() => setShowShopifyModal(true)}
-            className="bg-white/90 backdrop-blur-md rounded-xl border border-gray-200 shadow-lg"
-          />
+      {/* Unified Store Management Hub */}
+      <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
+        {/* Top bar: store selector + quick actions */}
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg md:text-xl font-semibold text-slate-800">Store Management</h2>
+            <StoreSelector
+              currentStoreId={currentStoreId}
+              initialStores={stores.map(s => ({ id: s.id, name: s.storeName, domain: s.shopDomain }))}
+              navigateTo={(id) => {
+                const store = stores.find(s => s.id === id)
+                if (store) setSelectedStore(store)
+                return `/dashboard/shopify`
+              }}
+            />
+          </div>
+          <div className="hidden md:block">
+            <QuickActionsBar onAction={sendPrompt} />
+          </div>
         </div>
 
-        {/* Main Content Area - Central AI Chat */}
-        <div className="flex-1 max-w-7xl mx-auto w-full px-6 overflow-hidden">
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-gray-200 shadow-xl h-[calc(100vh-360px)] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-orange-100 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">AI Store Assistant</h2>
-                  <p className="text-gray-600 text-sm mt-1">
-                    Complete Shopify management through intelligent conversations
-                  </p>
-                </div>
-                {connectionStatus === 'connected' && (
-                  <div className="flex items-center space-x-2 text-green-600">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium">Store Connected</span>
+        {/* Mobile quick actions */}
+        <div className="md:hidden mb-3">
+          <QuickActionsBar onAction={sendPrompt} />
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)_minmax(320px,0.9fr)]">
+          {/* Threads Sidebar */}
+          <ThreadsSidebar
+            storeId={currentStoreId}
+            threadId={threadId}
+            onSelect={(id) => setThreadId(id)}
+            onNewThread={() => createThread(currentStoreId)}
+          />
+
+          {/* Chat */}
+          <section className="cf-card p-3 flex flex-col h-[calc(100vh-160px)]">
+            <header className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm opacity-70 text-slate-600">AI Store Assistant</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 border border-slate-200 text-slate-600">
+                  Thread: {threadId ? threadId.slice(0,6) : "new"}
+                </span>
+              </div>
+              <button
+                className="text-xs px-2 py-1 rounded-md bg-[#ff6a3d] text-white hover:opacity-90"
+                onClick={async () => setThreadId(await createThread(currentStoreId))}
+              >
+                New Thread
+              </button>
+            </header>
+
+            <div className="flex-1 min-h-0">
+              <StoreChatPanel
+                storeId={currentStoreId}
+                sendStoreManagerMessage={(msg, opts) =>
+                  sendStoreManagerMessage(msg, { ...opts, threadId, context: { ...(opts?.context || {}), storeId: currentStoreId } })
+                }
+                onNewDraft={handleNewDraft}
+                renderToolbar={({ text, setText, busy, submit }) => (
+                  <div className="flex items-center gap-2">
+                    <input
+                      className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#ff6a3d] focus:ring-2 focus:ring-orange-100"
+                      placeholder={pendingPrompt ? pendingPrompt : 'Ask me to create products, manage orders…'}
+                      value={pendingPrompt ? pendingPrompt : text}
+                      onChange={(e) => { setPendingPrompt(""); setText(e.target.value); }}
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey ? submit() : null}
+                      disabled={busy}
+                    />
+                    <button
+                      onClick={() => { if (pendingPrompt) { setText(pendingPrompt); setPendingPrompt(""); } submit(); }}
+                      disabled={busy}
+                      className="rounded-lg px-4 py-2 bg-[#ff6a3d] text-white hover:opacity-90 disabled:opacity-50 cf-glow"
+                    >
+                      {busy ? "Sending…" : "Send"}
+                    </button>
                   </div>
                 )}
-              </div>
-            </div>
-
-            <div className="flex-1 bg-gray-50/80 backdrop-blur-sm overflow-hidden">
-              <SimplifiedShopifyAIChat
-                ref={chatRef}
-                className="h-full"
-                onProductCreated={handleProductCreated}
               />
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Bottom Management Panel with Spotlight Cards and Product Preview */}
-        <div className="flex-shrink-0">
-          <BottomManagementPanel
-            className="border-t border-white/20"
-            onQuickAction={handleQuickAction}
-            productPreview={productPreview}
-            isGeneratingProduct={isGeneratingProduct}
-            onPublishToShopify={handlePublishToShopify}
-          />
+          {/* Product Preview Dock */}
+          <section className="cf-card p-3 h-[calc(100vh-160px)] overflow-auto cf-scroll">
+            <header className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-slate-800">Product Preview</h3>
+              <span className="text-xs text-slate-500">Store: {selectedStore?.storeName || 'N/A'}</span>
+            </header>
+            <div className="cf-sep mb-2" />
+            <ProductPreviewDock
+              ref={productPreviewRef}
+              storeId={currentStoreId}
+              onPublished={() => { /* optional toast/refresh */ }}
+            />
+          </section>
         </div>
       </div>
 
@@ -373,7 +289,6 @@ function ShopifyDashboardContent() {
         onSuccess={(storeDomain) => {
           console.log('✅ Store connection initiated for:', storeDomain)
           setShowShopifyModal(false)
-          // Note: Data will be refreshed when OAuth callback completes
         }}
       />
     </div>

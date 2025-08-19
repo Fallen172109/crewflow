@@ -82,7 +82,8 @@ const HIGH_RISK_ACTIONS = [
   'product_delete',
   'order_cancel',
   'inventory_bulk_update',
-  'customer_delete'
+  'customer_delete',
+  'product_create'  // Require confirmation for product creation to enable preview flow
 ]
 
 // Parameter extraction patterns
@@ -92,7 +93,10 @@ const PARAMETER_PATTERNS = {
   customerId: /customer\s+(?:id\s+)?(\d+)/i,
   quantity: /(?:quantity|stock|amount)\s+(?:to\s+)?(\d+)/i,
   price: /(?:price|cost)\s+(?:to\s+)?\$?(\d+(?:\.\d{2})?)/i,
-  title: /(?:title|name)\s+["']([^"']+)["']/i,
+  // More flexible title patterns
+  title: /(?:title|name|named|called)\s+["']([^"']+)["']/i,
+  // Alternative title pattern without quotes
+  titleAlt: /(?:product|item)\s+(?:named|called)\s+([^,\n]+?)(?:\s+(?:price|cost|for))/i,
   description: /(?:description|desc)\s+["']([^"']+)["']/i
 }
 
@@ -188,7 +192,15 @@ export class ActionDetector {
     for (const [paramName, pattern] of Object.entries(PARAMETER_PATTERNS)) {
       const match = message.match(pattern)
       if (match && match[1]) {
-        parameters[paramName] = match[1]
+        parameters[paramName] = match[1].trim()
+      }
+    }
+
+    // Try alternative title pattern if title not found
+    if (!parameters.title && PARAMETER_PATTERNS.titleAlt) {
+      const altMatch = message.match(PARAMETER_PATTERNS.titleAlt)
+      if (altMatch && altMatch[1]) {
+        parameters.title = altMatch[1].trim()
       }
     }
 

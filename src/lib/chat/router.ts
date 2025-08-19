@@ -90,29 +90,32 @@ export class ChatRouter {
 
       // Detect chat type if not explicitly provided
       const chatType = (request.chatType || detectChatType(request)) as ChatType
+      console.log(`🔀 CHAT ROUTER [${requestId}]: Chat type detected:`, chatType)
 
       // Get appropriate handler
       const handler = this.handlers.get(chatType)
       if (!handler) {
         throw new ChatHandlerError(`No handler available for chat type: ${chatType}`)
       }
+      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler found:`, handler.constructor.name)
 
       // Verify handler can process this request
       if (!handler.canHandle(request)) {
         throw new ChatHandlerError(`Handler cannot process this request type`)
       }
+      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler can process request`)
 
-      // Check for preloaded response first (predictive pre-loading)
-      const preloadedMatch = await predictiveResponseChecker.checkForPreloadedResponse(request, user)
+      // TEMPORARILY DISABLE predictive response checker to debug
+      console.log(`🔀 CHAT ROUTER [${requestId}]: Skipping predictive response checker (debug mode)`)
 
-      let response: UnifiedChatResponse
-      if (preloadedMatch && preloadedMatch.shouldUse) {
-        console.log(`🔀 CHAT ROUTER [${requestId}]: Using preloaded response (${preloadedMatch.metadata.matchType} match, ${preloadedMatch.similarity.toFixed(2)} similarity)`)
-        response = predictiveResponseChecker.convertToUnifiedResponse(preloadedMatch, request)
-      } else {
-        // Process the chat request normally
-        response = await handler.process(request, user)
-      }
+      // Process the chat request normally
+      console.log(`🔀 CHAT ROUTER [${requestId}]: Calling handler.process()`)
+      const response = await handler.process(request, user)
+      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler response received:`, {
+        success: response.success,
+        responseLength: response.response?.length || 0,
+        hasProductPreview: !!response.productPreview
+      })
 
       // Record analytics
       this.recordAnalytics({

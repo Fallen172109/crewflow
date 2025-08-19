@@ -96,6 +96,7 @@ export class ChatClient {
     options: {
       threadId: string
       attachments?: UploadedFile[]
+      context?: any
     }
   ): Promise<UnifiedChatResponse> {
     return this.sendMessage({
@@ -103,7 +104,8 @@ export class ChatClient {
       chatType: 'ai-store-manager',
       taskType: 'business_automation',
       threadId: options.threadId,
-      attachments: options.attachments
+      attachments: options.attachments,
+      context: options.context
     })
   }
 
@@ -115,6 +117,7 @@ export class ChatClient {
     options: {
       threadId: string
       attachments?: UploadedFile[]
+      context?: any
       onChunk?: (chunk: { content: string; messageId?: string; metadata?: any }) => void
       onComplete?: (response: UnifiedChatResponse) => void
       onError?: (error: any) => void
@@ -125,7 +128,8 @@ export class ChatClient {
       chatType: 'ai-store-manager',
       taskType: 'business_automation',
       threadId: options.threadId,
-      attachments: options.attachments
+      attachments: options.attachments,
+      context: options.context
     }, {
       onChunk: options.onChunk,
       onComplete: options.onComplete,

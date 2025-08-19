@@ -44,26 +44,48 @@ export class ShopifyAIHandler implements ChatHandler {
 
       const supabase = await createSupabaseServerClient()
 
-      // Load thread context and validate ownership
-      const { data: thread, error: threadError } = await supabase
-        .from('chat_threads')
-        .select('*')
-        .eq('id', request.threadId)
-        .eq('user_id', user.id)
-        .single()
+      // Handle temporary threads vs persistent threads
+      let thread = null
+      let history: any[] = []
 
-      if (threadError || !thread) {
-        throw new ChatHandlerError('Thread not found or access denied', 404)
+      if (request.threadId.startsWith('temp-')) {
+        // Temporary thread - create minimal thread context
+        console.log('🛍️ SHOPIFY AI HANDLER: Using temporary thread:', request.threadId)
+        thread = {
+          id: request.threadId,
+          user_id: user.id,
+          agent_name: 'shopify-ai',
+          task_type: request.taskType || 'shopify',
+          title: 'Shopify Store Management',
+          context: request.context ? JSON.stringify(request.context) : null,
+          created_at: new Date().toISOString()
+        }
+      } else {
+        // Persistent thread - load from database
+        const { data: dbThread, error: threadError } = await supabase
+          .from('chat_threads')
+          .select('*')
+          .eq('id', request.threadId)
+          .eq('user_id', user.id)
+          .single()
+
+        if (threadError || !dbThread) {
+          throw new ChatHandlerError('Thread not found or access denied', 404)
+        }
+
+        thread = dbThread
+
+        // Get conversation history for persistent threads
+        const { data: dbHistory } = await supabase
+          .from('chat_history')
+          .select('message_type, content, created_at')
+          .eq('thread_id', request.threadId)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true })
+          .limit(20) // Last 20 messages for context
+
+        history = dbHistory || []
       }
-
-      // Get conversation history
-      const { data: history } = await supabase
-        .from('chat_history')
-        .select('message_type, content, created_at')
-        .eq('thread_id', request.threadId)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(20) // Last 20 messages for context
 
       // Process file attachments if present
       let fileAnalysis = ''
@@ -163,34 +185,43 @@ export class ShopifyAIHandler implements ChatHandler {
         })
       }
 
-      // Save conversation to database
-      const { data: savedMessages } = await supabase
-        .from('chat_history')
-        .insert([
-          {
-            user_id: user.id,
-            thread_id: request.threadId,
-            agent_name: 'shopify_ai',
-            message_type: 'user',
-            content: request.message,
-            task_type: request.taskType || 'general'
-          },
-          {
-            user_id: user.id,
-            thread_id: request.threadId,
-            agent_name: 'shopify_ai',
-            message_type: 'agent',
-            content: responseText,
-            task_type: request.taskType || 'general'
-          }
-        ])
-        .select('id')
+      // Save conversation to database (only for persistent threads)
+      let savedMessages = null
+      if (!request.threadId.startsWith('temp-')) {
+        const { data: dbSavedMessages } = await supabase
+          .from('chat_history')
+          .insert([
+            {
+              user_id: user.id,
+              thread_id: request.threadId,
+              agent_name: 'shopify_ai',
+              message_type: 'user',
+              content: request.message,
+              task_type: request.taskType || 'general'
+            },
+            {
+              user_id: user.id,
+              thread_id: request.threadId,
+              agent_name: 'shopify_ai',
+              message_type: 'agent',
+              content: responseText,
+              task_type: request.taskType || 'general'
+            }
+          ])
+          .select('id')
 
-      // Update thread timestamp
-      await supabase
-        .from('chat_threads')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', request.threadId)
+        savedMessages = dbSavedMessages
+
+        // Update thread timestamp
+        await supabase
+          .from('chat_threads')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', request.threadId)
+
+        console.log('🛍️ SHOPIFY AI HANDLER: Messages saved to database')
+      } else {
+        console.log('🛍️ SHOPIFY AI HANDLER: Temporary thread - skipping database save')
+      }
 
       // Track usage
       try {
@@ -212,7 +243,8 @@ export class ShopifyAIHandler implements ChatHandler {
           name: 'Shopify AI',
           framework: 'langchain'
         },
-        tokensUsed: response.response_metadata?.tokenUsage?.totalTokens
+        tokensUsed: response.response_metadata?.tokenUsage?.totalTokens,
+        detectedActions: actionResult.executedActions || []
       }
 
     } catch (error) {

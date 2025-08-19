@@ -42,15 +42,18 @@ export async function POST(request: NextRequest) {
 
     // Get chat router and process request
     const router = getChatRouter()
+    console.log('🚀 UNIFIED CHAT API: About to call router.processChat')
     const response = await router.processChat(body, user)
 
     console.log('🚀 UNIFIED CHAT API: Response generated:', {
       success: response.success,
       responseLength: response.response?.length || 0,
+      responseContent: response.response?.substring(0, 100) || 'NO CONTENT',
       threadId: response.threadId,
       agentId: response.agent?.id,
       tokensUsed: response.tokensUsed,
-      error: response.error
+      error: response.error,
+      fullResponse: response
     })
 
     // Return standardized response
@@ -61,7 +64,19 @@ export async function POST(request: NextRequest) {
           threadId: response.threadId,
           agent: response.agent,
           tokensUsed: response.tokensUsed,
-          metadata: response.metadata
+          metadata: response.metadata,
+          // DEBUG: Add debugging info to response
+          debug: {
+            routerResponse: {
+              success: response.success,
+              responseLength: response.response?.length || 0,
+              responseContent: response.response?.substring(0, 200) || 'NO CONTENT',
+              hasAgent: !!response.agent,
+              agentId: response.agent?.id,
+              hasError: !!response.error,
+              error: response.error
+            }
+          }
         },
         'Chat message processed successfully'
       )

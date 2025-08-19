@@ -62,7 +62,9 @@ export interface UnifiedChatResponse {
   // Specialized responses
   meal_plan?: any           // For meal planning
   context_used?: boolean    // For meal planning
-  
+  detectedActions?: any[]   // For Shopify actions
+  productPreview?: any      // For product creation previews
+
   // Error handling
   error?: string
   details?: any

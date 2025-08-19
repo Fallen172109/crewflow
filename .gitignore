@@ -107,3 +107,25 @@ debug-*.log
 *.bak
 *~
 .DS_Store?
+
+# Test reports and results
+test-results/
+playwright-report/
+coverage/
+
+# Development logs and documents
+*_Development_Log.txt
+*-submission.txt
+*.Business_Document.html
+
+# Additional test patterns discovered during cleanup
+src/app/admin-test/
+src/app/auth-test/
+src/app/test-*/
+src/app/api/test*/
+src/app/api/*/test*/
+src/components/test*/
+src/components/testing/
+*Test.tsx
+*test.ts
+*test.js

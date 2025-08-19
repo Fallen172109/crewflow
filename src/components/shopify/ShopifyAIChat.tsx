@@ -488,7 +488,12 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
               userMessage.content,
               {
                 threadId,
-                attachments: userMessage.attachments || []
+                attachments: userMessage.attachments || [],
+                context: {
+                  storeId: selectedStore.id,
+                  storeCurrency: selectedStore.currency,
+                  storePlan: selectedStore.plan_name
+                }
               }
             )
 
@@ -500,7 +505,8 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                 response: chatResponse.response,
                 threadId: chatResponse.threadId,
                 messageId: chatResponse.messageId,
-                usage: chatResponse.usage
+                usage: chatResponse.usage,
+                detectedActions: chatResponse.detectedActions
               })
             }
           } catch (error) {
@@ -559,12 +565,30 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
         setMessages(prev => [...prev, agentMessage])
       }
 
-      // Detect actions in the AI response
-      const actionDetectionResult = actionDetector.detectActions(data.response, {
-        storeId: selectedStore?.id,
-        userId: user?.id,
-        context: { requestType, threadId: threadIdToUse }
-      })
+      // Use server-side detected actions if available, otherwise fall back to client-side detection
+      let actionDetectionResult
+      if (data.detectedActions && data.detectedActions.length > 0) {
+        // Use server-side detected actions
+        actionDetectionResult = {
+          hasActions: true,
+          detectedActions: data.detectedActions.map((action: any) => ({
+            action,
+            confidence: 0.9, // Server-side detection is high confidence
+            requiresUserConfirmation: action.requiresConfirmation,
+            extractedFromText: action.description
+          }))
+        }
+        console.log('⚡ SHOPIFY AI CHAT: Using server-side detected actions', {
+          actionsCount: data.detectedActions.length
+        })
+      } else {
+        // Fall back to client-side action detection
+        actionDetectionResult = actionDetector.detectActions(data.response, {
+          storeId: selectedStore?.id,
+          userId: user?.id,
+          context: { requestType, threadId: threadIdToUse }
+        })
+      }
 
       if (actionDetectionResult.hasActions) {
         console.log('⚡ SHOPIFY AI CHAT: Actions detected in response', {

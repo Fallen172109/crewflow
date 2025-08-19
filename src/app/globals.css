@@ -96,6 +96,57 @@ canvas {
   -webkit-line-clamp: 3;
 }
 
+/* CrewFlow Store Management Hub Styles */
+/* Accent glow (no wobble) */
+@keyframes cf-glow {
+  0% { box-shadow: 0 0 0 0 rgba(255,106,61,.35); }
+  100% { box-shadow: 0 0 0 8px rgba(255,106,61,0); }
+}
+.cf-glow { animation: cf-glow 2s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cf-glow { animation: none !important; } }
+
+/* Compact card + divider helpers */
+.cf-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.cf-chip {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+.cf-chip:hover {
+  border-color: #ff6a3d;
+  background: #fff7ed;
+}
+.cf-sep {
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* Smooth scrolling for chat areas */
+.cf-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #ff6a3d #f3f4f6;
+}
+.cf-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.cf-scroll::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+.cf-scroll::-webkit-scrollbar-thumb {
+  background: #ff6a3d;
+  border-radius: 3px;
+}
+.cf-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
 /* Maritime gradient backgrounds */
 .bg-maritime-gradient {
   background: linear-gradient(135deg, #0ea5e9 0%, #f97316 100%);
@@ -227,4 +278,106 @@ canvas {
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-weight: 500;
+}
+
+/* Fluid tokens for responsive design */
+:root {
+  --fluid-space-xs: clamp(0.5rem, 1vw, 0.75rem);
+  --fluid-space-sm: clamp(0.75rem, 2vw, 1rem);
+  --fluid-space-md: clamp(1rem, 3vw, 1.5rem);
+  --fluid-space-lg: clamp(1.5rem, 4vw, 2rem);
+  --fluid-space-xl: clamp(2rem, 5vw, 3rem);
+  --fluid-text-sm: clamp(0.875rem, 1.5vw, 1rem);
+  --fluid-text-base: clamp(1rem, 2vw, 1.125rem);
+  --fluid-text-lg: clamp(1.125rem, 2.5vw, 1.25rem);
+}
+
+/* CrewFlow floating card animation */
+.cf-float {
+  animation: cf-float 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes cf-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-12px) rotate(-0.5deg);
+  }
+}
+
+/* CrewFlow beacon (lighthouse) animation */
+.cf-beacon {
+  position: relative;
+  display: inline-block;
+}
+
+.cf-beacon::after {
+  content: '🏮';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 0.75rem;
+  animation: cf-beacon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cf-beacon-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* CrewFlow scroll container */
+.cf-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #f97316 #f3f4f6;
+}
+
+.cf-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cf-scroll::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.cf-scroll::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 3px;
+}
+
+.cf-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .cf-float {
+    animation: none;
+  }
+
+  .cf-beacon::after {
+    animation: none;
+  }
+
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
