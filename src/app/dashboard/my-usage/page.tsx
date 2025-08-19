@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { calculateTokenCost } from '@/lib/ai-cost-calculator'
-import RealUsageTest from '@/components/dashboard/RealUsageTest'
 import { supabase } from '@/lib/supabase'
 
 export default function MyUsagePage() {
@@ -414,8 +413,17 @@ export default function MyUsagePage() {
         </div>
       </div>
 
-      {/* Real Usage Test Component */}
-      <RealUsageTest />
+      {/* Usage Analytics Note */}
+      <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-6">
+        <h2 className="text-xl font-semibold text-blue-900 mb-2 flex items-center">
+          <span className="text-2xl mr-2">📊</span>
+          Real-Time Usage Analytics
+        </h2>
+        <p className="text-blue-700">
+          All AI usage is tracked in real-time. Costs are calculated based on actual token consumption
+          from OpenAI, Anthropic, and other providers. Data is updated automatically after each interaction.
+        </p>
+      </div>
 
       {/* Recent Usage Details */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
