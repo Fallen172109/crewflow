@@ -3,72 +3,16 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from '@/lib/auth-context'
 import { ShopifyStoreProvider, useShopifyStore } from '@/contexts/ShopifyStoreContext'
 import StoreSelector from "@/components/assistant/StoreSelector";
-import ThreadsSidebar from "@/components/assistant/ThreadsSidebar";
 import QuickActionsBar from "@/components/assistant/QuickActionsBar";
 import ProductPreviewDock, { ProductDraft, ProductPreviewDockRef } from "@/components/assistant/ProductPreviewDock";
-import StoreChatPanel from "@/components/assistant/StoreChatPanel";
+import ShopifyAIChatSimple from "@/components/shopify/ShopifyAIChatSimple";
 import ConnectStoreModal from '@/components/shopify/ConnectStoreModal'
 import {
   Anchor,
   Plus
 } from 'lucide-react'
 
-/** Unified chat API integration */
-async function sendStoreManagerMessage(message: string, opts?: any) {
-  try {
-    const requestBody = {
-      message,
-      chatType: "ai-store-manager",
-      taskType: "business_automation",
-      attachments: opts?.attachments || [],
-      threadId: opts?.threadId || `temp-${Date.now()}`,
-      context: {
-        storeId: opts?.context?.storeId,
-        ...opts?.context
-      },
-    };
-
-    console.log('🔍 Sending chat request:', requestBody);
-
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('🚨 Chat API Error:', res.status, errorText);
-      throw new Error(`Chat API failed: ${res.status} ${errorText}`);
-    }
-
-    const data = await res.json();
-    console.log('🔍 Chat API Response:', data);
-    return data;
-  } catch (error) {
-    console.error('🚨 sendStoreManagerMessage Error:', error);
-    throw error;
-  }
-}
-
-/** Thread creation with store context */
-async function createThread(storeId: string): Promise<string> {
-  const res = await fetch("/api/chat/threads", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      agentName: 'ai_store_manager',
-      taskType: 'business_automation',
-      title: `AI Store Manager - ${new Date().toLocaleDateString()}`,
-      context: `Managing Shopify store: ${storeId}`
-    }),
-  });
-  if (res.ok) {
-    const json = await res.json();
-    return json?.thread?.id || json?.threadId || json?.id || crypto.randomUUID();
-  }
-  return crypto.randomUUID();
-}
+// The ShopifyAIChat component handles all chat functionality internally
 
 // Wrapper component with ShopifyStoreProvider
 export default function ShopifyDashboard() {
@@ -82,24 +26,8 @@ export default function ShopifyDashboard() {
 function ShopifyDashboardContent() {
   const { user } = useAuth()
   const { stores, selectedStore, setSelectedStore, hasStores } = useShopifyStore()
-  const [threadId, setThreadId] = useState<string | undefined>(undefined)
-  const [pendingPrompt, setPendingPrompt] = useState<string>("")
   const [showShopifyModal, setShowShopifyModal] = useState(false)
   const productPreviewRef = useRef<ProductPreviewDockRef>(null)
-
-  // Auto-create thread when store is selected
-  useEffect(() => {
-    if (selectedStore && !threadId) {
-      createThread(selectedStore.id).then(newThreadId => {
-        console.log('🧵 Auto-created thread for store:', selectedStore.id, 'Thread ID:', newThreadId)
-        setThreadId(newThreadId)
-      }).catch(error => {
-        console.error('Failed to auto-create thread:', error)
-        // Fallback to temporary thread ID
-        setThreadId(`temp-${Date.now()}`)
-      })
-    }
-  }, [selectedStore, threadId])
 
   // Handle OAuth callback parameters
   useEffect(() => {
@@ -117,9 +45,7 @@ function ShopifyDashboardContent() {
     }
   }, [])
 
-  const sendPrompt = async (prompt: string) => {
-    setPendingPrompt(prompt)
-  }
+  // ShopifyAIChat handles prompts internally
 
   const handleNewDraft = (draft: ProductDraft) => {
     productPreviewRef.current?.addDraft(draft)
@@ -201,69 +127,40 @@ function ShopifyDashboardContent() {
             />
           </div>
           <div className="hidden md:block">
-            <QuickActionsBar onAction={sendPrompt} />
+            <QuickActionsBar onAction={(prompt) => {
+              console.log('Quick action triggered:', prompt)
+              // The ShopifyAIChat component will handle this internally
+            }} />
           </div>
         </div>
 
         {/* Mobile quick actions */}
         <div className="md:hidden mb-3">
-          <QuickActionsBar onAction={sendPrompt} />
+          <QuickActionsBar onAction={(prompt) => {
+            console.log('Quick action triggered:', prompt)
+            // The ShopifyAIChat component will handle this internally
+          }} />
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)_minmax(320px,0.9fr)]">
-          {/* Threads Sidebar */}
-          <ThreadsSidebar
-            storeId={currentStoreId}
-            threadId={threadId}
-            onSelect={(id) => setThreadId(id)}
-            onNewThread={() => createThread(currentStoreId)}
-          />
-
-          {/* Chat */}
-          <section className="cf-card p-3 flex flex-col h-[calc(100vh-160px)]">
-            <header className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm opacity-70 text-slate-600">AI Store Assistant</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 border border-slate-200 text-slate-600">
-                  Thread: {threadId ? threadId.slice(0,6) : "new"}
-                </span>
-              </div>
-              <button
-                className="text-xs px-2 py-1 rounded-md bg-[#ff6a3d] text-white hover:opacity-90"
-                onClick={async () => setThreadId(await createThread(currentStoreId))}
-              >
-                New Thread
-              </button>
-            </header>
-
-            <div className="flex-1 min-h-0">
-              <StoreChatPanel
-                storeId={currentStoreId}
-                sendStoreManagerMessage={(msg, opts) =>
-                  sendStoreManagerMessage(msg, { ...opts, threadId, context: { ...(opts?.context || {}), storeId: currentStoreId } })
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+          {/* Advanced Shopify AI Chat - Full Featured */}
+          <section className="cf-card flex flex-col h-[calc(100vh-160px)] overflow-hidden">
+            <ShopifyAIChatSimple
+              className="flex-1 h-full"
+              onProductCreated={(product) => {
+                console.log('🎉 Product created in store management:', product)
+                // Handle product creation success
+                if (product) {
+                  handleNewDraft({
+                    id: product.id || `draft-${Date.now()}`,
+                    title: product.title || 'New Product',
+                    description: product.description || '',
+                    price: product.price?.toString() || '0',
+                    status: 'published'
+                  })
                 }
-                onNewDraft={handleNewDraft}
-                renderToolbar={({ text, setText, busy, submit }) => (
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#ff6a3d] focus:ring-2 focus:ring-orange-100"
-                      placeholder={pendingPrompt ? pendingPrompt : 'Ask me to create products, manage orders…'}
-                      value={pendingPrompt ? pendingPrompt : text}
-                      onChange={(e) => { setPendingPrompt(""); setText(e.target.value); }}
-                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey ? submit() : null}
-                      disabled={busy}
-                    />
-                    <button
-                      onClick={() => { if (pendingPrompt) { setText(pendingPrompt); setPendingPrompt(""); } submit(); }}
-                      disabled={busy}
-                      className="rounded-lg px-4 py-2 bg-[#ff6a3d] text-white hover:opacity-90 disabled:opacity-50 cf-glow"
-                    >
-                      {busy ? "Sending…" : "Send"}
-                    </button>
-                  </div>
-                )}
-              />
-            </div>
+              }}
+            />
           </section>
 
           {/* Product Preview Dock */}

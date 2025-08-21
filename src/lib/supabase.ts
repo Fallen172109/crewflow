@@ -122,6 +122,7 @@ export interface Database {
           archived: boolean
           task_type: string
           thread_id: string | null
+          image_context: Record<string, any> | null
         }
         Insert: {
           id?: string
@@ -133,6 +134,7 @@ export interface Database {
           archived?: boolean
           task_type?: string
           thread_id?: string | null
+          image_context?: Record<string, any> | null
         }
         Update: {
           id?: string
@@ -144,6 +146,7 @@ export interface Database {
           archived?: boolean
           task_type?: string
           thread_id?: string | null
+          image_context?: Record<string, any> | null
         }
       }
       chat_threads: {
@@ -211,6 +214,122 @@ export interface Database {
           metadata?: Record<string, any>
           created_at?: string
           updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          thread_id?: string | null
+          message_id?: string | null
+          file_name?: string
+          file_type?: string
+          file_size?: number
+          storage_path?: string
+          public_url?: string | null
+          upload_status?: 'uploading' | 'completed' | 'failed'
+          metadata?: Record<string, any>
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      chat_images: {
+        Row: {
+          id: string
+          user_id: string
+          thread_id: string | null
+          message_id: string | null
+          file_name: string
+          original_name: string
+          file_size: number
+          mime_type: string
+          storage_path: string
+          bucket_name: string
+          public_url: string | null
+          signed_url: string | null
+          url_expires_at: string | null
+          width: number | null
+          height: number | null
+          format: string | null
+          analysis_completed: boolean
+          analysis_description: string | null
+          analysis_tags: string[] | null
+          quality_score: number | null
+          suitable_for_ecommerce: boolean | null
+          detected_objects: string[] | null
+          dominant_colors: string[] | null
+          image_style: string | null
+          image_mood: string | null
+          use_for_product: boolean
+          product_relevance: string | null
+          upload_status: 'uploading' | 'completed' | 'failed' | 'analyzing'
+          created_at: string
+          updated_at: string
+          analyzed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          thread_id?: string | null
+          message_id?: string | null
+          file_name: string
+          original_name: string
+          file_size: number
+          mime_type: string
+          storage_path: string
+          bucket_name?: string
+          public_url?: string | null
+          signed_url?: string | null
+          url_expires_at?: string | null
+          width?: number | null
+          height?: number | null
+          format?: string | null
+          analysis_completed?: boolean
+          analysis_description?: string | null
+          analysis_tags?: string[] | null
+          quality_score?: number | null
+          suitable_for_ecommerce?: boolean | null
+          detected_objects?: string[] | null
+          dominant_colors?: string[] | null
+          image_style?: string | null
+          image_mood?: string | null
+          use_for_product?: boolean
+          product_relevance?: string | null
+          upload_status?: 'uploading' | 'completed' | 'failed' | 'analyzing'
+          created_at?: string
+          updated_at?: string
+          analyzed_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          thread_id?: string | null
+          message_id?: string | null
+          file_name?: string
+          original_name?: string
+          file_size?: number
+          mime_type?: string
+          storage_path?: string
+          bucket_name?: string
+          public_url?: string | null
+          signed_url?: string | null
+          url_expires_at?: string | null
+          width?: number | null
+          height?: number | null
+          format?: string | null
+          analysis_completed?: boolean
+          analysis_description?: string | null
+          analysis_tags?: string[] | null
+          quality_score?: number | null
+          suitable_for_ecommerce?: boolean | null
+          detected_objects?: string[] | null
+          dominant_colors?: string[] | null
+          image_style?: string | null
+          image_mood?: string | null
+          use_for_product?: boolean
+          product_relevance?: string | null
+          upload_status?: 'uploading' | 'completed' | 'failed' | 'analyzing'
+          created_at?: string
+          updated_at?: string
+          analyzed_at?: string | null
         }
         Update: {
           id?: string

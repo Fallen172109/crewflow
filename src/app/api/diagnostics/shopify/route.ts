@@ -1,103 +1,101 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { adminBase } from '@/lib/shopify/constants';
+import { NextResponse } from 'next/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
+import { SHOPIFY_API_VERSION } from '@/lib/shopify/constants'
 
-export const dynamic = 'force-dynamic';
+const adminBase = (shopDomain: string) =>
+  `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}`
+
+export const dynamic = 'force-dynamic'
+
+type Conn = {
+  source: 'api_connections' | 'shopify_stores'
+  id: string
+  user_id?: string
+  store_id?: string
+  shop_domain: string
+  access_token: string
+  updated_at?: string
+  status?: string
+}
 
 export async function GET() {
-  const supabase = createRouteHandlerClient({ cookies });
-  const {
-    data: { user },
-    error: userErr,
-  } = await supabase.auth.getUser();
+  const supabase = await createSupabaseServerClientWithCookies()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ ok:false, step:'auth', error:'Not authenticated' }, { status: 401 })
 
-  if (userErr || !user) {
-    return NextResponse.json({ ok: false, step: 'auth', error: 'Not authenticated' }, { status: 401 });
-  }
-
-  // 1) Find connected store + token
-  const { data: conn, error: connErr } = await supabase
+  // Load from BOTH sources
+  const { data: connsA } = await supabase
     .from('api_connections')
-    .select('*')
+    .select('id,user_id,shop_domain,access_token,status,updated_at')
     .eq('user_id', user.id)
     .eq('integration_id', 'shopify')
-    .eq('status', 'connected')
-    .maybeSingle();
 
-  if (connErr || !conn) {
-    return NextResponse.json({ ok: false, step: 'connection', error: 'No connected Shopify store found for user' }, { status: 404 });
+  const { data: stores } = await supabase
+    .from('shopify_stores')
+    .select('id,user_id,shop_domain,access_token,updated_at')
+    .eq('user_id', user.id)
+
+  const candidates: Conn[] = []
+  for (const c of connsA ?? []) {
+    if (c?.shop_domain && c?.access_token) {
+      candidates.push({
+        source: 'api_connections',
+        id: c.id,
+        user_id: c.user_id,
+        shop_domain: c.shop_domain,
+        access_token: c.access_token,
+        updated_at: c.updated_at,
+        status: c.status
+      })
+    }
+  }
+  for (const s of stores ?? []) {
+    if (s?.shop_domain && s?.access_token) {
+      candidates.push({
+        source: 'shopify_stores',
+        id: s.id,
+        user_id: s.user_id,
+        store_id: s.id,
+        shop_domain: s.shop_domain,
+        access_token: s.access_token,
+        updated_at: s.updated_at
+      })
+    }
   }
 
-  const shopDomain = conn.shop_domain ?? conn.metadata?.shop_domain;
-  const accessToken = conn.access_token ?? conn.credentials?.access_token;
-  if (!shopDomain || !accessToken) {
-    return NextResponse.json({ ok: false, step: 'secrets', error: 'Missing shop_domain or access_token' }, { status: 500 });
+  if (candidates.length === 0) {
+    return NextResponse.json({ ok:false, step:'connection', error:'No tokens found in api_connections or shopify_stores' }, { status: 404 })
   }
 
-  // 2) Token sanity: GET shop.json
-  const shopRes = await fetch(`${adminBase(shopDomain)}/shop.json`, {
-    headers: { 'X-Shopify-Access-Token': accessToken },
-    cache: 'no-store',
-  });
-  const shopText = await shopRes.text();
-  if (!shopRes.ok) {
-    return NextResponse.json({ ok: false, step: 'token_check', status: shopRes.status, body: shopText }, { status: 502 });
+  const results: any[] = []
+  for (const c of candidates) {
+    const res = await fetch(`${adminBase(c.shop_domain)}/shop.json`, {
+      headers: { 'X-Shopify-Access-Token': c.access_token },
+      cache: 'no-store',
+    }).catch((e)=>({ ok:false, status:0, _err:e } as any))
+
+    const body = await (async () => {
+      try { return await (res as Response).text() } catch { return '' }
+    })()
+
+    results.push({
+      source: c.source,
+      id: c.id,
+      shop_domain: c.shop_domain,
+      token_preview: `...${c.access_token.slice(-6)}`, // safe preview
+      updated_at: c.updated_at,
+      status: (res as Response)?.status ?? 0,
+      ok: (res as Response)?.ok ?? false,
+      body: body?.slice(0, 400) // trim
+    })
   }
 
-  // 3) Scope sanity: GET products.json (read)
-  const readRes = await fetch(`${adminBase(shopDomain)}/products.json?limit=1`, {
-    headers: { 'X-Shopify-Access-Token': accessToken },
-  });
-  const readText = await readRes.text();
-  if (!readRes.ok) {
-    return NextResponse.json({ ok: false, step: 'read_products', status: readRes.status, body: readText }, { status: 502 });
-  }
-
-  // 4) Write sanity (dry-run product with unique handle; delete afterwards)
-  const draft = {
-    title: `CrewFlow Diagnostic Product ${Date.now()}`,
-    status: 'draft',
-    variants: [{ title: 'Default', price: '9.99' }],
-  };
-
-  const writeRes = await fetch(`${adminBase(shopDomain)}/products.json`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': accessToken,
-    },
-    body: JSON.stringify({ product: draft }),
-  });
-  const writeText = await writeRes.text();
-  if (!writeRes.ok) {
-    return NextResponse.json({ ok: false, step: 'write_products', status: writeRes.status, body: writeText }, { status: 502 });
-  }
-
-  let createdId: number | undefined;
-  try {
-    const parsed = JSON.parse(writeText);
-    createdId = parsed?.product?.id;
-  } catch {}
-
-  // 5) Cleanup (best effort)
-  if (createdId) {
-    await fetch(`${adminBase(shopDomain)}/products/${createdId}.json`, {
-      method: 'DELETE',
-      headers: { 'X-Shopify-Access-Token': accessToken },
-    }).catch(() => {});
-  }
-
+  // If none OK, return the matrix so we can act
+  const anyOK = results.some(r => r.ok)
   return NextResponse.json({
-    ok: true,
-    checks: ['auth', 'connection', 'token_check', 'read_products', 'write_products'],
-    shop: JSON.parse(shopText),
-    connection: {
-      shop_domain: shopDomain,
-      integration_id: conn.integration_id,
-      status: conn.status,
-      connected_at: conn.created_at
-    },
-    test_product_created_and_deleted: !!createdId
-  });
+    ok: anyOK,
+    step: anyOK ? 'token_check' : 'token_check_failed',
+    api_version: SHOPIFY_API_VERSION,
+    results
+  }, { status: anyOK ? 200 : 502 })
 }

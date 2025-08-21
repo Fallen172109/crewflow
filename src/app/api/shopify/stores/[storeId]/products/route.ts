@@ -45,8 +45,27 @@ export async function GET(
 
     console.log('✅ Permission validated for products read access')
 
-    // Fetch products from Shopify using the Admin API
-    const shopifyAPI = await createShopifyAPI(user.id)
+    // Get store information to pass the correct shop domain
+    const { data: store, error: storeError } = await supabase
+      .from('shopify_stores')
+      .select('shop_domain')
+      .eq('id', storeId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (storeError || !store) {
+      console.error('❌ Failed to get store info:', storeError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Store not found'
+        },
+        { status: 404 }
+      )
+    }
+
+    // Fetch products from Shopify using the Admin API with specific shop domain
+    const shopifyAPI = await createShopifyAPI(user.id, undefined, store.shop_domain)
     if (!shopifyAPI) {
       return NextResponse.json(
         {
@@ -149,8 +168,27 @@ export async function POST(
 
     console.log('✅ Permission validated for products write access')
 
-    // Create product using Shopify Admin API
-    const shopifyAPI = await createShopifyAPI(user.id)
+    // Get store information to pass the correct shop domain
+    const { data: store, error: storeError } = await supabase
+      .from('shopify_stores')
+      .select('shop_domain')
+      .eq('id', storeId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (storeError || !store) {
+      console.error('❌ Failed to get store info:', storeError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Store not found'
+        },
+        { status: 404 }
+      )
+    }
+
+    // Create product using Shopify Admin API with specific shop domain
+    const shopifyAPI = await createShopifyAPI(user.id, undefined, store.shop_domain)
     if (!shopifyAPI) {
       return NextResponse.json(
         {

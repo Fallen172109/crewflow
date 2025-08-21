@@ -2,7 +2,7 @@
 // Single entry point for all CrewFlow chat interactions
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth'
+import { requireAuthAPI } from '@/lib/auth'
 import { getChatRouter } from '@/lib/chat/router'
 import {
   ChatValidationError,
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     console.log('🚀 UNIFIED CHAT API: Request received')
 
     // Authenticate user
-    const user = await requireAuth()
+    const user = await requireAuthAPI()
     console.log('🚀 UNIFIED CHAT API: User authenticated:', user.id)
 
     // Parse request body
@@ -65,6 +65,8 @@ export async function POST(request: NextRequest) {
           agent: response.agent,
           tokensUsed: response.tokensUsed,
           metadata: response.metadata,
+          detectedActions: response.detectedActions,
+          productPreview: response.productPreview,
           // DEBUG: Add debugging info to response
           debug: {
             routerResponse: {
@@ -74,7 +76,10 @@ export async function POST(request: NextRequest) {
               hasAgent: !!response.agent,
               agentId: response.agent?.id,
               hasError: !!response.error,
-              error: response.error
+              error: response.error,
+              hasDetectedActions: !!(response.detectedActions && response.detectedActions.length > 0),
+              detectedActionsCount: response.detectedActions?.length || 0,
+              hasProductPreview: !!response.productPreview
             }
           }
         },

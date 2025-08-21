@@ -20,6 +20,7 @@ import { actionDetector, ActionDetectionResult } from '@/lib/ai/action-detection
 import { ShopifyActionExecutor, ActionResult } from '@/lib/ai/shopify-action-executor'
 
 export class AIStoreManagerHandler implements ChatHandler {
+  // DEBUG: Force recompilation v3
   private contextCompressor = new SmartContextCompressor()
 
   canHandle(request: UnifiedChatRequest): boolean {
@@ -29,7 +30,7 @@ export class AIStoreManagerHandler implements ChatHandler {
 
   async process(request: UnifiedChatRequest, user: any): Promise<UnifiedChatResponse> {
     try {
-      console.log('🏪 AI STORE MANAGER HANDLER: Processing request', {
+      console.log('🏪 AI STORE MANAGER HANDLER: Processing request [DEBUG v2]', {
         taskType: request.taskType,
         threadId: request.threadId,
         messageLength: request.message.length,
@@ -222,7 +223,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         responseText = "I'm ready to help you manage your Shopify store! What would you like me to do?"
       }
 
-      // Process actions in response if store context is available
+      // Process actions in response - always check for actions
       let actionProcessingResult = {
         hasActions: false,
         executedActions: [],
@@ -230,14 +231,27 @@ Revenue Trend: ${orderStats.revenue_trend}`
         detectedActions: []
       }
 
-      if (request.context?.storeId) {
-        // First check the user's original message for actions
-        const userMessageActions = actionDetector.detectActions(request.message, {
-          storeId: request.context.storeId,
-          userId: user.id,
-          context: request.context
-        })
+      console.log('🏪 AI STORE MANAGER HANDLER: Checking for actions', {
+        hasContext: !!request.context,
+        hasStoreId: !!request.context?.storeId,
+        contextKeys: request.context ? Object.keys(request.context) : [],
+        message: request.message
+      })
 
+      // Always check the user's original message for actions (even without storeId)
+      const userMessageActions = actionDetector.detectActions(request.message, {
+        storeId: request.context?.storeId || 'default-store',
+        userId: user.id,
+        context: request.context || {}
+      })
+
+      console.log('🏪 AI STORE MANAGER HANDLER: User message action detection result', {
+        hasActions: userMessageActions.hasActions,
+        actionsCount: userMessageActions.detectedActions?.length || 0,
+        actions: userMessageActions.detectedActions
+      })
+
+      if (request.context?.storeId) {
         // Then check the AI response for actions
         actionProcessingResult = await this.processActionsInResponse(
           responseText,
@@ -245,18 +259,24 @@ Revenue Trend: ${orderStats.revenue_trend}`
           request.context.storeId,
           request
         )
-
-        // Combine actions from both user message and AI response
-        if (userMessageActions.hasActions) {
-          actionProcessingResult.detectedActions = [
-            ...(actionProcessingResult.detectedActions || []),
-            ...userMessageActions.detectedActions
-          ]
-          actionProcessingResult.hasActions = true
-        }
-
-        responseText = actionProcessingResult.enhancedResponse
       }
+
+      // Combine actions from both user message and AI response
+      if (userMessageActions.hasActions) {
+        actionProcessingResult.detectedActions = [
+          ...(actionProcessingResult.detectedActions || []),
+          ...userMessageActions.detectedActions
+        ]
+        actionProcessingResult.hasActions = true
+      }
+
+      console.log('🏪 AI STORE MANAGER HANDLER: Final action processing result', {
+        hasActions: actionProcessingResult.hasActions,
+        totalActionsCount: actionProcessingResult.detectedActions?.length || 0,
+        detectedActions: actionProcessingResult.detectedActions
+      })
+
+      responseText = actionProcessingResult.enhancedResponse
 
       // Save conversation to database
       const { data: savedMessages } = await supabase
@@ -571,7 +591,16 @@ Revenue Trend: ${orderStats.revenue_trend}`
         detectedActions: []
       }
 
-      if (request.context?.storeId) {
+      console.log('🏪 AI STORE MANAGER HANDLER: Checking storeId for action processing', {
+        hasContext: !!request.context,
+        storeId: request.context?.storeId,
+        storeIdType: typeof request.context?.storeId,
+        storeIdValid: request.context?.storeId && request.context.storeId !== 'no-store'
+      })
+
+      if (request.context?.storeId && request.context.storeId !== 'no-store') {
+        console.log('🏪 AI STORE MANAGER HANDLER: Valid storeId found, processing actions')
+
         // First check the user's original message for actions
         const userMessageActions = actionDetector.detectActions(request.message, {
           storeId: request.context.storeId,
@@ -580,12 +609,25 @@ Revenue Trend: ${orderStats.revenue_trend}`
         })
 
         // Then check the AI response for actions
+        console.log('🏪 AI STORE MANAGER HANDLER: About to process actions in response', {
+          responseLength: fullResponse.length,
+          userId: user.id,
+          storeId: request.context.storeId,
+          hasStoreId: !!request.context.storeId
+        })
+
         actionProcessingResult = await this.processActionsInResponse(
           fullResponse,
           user.id,
           request.context.storeId,
           request
         )
+
+        console.log('🏪 AI STORE MANAGER HANDLER: Action processing completed', {
+          hasActions: actionProcessingResult.hasActions,
+          actionsCount: actionProcessingResult.detectedActions?.length || 0,
+          enhancedResponse: actionProcessingResult.enhancedResponse !== fullResponse
+        })
 
         // Combine actions from both user message and AI response
         if (userMessageActions.hasActions) {
@@ -613,6 +655,12 @@ Revenue Trend: ${orderStats.revenue_trend}`
         }
 
         fullResponse = actionProcessingResult.enhancedResponse
+      } else {
+        console.log('🏪 AI STORE MANAGER HANDLER: No valid storeId, skipping action processing', {
+          hasContext: !!request.context,
+          storeId: request.context?.storeId,
+          reason: !request.context?.storeId ? 'No storeId in context' : 'StoreId is no-store'
+        })
       }
 
       // Save conversation to database
@@ -872,13 +920,32 @@ CURRENT FOCUS: Operations Management
   }> {
     try {
       // Detect actions in the response
+      console.log('⚡ AI STORE MANAGER HANDLER: About to detect actions', {
+        responseText: responseText.substring(0, 100) + '...',
+        storeId,
+        userId,
+        hasContext: !!request?.context
+      })
+
       const detectionResult = actionDetector.detectActions(responseText, {
         storeId,
         userId,
         context: request?.context
       })
 
+      console.log('⚡ AI STORE MANAGER HANDLER: Action detection result', {
+        hasActions: detectionResult.hasActions,
+        actionsCount: detectionResult.detectedActions?.length || 0,
+        storeId,
+        storeIdValid: !!storeId
+      })
+
       if (!detectionResult.hasActions || !storeId) {
+        console.log('⚡ AI STORE MANAGER HANDLER: Skipping action processing', {
+          reason: !detectionResult.hasActions ? 'No actions detected' : 'No storeId provided',
+          hasActions: detectionResult.hasActions,
+          storeId
+        })
         return {
           hasActions: false,
           executedActions: [],

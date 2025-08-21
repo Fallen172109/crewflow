@@ -31,6 +31,19 @@ export interface UploadedFile {
   uploadStatus: 'uploading' | 'completed' | 'failed'
   error?: string
   preview?: string // For image previews
+  // Image-specific properties
+  isImage?: boolean
+  dimensions?: { width: number; height: number }
+  analysisResult?: ImageAnalysisResult
+  useForProduct?: boolean // Flag for product image selection
+}
+
+export interface ImageAnalysisResult {
+  description: string
+  productRelevance: string
+  suggestedTags: string[]
+  qualityScore: number
+  suitableForEcommerce: boolean
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({

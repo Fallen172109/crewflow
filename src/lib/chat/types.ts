@@ -31,7 +31,8 @@ export interface UnifiedChatRequest {
   // Optional parameters
   attachments?: UploadedFile[]
   userId?: string            // Legacy support
-  
+  context?: any              // General context (storeId, etc.)
+
   // Meal planning specific (when chatType = 'meal-planning')
   mealPlanningContext?: MealPlanningContext
 }

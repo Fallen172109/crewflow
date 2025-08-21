@@ -26,6 +26,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useShopifyStore, useStorePermissions } from '@/contexts/ShopifyStoreContext'
 import FileUpload, { UploadedFile } from '@/components/ui/FileUpload'
+import ImageUpload from '@/components/shopify/ImageUpload'
+import ImageMessageDisplay from '@/components/chat/ImageMessageDisplay'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer'
 import ThreadManager, { ThreadManagerRef } from '@/components/agents/ThreadManager'
 import FeedbackCollector from '@/components/ai/FeedbackCollector'
@@ -43,9 +45,30 @@ interface Message {
   content: string
   timestamp: Date
   attachments?: UploadedFile[]
+  images?: UploadedFile[] // Dedicated image attachments
   productPreview?: ProductPreview
   threadId?: string
   messageId?: string // For feedback tracking
+  imageAnalysis?: ImageAnalysisContext // AI analysis of uploaded images
+  publishedProduct?: {
+    id: string
+    title: string
+    admin_url?: string
+    store_url?: string
+    status?: string
+  }
+}
+
+interface ImageAnalysisContext {
+  totalImages: number
+  analysisResults: Array<{
+    fileName: string
+    description: string
+    relevance: string
+    tags: string[]
+    suitableForProduct: boolean
+  }>
+  combinedInsights: string // AI's combined analysis of all images
 }
 
 interface ProductPreview {
@@ -110,7 +133,9 @@ const ShopifyAIChat = forwardRef<ShopifyAIChatRef, ShopifyAIChatProps>(({
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showFileUpload, setShowFileUpload] = useState(false)
+  const [showImageUpload, setShowImageUpload] = useState(false)
   const [attachments, setAttachments] = useState<UploadedFile[]>([])
+  const [uploadedImages, setUploadedImages] = useState<UploadedFile[]>([])
   const [currentPreview, setCurrentPreview] = useState<ProductPreview | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
@@ -178,7 +203,7 @@ I'm your comprehensive AI assistant for complete store management. I can help yo
 • Analyze sales trends
 • Suggest improvements
 
-${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '⚠️ Please select a store first'}
+${selectedStore ? `🎯 Currently managing: **${selectedStore.storeName}**` : '⚠️ Please select a store first'}
 
 ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited permissions - some features may be restricted'}
 
@@ -242,6 +267,23 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
 
   const handleFileRemove = (fileId: string) => {
     setAttachments(prev => prev.filter(f => f.id !== fileId))
+  }
+
+  const handleImageUpload = (image: UploadedFile) => {
+    setUploadedImages(prev => [...prev, image])
+    console.log('🖼️ Image uploaded:', image.fileName, 'Analysis:', image.analysisResult)
+  }
+
+  const handleImageRemove = (imageId: string) => {
+    setUploadedImages(prev => prev.filter(img => img.id !== imageId))
+  }
+
+  const handleToggleProductUse = (imageId: string) => {
+    setUploadedImages(prev => prev.map(img =>
+      img.id === imageId
+        ? { ...img, useForProduct: !img.useForProduct }
+        : img
+    ))
   }
 
   const handleCreateThread = async () => {
@@ -348,71 +390,97 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
     console.log('🛍️ SHOPIFY DEBUG: handleSendMessage called', {
       inputValue: inputValue.substring(0, 100) + '...',
       attachmentsCount: attachments.length,
-      selectedStore: selectedStore?.name,
+      selectedStore: selectedStore?.storeName,
       activeThreadId,
       timestamp: new Date().toISOString()
     })
 
-    if (!inputValue.trim() && attachments.length === 0) return
+    if (!inputValue.trim() && attachments.length === 0 && uploadedImages.length === 0) return
     if (!selectedStore) {
       alert('Please select a store first')
       return
     }
 
     const messageId = `msg-${Date.now()}`
-    const requestType = determineRequestType(inputValue, attachments)
+    const allAttachments = [...attachments, ...uploadedImages]
+    const requestType = determineRequestType(inputValue, allAttachments)
 
     console.log('🛍️ SHOPIFY DEBUG: Request type determined', {
       requestType,
       inputValue: inputValue.substring(0, 50) + '...',
       hasAttachments: attachments.length > 0
     })
-    
-    // Auto-create thread if none exists
-    let threadIdToUse = activeThreadId
-    if (!activeThreadId) {
-      console.log('🛍️ SHOPIFY DEBUG: Auto-creating thread for first message')
-      try {
-        const response = await fetch('/api/chat/threads', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            agentName: storeManagerAgent.id,
-            taskType: 'business_automation',
-            title: inputValue.trim().substring(0, 50) + (inputValue.trim().length > 50 ? '...' : ''),
-            context: null,
-            attachments: attachments.filter(att => att.uploadStatus === 'completed')
-          })
-        })
 
-        if (response.ok) {
-          const data = await response.json()
-          threadIdToUse = data.thread.id
-          setActiveThreadId(threadIdToUse)
-          console.log('🛍️ SHOPIFY DEBUG: Auto-created thread:', threadIdToUse)
-          // Refresh thread list to show the new thread
-          threadManagerRef.current?.refreshThreads()
-        } else {
-          const errorText = await response.text()
-          console.error('🛍️ SHOPIFY DEBUG: Failed to create thread:', response.status, errorText)
+    try {
+      // Auto-create thread if none exists
+      let threadIdToUse = activeThreadId
+      if (!activeThreadId) {
+        console.log('🛍️ SHOPIFY DEBUG: Auto-creating thread for first message')
+        try {
+          const response = await fetch('/api/chat/threads', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              agentName: storeManagerAgent.id,
+              taskType: 'business_automation',
+              title: inputValue.trim().substring(0, 50) + (inputValue.trim().length > 50 ? '...' : ''),
+              context: null,
+              attachments: attachments.filter(att => att.uploadStatus === 'completed')
+            })
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            threadIdToUse = data.thread.id
+            setActiveThreadId(threadIdToUse)
+            console.log('🛍️ SHOPIFY DEBUG: Auto-created thread:', threadIdToUse)
+            // Refresh thread list to show the new thread
+            threadManagerRef.current?.refreshThreads()
+          } else {
+            const errorText = await response.text()
+            console.error('🛍️ SHOPIFY DEBUG: Failed to create thread:', response.status, errorText)
+            // Use temporary thread as fallback
+            threadIdToUse = `temp-${Date.now()}`
+          }
+        } catch (error) {
+          console.error('🛍️ SHOPIFY DEBUG: Error auto-creating thread:', error)
           // Use temporary thread as fallback
           threadIdToUse = `temp-${Date.now()}`
         }
-      } catch (error) {
-        console.error('🛍️ SHOPIFY DEBUG: Error auto-creating thread:', error)
-        // Use temporary thread as fallback
-        threadIdToUse = `temp-${Date.now()}`
       }
-    }
 
-    const userMessage: Message = {
-      id: messageId,
-      type: 'user',
-      content: inputValue.trim(),
-      timestamp: new Date(),
+      // Create image analysis context if images are present
+      let imageAnalysis: ImageAnalysisContext | undefined
+      if (uploadedImages.length > 0) {
+        const analysisResults = uploadedImages
+          .filter(img => img.analysisResult)
+          .map(img => ({
+            fileName: img.fileName,
+            description: img.analysisResult!.description,
+            relevance: img.analysisResult!.productRelevance,
+            tags: img.analysisResult!.suggestedTags,
+            suitableForProduct: img.analysisResult!.suitableForEcommerce
+          }))
+
+        imageAnalysis = {
+          totalImages: uploadedImages.length,
+          analysisResults,
+          combinedInsights: analysisResults.length > 0
+            ? `Analyzed ${analysisResults.length} images with ${analysisResults.filter(r => r.suitableForProduct).length} suitable for e-commerce.`
+            : `${uploadedImages.length} images uploaded, analysis pending.`
+        }
+      }
+
+      const userMessage: Message = {
+        id: messageId,
+        type: 'user',
+        content: inputValue.trim(),
+        timestamp: new Date(),
       attachments: attachments.filter(att => att.uploadStatus === 'completed'),
+      images: uploadedImages.filter(img => img.uploadStatus === 'completed'),
+      imageAnalysis,
       threadId: threadIdToUse || undefined
     }
 
@@ -429,7 +497,9 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
 
     setInputValue('')
     setAttachments([])
+    setUploadedImages([])
     setShowFileUpload(false)
+    setShowImageUpload(false)
     setIsLoading(true)
 
     try {
@@ -437,9 +507,11 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       let requestBody: any = {
         message: userMessage.content,
         attachments: userMessage.attachments,
+        images: userMessage.images,
+        imageAnalysis: userMessage.imageAnalysis,
         storeId: selectedStore.id,
         storeCurrency: selectedStore.currency,
-        storePlan: selectedStore.plan_name,
+        storePlan: selectedStore.planName,
         requestType
       }
 
@@ -469,7 +541,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
               attachments: userMessage.attachments,
               storeId: selectedStore?.id,
               storeCurrency: selectedStore?.currency,
-              storePlan: selectedStore?.plan_name
+              storePlan: selectedStore?.planName
             })
           })
           break
@@ -492,7 +564,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                 context: {
                   storeId: selectedStore.id,
                   storeCurrency: selectedStore.currency,
-                  storePlan: selectedStore.plan_name
+                  storePlan: selectedStore.planName
                 }
               }
             )
@@ -567,19 +639,29 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
 
       // Use server-side detected actions if available, otherwise fall back to client-side detection
       let actionDetectionResult
+
+      console.log('🔍 SHOPIFY AI CHAT: Checking for detected actions', {
+        hasDetectedActions: !!(data.detectedActions && data.detectedActions.length > 0),
+        detectedActionsLength: data.detectedActions?.length || 0,
+        detectedActions: data.detectedActions,
+        fullData: data
+      })
+
       if (data.detectedActions && data.detectedActions.length > 0) {
         // Use server-side detected actions
         actionDetectionResult = {
           hasActions: true,
-          detectedActions: data.detectedActions.map((action: any) => ({
-            action,
-            confidence: 0.9, // Server-side detection is high confidence
-            requiresUserConfirmation: action.requiresConfirmation,
-            extractedFromText: action.description
+          detectedActions: data.detectedActions.map((detectedAction: any) => ({
+            action: detectedAction.action,
+            confidence: detectedAction.confidence || 0.9,
+            requiresUserConfirmation: detectedAction.requiresUserConfirmation,
+            extractedFromText: detectedAction.extractedFromText
           }))
         }
         console.log('⚡ SHOPIFY AI CHAT: Using server-side detected actions', {
-          actionsCount: data.detectedActions.length
+          actionsCount: data.detectedActions.length,
+          actions: data.detectedActions,
+          actionDetectionResult
         })
       } else {
         // Fall back to client-side action detection
@@ -593,14 +675,14 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       if (actionDetectionResult.hasActions) {
         console.log('⚡ SHOPIFY AI CHAT: Actions detected in response', {
           actionsCount: actionDetectionResult.detectedActions.length,
-          actions: actionDetectionResult.detectedActions.map(a => ({
+          actions: actionDetectionResult.detectedActions.map((a: any) => ({
             id: a.action.id,
             type: a.action.type,
             confidence: a.confidence
           }))
         })
 
-        setDetectedActions(actionDetectionResult.detectedActions.map(a => a.action))
+        setDetectedActions(actionDetectionResult.detectedActions.map((a: any) => a.action))
         setShowActionPanel(true)
       }
 
@@ -608,6 +690,27 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       if (data.productPreview) {
         setCurrentPreview(data.productPreview)
         setShowPreview(true)
+      }
+
+      // Handle successful publication
+      if (data.publishedProduct) {
+        console.log('🎉 PRODUCT PUBLISHED SUCCESSFULLY:', data.publishedProduct)
+
+        // Show success notification in chat
+        const successMessage: Message = {
+          id: `success-${Date.now()}`,
+          type: 'system',
+          content: `🎉 **Product Published Successfully!**\n\n**Product:** ${data.publishedProduct.title}\n**Shopify ID:** ${data.publishedProduct.id}\n**Status:** Active\n\n${data.publishedProduct.admin_url ? `[View in Shopify Admin](${data.publishedProduct.admin_url})` : ''}\n${data.publishedProduct.store_url ? `[View in Store](${data.publishedProduct.store_url})` : ''}`,
+          timestamp: new Date(),
+          threadId: activeThreadId || undefined,
+          publishedProduct: data.publishedProduct
+        }
+
+        if (activeThreadId) {
+          setThreadMessages(prev => [...prev, successMessage])
+        } else {
+          setMessages(prev => [...prev, successMessage])
+        }
       }
 
     } catch (error) {
@@ -896,13 +999,101 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                 </div>
               )}
 
+              {/* Image Attachments */}
+              {message.images && message.images.length > 0 && (
+                <div className="mt-3">
+                  <ImageMessageDisplay
+                    images={message.images}
+                    showAnalysis={true}
+                    showProductBadges={true}
+                    className="max-w-full"
+                  />
+                </div>
+              )}
+
+              {/* Image Analysis Context */}
+              {message.imageAnalysis && (
+                <div className="mt-2 p-2 bg-white/10 rounded border">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Sparkles className="w-3 h-3" />
+                    <span className="text-xs font-medium">AI Image Analysis</span>
+                  </div>
+                  <p className="text-xs opacity-90">{message.imageAnalysis.combinedInsights}</p>
+                </div>
+              )}
+
+              {/* Published Product Success */}
+              {message.publishedProduct && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">Product Published Successfully!</span>
+                  </div>
+                  <div className="space-y-1 text-sm text-green-700">
+                    <p><strong>Product:</strong> {message.publishedProduct.title}</p>
+                    <p><strong>Shopify ID:</strong> {message.publishedProduct.id}</p>
+                    <p><strong>Status:</strong> <span className="text-green-600 font-medium">Active</span></p>
+                  </div>
+                  <div className="mt-2 flex space-x-2">
+                    {message.publishedProduct.admin_url && (
+                      <a
+                        href={message.publishedProduct.admin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors"
+                      >
+                        View in Shopify Admin
+                      </a>
+                    )}
+                    {message.publishedProduct.store_url && (
+                      <a
+                        href={message.publishedProduct.store_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+                      >
+                        View in Store
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Product Preview */}
               {message.productPreview && (
                 <div className="mt-3 p-3 bg-white/10 rounded-lg border">
                   <div className="flex items-center space-x-2 mb-2">
                     <Package className="w-4 h-4" />
                     <span className="text-sm font-medium">Product Preview</span>
+                    {message.productPreview.images && message.productPreview.images.length > 0 && (
+                      <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
+                        {message.productPreview.images.length} images
+                      </span>
+                    )}
                   </div>
+
+                  {/* Product Images Preview */}
+                  {message.productPreview.images && message.productPreview.images.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex space-x-2 overflow-x-auto">
+                        {message.productPreview.images.slice(0, 3).map((image, index) => (
+                          <div key={index} className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded overflow-hidden">
+                            <img
+                              src={image}
+                              alt={`Product ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                        {message.productPreview.images.length > 3 && (
+                          <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                            <span className="text-xs text-gray-500">+{message.productPreview.images.length - 3}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-1 text-sm">
                     <p><strong>Title:</strong> {message.productPreview.title}</p>
                     {message.productPreview.price && (
@@ -991,6 +1182,38 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
         </div>
       )}
 
+      {/* Image Upload Area - Compact Version */}
+      {showImageUpload && (
+        <div className="border-t border-gray-200 bg-gray-50">
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                <ImageIcon className="w-4 h-4" />
+                <span>Upload Product Images</span>
+              </h4>
+              <button
+                onClick={() => setShowImageUpload(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              <ImageUpload
+                onImageUpload={handleImageUpload}
+                onImageRemove={handleImageRemove}
+                maxImages={8}
+                maxFileSize={15 * 1024 * 1024} // 15MB
+                enableAnalysis={true}
+                showProductSelection={true}
+                existingImages={uploadedImages}
+                compact={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="border-t border-gray-200 p-3 bg-gray-50">
@@ -1010,6 +1233,35 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Uploaded Images Preview - Compact */}
+      {uploadedImages.length > 0 && (
+        <div className="border-t border-gray-200 bg-gray-50">
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                <ImageIcon className="w-4 h-4" />
+                <span>Ready to Send ({uploadedImages.length} images)</span>
+              </h4>
+              <button
+                onClick={() => setUploadedImages([])}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Clear All
+              </button>
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              <ImageMessageDisplay
+                images={uploadedImages}
+                showAnalysis={true}
+                showProductBadges={true}
+                onToggleProductUse={handleToggleProductUse}
+                className="space-y-2"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -1048,6 +1300,23 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
               <Upload className="w-5 h-5" />
             </button>
 
+            <button
+              onClick={() => setShowImageUpload(!showImageUpload)}
+              className={`p-2 rounded-lg transition-colors relative ${
+                showImageUpload
+                  ? 'text-orange-600 bg-orange-50 border border-orange-200'
+                  : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+              }`}
+              title={showImageUpload ? "Hide Image Upload" : "Upload Product Images"}
+            >
+              <ImageIcon className="w-5 h-5" />
+              {uploadedImages.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {uploadedImages.length}
+                </span>
+              )}
+            </button>
+
             {/* Action Panel Toggle */}
             {detectedActions.length > 0 && (
               <button
@@ -1070,7 +1339,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
 
             <button
               onClick={handleSendMessage}
-              disabled={isLoading || (!inputValue.trim() && attachments.length === 0)}
+              disabled={isLoading || (!inputValue.trim() && attachments.length === 0 && uploadedImages.length === 0)}
               className="p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-5 h-5" />
@@ -1159,6 +1428,40 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                   <p className="text-2xl font-bold text-orange-600">${currentPreview.price}</p>
                 )}
               </div>
+
+              {/* Product Images */}
+              {currentPreview.images && currentPreview.images.length > 0 && (
+                <div>
+                  <h5 className="font-medium text-gray-700 mb-2 flex items-center space-x-2">
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Product Images ({currentPreview.images.length})</span>
+                  </h5>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {currentPreview.images.map((image, index) => (
+                      <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden group relative">
+                        <img
+                          src={image}
+                          alt={`Product ${index + 1}`}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        {index === 0 && (
+                          <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                            Main Image
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+                          <button
+                            onClick={() => window.open(image, '_blank')}
+                            className="opacity-0 group-hover:opacity-100 bg-white text-gray-900 p-2 rounded-full transition-opacity"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {currentPreview.description && (
                 <div>

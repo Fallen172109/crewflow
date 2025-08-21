@@ -181,20 +181,39 @@ export default function ProductPreviewPanel({
                 </div>
               )}
 
-              {/* Images Placeholder */}
+              {/* Product Images */}
               {productPreview.images && productPreview.images.length > 0 ? (
                 <div>
-                  <label className="text-gray-700 text-sm font-medium mb-2 block">Product Images</label>
+                  <label className="text-gray-700 text-sm font-medium mb-2 block flex items-center space-x-2">
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Product Images ({productPreview.images.length})</span>
+                  </label>
                   <div className="grid grid-cols-2 gap-2">
                     {productPreview.images.slice(0, 4).map((image, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200 aspect-square flex items-center justify-center">
+                      <div key={index} className="bg-gray-50 rounded-lg border border-gray-200 aspect-square overflow-hidden group relative">
                         <img
                           src={image}
                           alt={`Product ${index + 1}`}
-                          className="w-full h-full object-cover rounded"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
                         />
+                        {index === 0 && (
+                          <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                            Main
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+                          <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
                       </div>
                     ))}
+                    {productPreview.images.length > 4 && (
+                      <div className="bg-gray-100 rounded-lg border border-gray-200 aspect-square flex items-center justify-center">
+                        <div className="text-center">
+                          <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                          <p className="text-xs text-gray-500">+{productPreview.images.length - 4} more</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

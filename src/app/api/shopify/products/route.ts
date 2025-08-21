@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { cookies } from 'next/headers'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { adminBase } from '@/lib/shopify/constants'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
+import { getShopifyAuthForUser } from '@/lib/shopify/get-auth'
+import { SHOPIFY_API_VERSION } from '@/lib/shopify/constants'
+
+const adminBase = (d: string) => `https://${d}/admin/api/${SHOPIFY_API_VERSION}`
 
 const Body = z.object({
   storeId: z.string().uuid(),
@@ -26,7 +28,7 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createSupabaseServerClientWithCookies();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
 
@@ -35,31 +37,30 @@ export async function POST(req: Request) {
 
   const { storeId, product } = body.data;
 
-  // Resolve store + token by storeId
-  const { data: store, error: storeErr } = await supabase
+  // Get unified auth (store-first, fallback to api_connections)
+  const auth = await getShopifyAuthForUser(storeId);
+  if (!auth) return NextResponse.json({ error: 'No valid Shopify token' }, { status: 401 });
+
+  // Get store info for vendor name
+  const { data: store } = await supabase
     .from('shopify_stores')
-    .select('id, shop_domain, store_name')
+    .select('id, store_name')
     .eq('id', storeId)
     .maybeSingle();
 
-  if (storeErr || !store) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
-
-  const { data: conn } = await supabase
-    .from('api_connections')
-    .select('access_token')
-    .eq('user_id', user.id)
-    .eq('integration_id', 'shopify')
-    .eq('status', 'connected')
-    .maybeSingle();
-
-  const accessToken = conn?.access_token;
-  if (!accessToken) return NextResponse.json({ error: 'Missing Shopify access token' }, { status: 500 });
-
   // Publish
-  const res = await fetch(`${adminBase(store.shop_domain)}/products.json`, {
+  const res = await fetch(`${adminBase(auth.shop_domain)}/products.json`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': accessToken },
-    body: JSON.stringify({ product: { vendor: store.store_name, ...product } }),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': auth.access_token
+    },
+    body: JSON.stringify({
+      product: {
+        vendor: store?.store_name || auth.shop_domain,
+        ...product
+      }
+    }),
   });
 
   const text = await res.text();
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createSupabaseServerClientWithCookies();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
 
@@ -91,29 +92,20 @@ export async function GET(request: NextRequest) {
 
   if (!storeId) return NextResponse.json({ error: 'Store ID is required' }, { status: 400 });
 
-  // Resolve store + token by storeId
-  const { data: store, error: storeErr } = await supabase
+  // Get unified auth (store-first, fallback to api_connections)
+  const auth = await getShopifyAuthForUser(storeId);
+  if (!auth) return NextResponse.json({ error: 'No valid Shopify token' }, { status: 401 });
+
+  // Get store info for response
+  const { data: store } = await supabase
     .from('shopify_stores')
-    .select('id, shop_domain, store_name')
+    .select('id, store_name')
     .eq('id', storeId)
     .maybeSingle();
 
-  if (storeErr || !store) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
-
-  const { data: conn } = await supabase
-    .from('api_connections')
-    .select('access_token')
-    .eq('user_id', user.id)
-    .eq('integration_id', 'shopify')
-    .eq('status', 'connected')
-    .maybeSingle();
-
-  const accessToken = conn?.access_token;
-  if (!accessToken) return NextResponse.json({ error: 'Missing Shopify access token' }, { status: 500 });
-
   // Fetch products from Shopify
-  const res = await fetch(`${adminBase(store.shop_domain)}/products.json?limit=${limit}`, {
-    headers: { 'X-Shopify-Access-Token': accessToken },
+  const res = await fetch(`${adminBase(auth.shop_domain)}/products.json?limit=${limit}`, {
+    headers: { 'X-Shopify-Access-Token': auth.access_token },
   });
 
   const text = await res.text();
@@ -122,5 +114,10 @@ export async function GET(request: NextRequest) {
   }
 
   const parsed = JSON.parse(text);
-  return NextResponse.json({ ok: true, products: parsed.products || [], store });
+  return NextResponse.json({
+    ok: true,
+    products: parsed.products || [],
+    store: store || { shop_domain: auth.shop_domain },
+    auth_source: auth.source
+  });
 }

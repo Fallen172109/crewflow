@@ -1,15 +1,19 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Loader2, User, Bot, X, Package } from 'lucide-react'
+import { Send, Paperclip, Loader2, User, Bot, X, Package, Image as ImageIcon } from 'lucide-react'
 import { getChatClient } from '@/lib/chat/client'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer'
+import ImageUpload from '@/components/shopify/ImageUpload'
+import { UploadedFile } from '@/components/ui/FileUpload'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Message {
   id: string
   type: 'user' | 'assistant' | 'system'
   content: string
   timestamp: Date
+  images?: UploadedFile[]
 }
 
 interface ProductDraft {
@@ -61,6 +65,8 @@ export default function StoreChatPanel({
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
+  const [uploadedImages, setUploadedImages] = useState<UploadedFile[]>([])
+  const [showImageUpload, setShowImageUpload] = useState(false)
   const [currentPreview, setCurrentPreview] = useState<ProductPreview | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -75,13 +81,14 @@ export default function StoreChatPanel({
   }, [messages])
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return
+    if ((!inputMessage.trim() && uploadedImages.length === 0) || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
       content: inputMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      images: uploadedImages.length > 0 ? [...uploadedImages] : undefined
     }
 
     setMessages(prev => [...prev, userMessage])
@@ -90,7 +97,17 @@ export default function StoreChatPanel({
 
     try {
       const response = await sendStoreManagerMessage(inputMessage, {
-        context: { storeId }
+        attachments: uploadedImages.map(img => ({
+          id: img.id,
+          name: img.name,
+          url: img.url,
+          type: img.type,
+          size: img.size
+        })),
+        context: {
+          storeId,
+          images: uploadedImages
+        }
       })
 
       // Debug: Log the response structure
@@ -193,6 +210,8 @@ export default function StoreChatPanel({
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+      setUploadedImages([])
+      setShowImageUpload(false)
     }
   }
 
@@ -210,6 +229,18 @@ export default function StoreChatPanel({
 
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleImageUpload = (file: UploadedFile) => {
+    setUploadedImages(prev => [...prev, file])
+  }
+
+  const handleImageRemove = (fileId: string) => {
+    setUploadedImages(prev => prev.filter(img => img.id !== fileId))
+  }
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index))
   }
 
   return (
@@ -262,6 +293,24 @@ export default function StoreChatPanel({
                   : 'bg-slate-100 text-slate-800'
               }`}
             >
+              {/* Images */}
+              {message.images && message.images.length > 0 && (
+                <div className="mb-2 grid grid-cols-2 gap-2">
+                  {message.images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={image.url}
+                        alt={image.name}
+                        className="w-full h-20 object-cover rounded"
+                      />
+                      <div className="absolute top-1 right-1 bg-green-500 rounded-full p-1">
+                        <ImageIcon className="w-3 h-3 text-white" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="text-sm whitespace-pre-wrap">{message.content}</div>
               <div className="text-xs opacity-70 mt-1">
                 {message.timestamp.toLocaleTimeString()}
@@ -292,6 +341,61 @@ export default function StoreChatPanel({
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Image Upload Area */}
+      <AnimatePresence>
+        {showImageUpload && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-slate-200 bg-orange-50"
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-slate-900">Upload Product Images</h3>
+                <button
+                  onClick={() => setShowImageUpload(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <ImageUpload
+                onImageUpload={handleImageUpload}
+                onImageRemove={handleImageRemove}
+                maxImages={5}
+                compact={true}
+                existingImages={uploadedImages}
+              />
+
+              {uploadedImages.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-slate-600 mb-2">Uploaded Images:</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {uploadedImages.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image.url}
+                          alt={image.name}
+                          className="w-full h-16 object-cover rounded border"
+                        />
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Attachments */}
       {attachments.length > 0 && (
@@ -334,9 +438,28 @@ export default function StoreChatPanel({
             />
 
             <button
+              onClick={() => setShowImageUpload(!showImageUpload)}
+              className={`p-2 transition-colors relative ${
+                showImageUpload || uploadedImages.length > 0
+                  ? 'text-orange-600 bg-orange-50'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+              disabled={isLoading}
+              title={showImageUpload ? 'Hide Image Upload' : 'Upload Product Images'}
+            >
+              <ImageIcon className="w-5 h-5" />
+              {uploadedImages.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {uploadedImages.length}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => fileInputRef.current?.click()}
               className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
               disabled={isLoading}
+              title="Upload Files"
             >
               <Paperclip className="w-5 h-5" />
             </button>
@@ -355,7 +478,7 @@ export default function StoreChatPanel({
 
             <button
               onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading}
+              disabled={(!inputMessage.trim() && uploadedImages.length === 0) || isLoading}
               className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (

@@ -23,7 +23,13 @@ const ACTION_PATTERNS = {
   product_create: [
     /create\s+(?:a\s+)?(?:new\s+)?product/i,
     /add\s+(?:a\s+)?(?:new\s+)?product/i,
-    /make\s+(?:a\s+)?(?:new\s+)?product/i
+    /make\s+(?:a\s+)?(?:new\s+)?product/i,
+    /use\s+(?:this|these)\s+.*?\s+as\s+(?:a\s+)?product/i,
+    /turn\s+(?:this|these)\s+.*?\s+into\s+(?:a\s+)?product/i,
+    /list\s+(?:this|these)\s+.*?\s+as\s+(?:a\s+)?product/i,
+    /sell\s+(?:this|these)\s+.*?\s+as\s+(?:a\s+)?product/i,
+    /add\s+(?:this|these)\s+.*?\s+to\s+(?:my\s+)?(?:store|shop)/i,
+    /create\s+(?:a\s+)?(?:product|listing)\s+(?:for|from|with)\s+(?:this|these)/i
   ],
   product_update: [
     /update\s+product/i,
@@ -114,10 +120,30 @@ export class ActionDetector {
     let processedMessage = message
 
     // Check each action pattern
+    console.log('🔍 ACTION DETECTOR: Checking patterns against message:', {
+      message: message.substring(0, 100),
+      totalPatterns: Object.keys(ACTION_PATTERNS).length
+    })
+
     for (const [actionKey, patterns] of Object.entries(ACTION_PATTERNS)) {
+      console.log(`🔍 ACTION DETECTOR: Testing ${actionKey} patterns (${patterns.length} patterns)`)
+
       for (const pattern of patterns) {
         const match = message.match(pattern)
+        console.log(`🔍 ACTION DETECTOR: Pattern test`, {
+          actionKey,
+          pattern: pattern.toString(),
+          matched: !!match,
+          matchResult: match ? match[0] : null
+        })
+
         if (match) {
+          console.log('🎯 ACTION DETECTOR: Pattern matched!', {
+            actionKey,
+            pattern: pattern.toString(),
+            match: match[0]
+          })
+
           const action = this.createActionFromMatch(actionKey, match, message, context)
           if (action) {
             detectedActions.push({

@@ -150,6 +150,7 @@ export function normalizeRequest(request: any): UnifiedChatRequest {
     taskType: request.taskType,
     attachments: request.attachments,
     userId: request.userId,
+    context: request.context,
     mealPlanningContext: request.mealPlanningContext
   }
 
