@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { message, attachments, storeId, storeCurrency, storePlan } = body
+    const { message, attachments, images, imageAnalysis: providedImageAnalysis, storeId, storeCurrency, storePlan } = body
 
     if (!storeId) {
       return NextResponse.json(
@@ -79,26 +79,44 @@ export async function POST(request: NextRequest) {
     let imageAnalysis = ''
     let detailedProductAnalysis: any = null
 
-    if (attachments && attachments.length > 0) {
-      const imageAttachments = attachments.filter((att: any) => att.fileType?.startsWith('image/') || att.type?.startsWith('image/'))
+    // Process both traditional attachments and new image uploads
+    const allAttachments = [...(attachments || []), ...(images || [])]
+    if (allAttachments.length > 0) {
+      const imageAttachments = allAttachments.filter((att: any) => att.fileType?.startsWith('image/') || att.type?.startsWith('image/'))
 
       if (imageAttachments.length > 0) {
         try {
-          // Normalize attachment format for image analysis (fix publicUrl vs url issue)
-          const normalizedAttachments = imageAttachments.map((att: any) => ({
-            ...att,
-            publicUrl: att.publicUrl || att.url,
-            fileName: att.fileName || att.name,
-            fileType: att.fileType || att.type
-          }))
+          console.log('🖼️ Processing product images:', imageAttachments.length)
 
-          // Use advanced AI image analysis for product details
-          const analyzer = createProductImageAnalyzer()
-          const analyses = await analyzer.analyzeMultipleImages(normalizedAttachments, message)
+          // Use existing image analysis if available from the new image upload system
+          if (providedImageAnalysis && providedImageAnalysis.analysisResults && providedImageAnalysis.analysisResults.length > 0) {
+            console.log('📊 Using existing image analysis results')
+            const primaryAnalysis = providedImageAnalysis.analysisResults[0]
+            imageAnalysis = `\n\nImage Analysis Summary:
+- Total Images: ${providedImageAnalysis.totalImages}
+- Primary Image: ${primaryAnalysis.fileName}
+- Description: ${primaryAnalysis.description}
+- Product Relevance: ${primaryAnalysis.relevance}
+- Suggested Tags: ${primaryAnalysis.tags.join(', ')}
+- E-commerce Suitable: ${primaryAnalysis.suitableForProduct ? 'Yes' : 'No'}
+- Combined Insights: ${providedImageAnalysis.combinedInsights}`
+          } else {
+            // Fallback to traditional image analysis for backward compatibility
+            console.log('🔄 Using traditional image analysis')
+            const normalizedAttachments = imageAttachments.map((att: any) => ({
+              ...att,
+              publicUrl: att.publicUrl || att.url,
+              fileName: att.fileName || att.name,
+              fileType: att.fileType || att.type
+            }))
 
-          if (analyses.length > 0) {
-            detailedProductAnalysis = analyses[0] // Use first analysis as primary
-            imageAnalysis = `\n\nDetailed Image Analysis:
+            // Use advanced AI image analysis for product details
+            const analyzer = createProductImageAnalyzer()
+            const analyses = await analyzer.analyzeMultipleImages(normalizedAttachments, message)
+
+            if (analyses.length > 0) {
+              detailedProductAnalysis = analyses[0] // Use first analysis as primary
+              imageAnalysis = `\n\nDetailed Image Analysis:
 - Product: ${detailedProductAnalysis.productName}
 - Category: ${detailedProductAnalysis.category}
 - Features: ${detailedProductAnalysis.features.join(', ')}
@@ -109,6 +127,7 @@ export async function POST(request: NextRequest) {
 - Quality Score: ${detailedProductAnalysis.qualityAssessment.score}/10
 - SEO Keywords: ${detailedProductAnalysis.seoKeywords.join(', ')}
 - Marketing Angles: ${detailedProductAnalysis.marketingAngles.join(', ')}`
+            }
           }
         } catch (error) {
           console.error('Error analyzing product images:', error)
@@ -345,6 +364,22 @@ ${shouldAutoPublish ?
       }
     }
 
+    // Add uploaded images to product preview
+    if (productPreview && images && images.length > 0) {
+      const productImages = images
+        .filter((img: any) => img.useForProduct && img.publicUrl)
+        .map((img: any) => img.publicUrl)
+
+      if (productImages.length > 0) {
+        if (productPreview.images) {
+          productPreview.images = [...productImages, ...productPreview.images]
+        } else {
+          productPreview.images = productImages
+        }
+        console.log('🖼️ Added uploaded images to product:', productImages.length)
+      }
+    }
+
     // Store the product creation session for potential publishing
     if (productPreview) {
       await supabase.from('product_drafts').insert({
@@ -357,6 +392,7 @@ ${shouldAutoPublish ?
         tags: productPreview.tags,
         variants: productPreview.variants,
         images: productPreview.images,
+        uploaded_images: images ? images.filter((img: any) => img.useForProduct) : [],
         created_at: new Date().toISOString()
       })
     }

@@ -3,6 +3,7 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { OAuthSecurityManager } from '@/lib/integrations/security'
+import { adminBase, SHOPIFY_API_VERSION } from '@/lib/shopify/constants'
 import {
   ShopifyStore,
   ShopifyProduct,
@@ -49,6 +50,8 @@ export class ShopifyAdminAPI {
   // Initialize the API client with user's Shopify credentials
   async initialize(shopDomain?: string): Promise<boolean> {
     try {
+      console.log('🔍 Shopify API: Initializing...', { userId: this.userId, shopDomain })
+
       const supabase = createSupabaseServerClient()
       const securityManager = new OAuthSecurityManager()
 
@@ -61,13 +64,36 @@ export class ShopifyAdminAPI {
 
       // If shop domain is provided, filter by it, otherwise get the first active connection
       if (shopDomain) {
+        console.log('🔍 Shopify API: Adding shop_domain filter:', shopDomain)
         query = query.eq('shop_domain', shopDomain)
       }
 
-      const { data: connection } = await query.single()
+      console.log('🔍 Shopify API: About to execute query...')
+      const { data: connection, error } = await query.single()
+
+      console.log('🔍 Shopify API: Query result:', {
+        connection: !!connection,
+        error,
+        connectionData: connection ? {
+          id: connection.id,
+          shopDomain: connection.shop_domain,
+          status: connection.status,
+          hasAccessToken: !!connection.access_token,
+          hasApiKeyEncrypted: !!connection.api_key_encrypted
+        } : null
+      })
 
       if (!connection) {
-        console.warn('No Shopify connection found for user:', this.userId)
+        console.warn('No Shopify connection found for user:', this.userId, 'Error:', error)
+
+        // Debug: Let's see what connections exist
+        const { data: allConnections } = await supabase
+          .from('api_connections')
+          .select('*')
+          .eq('user_id', this.userId)
+          .eq('integration_id', 'shopify')
+
+        console.log('🔍 Shopify API: All connections for user:', allConnections)
         return false
       }
 
@@ -91,7 +117,7 @@ export class ShopifyAdminAPI {
       this.accessToken = accessToken
 
       if (this.shopDomain) {
-        this.baseUrl = `https://${this.shopDomain}/admin/api/2024-01`
+        this.baseUrl = adminBase(this.shopDomain)
       }
 
       return true
@@ -974,7 +1000,7 @@ export async function createShopifyAPI(userId: string, accessToken?: string, sho
   if (accessToken && shopDomain) {
     api['accessToken'] = accessToken
     api['shopDomain'] = shopDomain
-    api['baseUrl'] = `https://${shopDomain}/admin/api/2024-01`
+    api['baseUrl'] = adminBase(shopDomain)
     return api
   }
 

@@ -2,6 +2,7 @@
 // Handles authenticated API calls to CrewFlow's Shopify endpoints
 
 import { createSupabaseClient } from '@/lib/supabase/client'
+import { adminBase } from '@/lib/shopify/constants'
 
 export interface ShopifyApiResponse<T = any> {
   success: boolean
@@ -128,6 +129,85 @@ export async function deleteProduct(storeId: string, productId: string) {
   return shopifyApiCall(endpoint, {
     method: 'DELETE'
   })
+}
+
+/**
+ * Direct REST API call to Shopify (for testing/diagnostics)
+ * Creates a product directly via Shopify REST API
+ */
+export async function createProductREST(shopDomain: string, accessToken: string, product: any) {
+  const res = await fetch(`${adminBase(shopDomain)}/products.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': accessToken,
+    },
+    body: JSON.stringify({ product }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Shopify createProduct failed ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
+/**
+ * Direct REST API call to get shop info (for testing/diagnostics)
+ */
+export async function getShopInfoREST(shopDomain: string, accessToken: string) {
+  const res = await fetch(`${adminBase(shopDomain)}/shop.json`, {
+    headers: {
+      'X-Shopify-Access-Token': accessToken,
+    },
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Shopify getShopInfo failed ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
+/**
+ * Direct REST API call to get products (for testing/diagnostics)
+ */
+export async function getProductsREST(shopDomain: string, accessToken: string, limit: number = 1) {
+  const res = await fetch(`${adminBase(shopDomain)}/products.json?limit=${limit}`, {
+    headers: {
+      'X-Shopify-Access-Token': accessToken,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Shopify getProducts failed ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
+/**
+ * Direct REST API call to delete a product (for testing/diagnostics)
+ */
+export async function deleteProductREST(shopDomain: string, accessToken: string, productId: number) {
+  const res = await fetch(`${adminBase(shopDomain)}/products/${productId}.json`, {
+    method: 'DELETE',
+    headers: {
+      'X-Shopify-Access-Token': accessToken,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Shopify deleteProduct failed ${res.status}: ${text}`);
+  }
+
+  // DELETE requests typically return 200 with empty body or 204 with no content
+  if (res.status === 204) {
+    return { success: true };
+  }
+  return res.json();
 }
 
 /**

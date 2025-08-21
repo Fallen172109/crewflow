@@ -1,202 +1,126 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { createShopifyAPI } from '@/lib/integrations/shopify-admin-api'
-import { requireAuth } from '@/lib/auth'
+import { z } from 'zod'
+import { cookies } from 'next/headers'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { adminBase } from '@/lib/shopify/constants'
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = await requireAuth()
-    const supabase = await createSupabaseServerClient()
-
-    const body = await request.json()
-    const { storeId, product } = body
-
-    if (!storeId || !product) {
-      return NextResponse.json(
-        { error: 'Store ID and product data are required' },
-        { status: 400 }
-      )
-    }
-
-    // Verify user owns the store
-    const { data: store, error: storeError } = await supabase
-      .from('shopify_stores')
-      .select('*')
-      .eq('id', storeId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (storeError || !store) {
-      return NextResponse.json(
-        { error: 'Store not found or access denied' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has product write permissions
-    if (!store.permissions?.write_products) {
-      return NextResponse.json(
-        { error: 'You do not have permission to create products in this store' },
-        { status: 403 }
-      )
-    }
-
-    // Initialize Shopify API
-    const shopifyAPI = await createShopifyAPI(user.id)
-    if (!shopifyAPI) {
-      return NextResponse.json(
-        { error: 'Failed to initialize Shopify API' },
-        { status: 500 }
-      )
-    }
-
-    // Transform product data to Shopify format
-    const shopifyProduct = {
-      title: product.title,
-      body_html: product.description,
-      vendor: store.store_name,
-      product_type: product.category || 'General',
-      tags: product.tags ? product.tags.join(', ') : '',
-      status: 'active',
-      variants: product.variants?.map((variant: any) => ({
-        title: variant.title || 'Default Title',
-        price: variant.price?.toString() || product.price?.toString() || '0.00',
-        inventory_quantity: variant.inventory_quantity || 0,
-        inventory_management: 'shopify'
-      })) || [{
-        title: 'Default Title',
-        price: product.price?.toString() || '0.00',
-        inventory_quantity: 0,
-        inventory_management: 'shopify'
-      }],
-      images: product.images?.map((imageUrl: string) => ({
-        src: imageUrl
-      })) || []
-    }
-
-    // Create product in Shopify
-    const createdProduct = await shopifyAPI.createProduct(shopifyProduct)
-
-    if (!createdProduct) {
-      return NextResponse.json(
-        { error: 'Failed to create product in Shopify' },
-        { status: 500 }
-      )
-    }
-
-    // Update product draft status
-    await supabase
-      .from('product_drafts')
-      .update({ 
-        published: true,
-        shopify_product_id: createdProduct.id,
-        published_at: new Date().toISOString()
+const Body = z.object({
+  storeId: z.string().uuid(),
+  product: z.object({
+    title: z.string().min(1),
+    body_html: z.string().optional(),
+    product_type: z.string().optional(),
+    tags: z.string().optional(),
+    variants: z.array(
+      z.object({
+        title: z.string().default('Default Title'),
+        price: z.string(),
+        inventory_quantity: z.number().int().min(0).optional(),
+        inventory_management: z.string().optional(),
+        inventory_policy: z.string().optional(),
       })
-      .eq('user_id', user.id)
-      .eq('store_id', storeId)
-      .eq('title', product.title)
+    ).min(1),
+    images: z.array(z.object({ src: z.string().url(), position: z.number().int().min(1).optional() })).optional(),
+    status: z.enum(['draft', 'active']).default('draft'),
+  }),
+});
 
-    // Log the successful product creation
-    await supabase.from('shopify_activity_log').insert({
-      user_id: user.id,
-      store_id: storeId,
-      action: 'product_created',
-      resource_type: 'product',
-      resource_id: createdProduct.id.toString(),
-      details: {
-        title: createdProduct.title,
-        price: createdProduct.variants?.[0]?.price,
-        created_via: 'ai_chat'
-      },
-      created_at: new Date().toISOString()
-    })
+export async function POST(req: Request) {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
 
-    return NextResponse.json({
-      success: true,
-      product: {
-        id: createdProduct.id,
-        title: createdProduct.title,
-        handle: createdProduct.handle,
-        admin_url: `https://admin.shopify.com/store/${store.shop_domain.replace('.myshopify.com', '')}/products/${createdProduct.id}`,
-        public_url: `https://${store.shop_domain}/products/${createdProduct.handle}`
-      }
-    })
+  const body = Body.safeParse(await req.json());
+  if (!body.success) return NextResponse.json({ error: 'Invalid payload', issues: body.error.issues }, { status: 400 });
 
-  } catch (error) {
-    console.error('Error creating Shopify product:', error)
-    return NextResponse.json(
-      { error: 'Failed to create product' },
-      { status: 500 }
-    )
+  const { storeId, product } = body.data;
+
+  // Resolve store + token by storeId
+  const { data: store, error: storeErr } = await supabase
+    .from('shopify_stores')
+    .select('id, shop_domain, store_name')
+    .eq('id', storeId)
+    .maybeSingle();
+
+  if (storeErr || !store) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
+
+  const { data: conn } = await supabase
+    .from('api_connections')
+    .select('access_token')
+    .eq('user_id', user.id)
+    .eq('integration_id', 'shopify')
+    .eq('status', 'connected')
+    .maybeSingle();
+
+  const accessToken = conn?.access_token;
+  if (!accessToken) return NextResponse.json({ error: 'Missing Shopify access token' }, { status: 500 });
+
+  // Publish
+  const res = await fetch(`${adminBase(store.shop_domain)}/products.json`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': accessToken },
+    body: JSON.stringify({ product: { vendor: store.store_name, ...product } }),
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    return NextResponse.json({ error: 'Shopify createProduct failed', status: res.status, body: text }, { status: 502 });
   }
+
+  const parsed = JSON.parse(text);
+
+  // non-blocking activity log
+  void supabase.from('shopify_activity_log').insert({
+    user_id: user.id,
+    store_id: storeId,
+    action: 'product_created',
+    resource_id: String(parsed?.product?.id ?? ''),
+  }).catch(() => {});
+
+  return NextResponse.json({ ok: true, product: parsed.product });
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const supabase = createSupabaseServerClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
 
-    if (!user || userError) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+  const { searchParams } = new URL(request.url);
+  const storeId = searchParams.get('storeId');
+  const limit = parseInt(searchParams.get('limit') || '50');
 
-    const { searchParams } = new URL(request.url)
-    const storeId = searchParams.get('storeId')
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const offset = parseInt(searchParams.get('offset') || '0')
+  if (!storeId) return NextResponse.json({ error: 'Store ID is required' }, { status: 400 });
 
-    if (!storeId) {
-      return NextResponse.json(
-        { error: 'Store ID is required' },
-        { status: 400 }
-      )
-    }
+  // Resolve store + token by storeId
+  const { data: store, error: storeErr } = await supabase
+    .from('shopify_stores')
+    .select('id, shop_domain, store_name')
+    .eq('id', storeId)
+    .maybeSingle();
 
-    // Verify user owns the store
-    const { data: store, error: storeError } = await supabase
-      .from('shopify_stores')
-      .select('*')
-      .eq('id', storeId)
-      .eq('user_id', user.id)
-      .single()
+  if (storeErr || !store) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
 
-    if (storeError || !store) {
-      return NextResponse.json(
-        { error: 'Store not found or access denied' },
-        { status: 404 }
-      )
-    }
+  const { data: conn } = await supabase
+    .from('api_connections')
+    .select('access_token')
+    .eq('user_id', user.id)
+    .eq('integration_id', 'shopify')
+    .eq('status', 'connected')
+    .maybeSingle();
 
-    // Initialize Shopify API
-    const shopifyAPI = await createShopifyAPI(user.id)
-    if (!shopifyAPI) {
-      return NextResponse.json(
-        { error: 'Failed to initialize Shopify API' },
-        { status: 500 }
-      )
-    }
+  const accessToken = conn?.access_token;
+  if (!accessToken) return NextResponse.json({ error: 'Missing Shopify access token' }, { status: 500 });
 
-    // Get products from Shopify
-    const products = await shopifyAPI.getProducts(limit, offset)
+  // Fetch products from Shopify
+  const res = await fetch(`${adminBase(store.shop_domain)}/products.json?limit=${limit}`, {
+    headers: { 'X-Shopify-Access-Token': accessToken },
+  });
 
-    return NextResponse.json({
-      success: true,
-      products: products || [],
-      store: {
-        id: store.id,
-        name: store.store_name,
-        domain: store.shop_domain
-      }
-    })
-
-  } catch (error) {
-    console.error('Error fetching Shopify products:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    )
+  const text = await res.text();
+  if (!res.ok) {
+    return NextResponse.json({ error: 'Shopify getProducts failed', status: res.status, body: text }, { status: 502 });
   }
+
+  const parsed = JSON.parse(text);
+  return NextResponse.json({ ok: true, products: parsed.products || [], store });
 }
