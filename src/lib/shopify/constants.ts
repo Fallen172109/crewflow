@@ -87,6 +87,19 @@ export const SHOPIFY_WEBHOOK_TOPICS = [
 ] as const;
 
 /**
+ * Normalize shop domain input to proper Shopify format
+ * @param input - Raw shop domain input (e.g., 'mystore', 'mystore.myshopify.com')
+ * @returns Normalized domain (e.g., 'mystore.myshopify.com')
+ */
+export function normalizeShopDomain(input: string): string {
+  let s = input.trim().toLowerCase();
+  if (!s.endsWith('.myshopify.com')) {
+    s = `${s}.myshopify.com`;
+  }
+  return s;
+}
+
+/**
  * Helper function to validate shop domain format
  * @param shopDomain - Domain to validate
  * @returns true if valid Shopify domain format
