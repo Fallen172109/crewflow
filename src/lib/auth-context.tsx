@@ -33,10 +33,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Create browser client with SSR support
+// Create browser client with SSR support and proper cookie configuration
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      // Ensure cookies work on crewflow.ai domain
+      storageKey: 'sb-crewflow-auth-token'
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'crewflow-web'
+      }
+    }
+  }
 )
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

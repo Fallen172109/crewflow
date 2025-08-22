@@ -8,6 +8,14 @@ import { getInstallForUserShop, logOAuth } from '@/lib/shopify/install'
 export async function GET(req: Request) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Log session debug info
+  logOAuth('authorize.session_check', {
+    hasUser: !!user,
+    userId: user?.id,
+    userEmail: user?.email
+  })
+
   if (!user) return NextResponse.json({ error:'Auth required' }, { status: 401 })
 
   const url = new URL(req.url)

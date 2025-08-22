@@ -2,8 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 
 export function createSupabaseServerClient() {
-  // For API routes, we'll use a simpler approach without async cookies
-  // This should resolve the auth undefined issue
+  // ⚠️ DEPRECATED: Use createSupabaseServerClientWithCookies for proper session handling
+  // This client doesn't persist sessions and should only be used for non-auth operations
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

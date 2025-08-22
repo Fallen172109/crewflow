@@ -8,6 +8,8 @@ export async function GET(req: Request) {
   try {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies })
+
+    console.log('🔍 SESSION COOKIE DEBUG: Starting analysis...')
     
     // Get all cookies
     const allCookies = cookieStore.getAll()
