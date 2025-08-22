@@ -6,7 +6,7 @@ export default function Embedded() {
     const p = new URLSearchParams(window.location.search);
     const shop = p.get('shop') || p.get('shopify_domain') || '';
     if (shop) {
-      const to = new URL('/api/auth/shopify', window.location.origin);
+      const to = new URL('/api/auth/shopify/authorize', window.location.origin);
       to.searchParams.set('shop', shop);
       const host = p.get('host');
       if (host) to.searchParams.set('host', host);

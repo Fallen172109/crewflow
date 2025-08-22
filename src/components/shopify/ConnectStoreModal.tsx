@@ -52,7 +52,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
       const cleanDomain = storeDomain.replace(/^https?:\/\//, '')
       
       // Redirect to OAuth flow
-      const oauthUrl = `/api/auth/shopify?shop=${encodeURIComponent(cleanDomain)}`
+      const oauthUrl = `/api/auth/shopify/authorize?shop=${encodeURIComponent(cleanDomain)}`
       window.location.href = oauthUrl
       
     } catch (error) {
