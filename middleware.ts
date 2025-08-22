@@ -3,6 +3,14 @@ import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 export async function middleware(req: NextRequest) {
+  // 1) Canonical host: redirect www → apex to keep Supabase cookies valid
+  const host = req.headers.get('host') || ''
+  if (host.startsWith('www.crewflow.ai')) {
+    const url = new URL(req.url)
+    url.host = 'crewflow.ai'
+    return NextResponse.redirect(url, 308)
+  }
+
   const { pathname } = req.nextUrl;
 
   // Skip middleware for auth routes to prevent redirect loops
@@ -106,5 +114,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next|favicon.ico|robots.txt|sitemap.xml).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)'],
 };
