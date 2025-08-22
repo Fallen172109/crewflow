@@ -8,6 +8,7 @@ export async function middleware(req: NextRequest) {
   if (host.startsWith('www.crewflow.ai')) {
     const url = new URL(req.url)
     url.host = 'crewflow.ai'
+    console.log('🔄 MIDDLEWARE: Redirecting www to apex domain:', `${host} → crewflow.ai`)
     return NextResponse.redirect(url, 308)
   }
 
@@ -80,16 +81,30 @@ export async function middleware(req: NextRequest) {
 
   // Protect dashboard routes
   if (pathname.startsWith('/dashboard')) {
-    // Check for auth tokens in cookies
+    // Check for auth tokens in cookies (standard Supabase SSR cookies)
     const accessToken = req.cookies.get('sb-access-token')?.value;
     const refreshToken = req.cookies.get('sb-refresh-token')?.value;
 
-    // If no tokens, redirect to login
-    if (!accessToken && !refreshToken) {
+    // Also check for legacy custom cookie during transition
+    const legacyToken = req.cookies.get('sb-crewflow-auth-token')?.value;
+    const projectToken = req.cookies.get('sb-bmlieuyijpgxdhvicpsf-auth-token')?.value;
+
+    // If no tokens found, redirect to login
+    if (!accessToken && !refreshToken && !legacyToken && !projectToken) {
+      console.log('🔒 MIDDLEWARE: No auth tokens found, redirecting to login');
       const redirectUrl = new URL('/auth/login', req.url);
       redirectUrl.searchParams.set('redirectTo', pathname);
       return NextResponse.redirect(redirectUrl);
     }
+
+    // Log token status for debugging
+    console.log('🔍 MIDDLEWARE: Auth token check:', {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      hasLegacyToken: !!legacyToken,
+      hasProjectToken: !!projectToken,
+      path: pathname
+    });
   }
 
   // Protect admin routes - requires both authentication and admin role

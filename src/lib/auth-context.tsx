@@ -33,7 +33,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Create browser client with SSR support and proper cookie configuration
+// Create browser client with SSR support and standard cookie configuration
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -42,8 +42,8 @@ const supabase = createBrowserClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      // Ensure cookies work on crewflow.ai domain
-      storageKey: 'sb-crewflow-auth-token'
+      // Use standard Supabase SSR cookies for consistency with server-side
+      flowType: 'pkce'
     },
     global: {
       headers: {

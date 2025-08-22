@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { automationScheduler } from '@/lib/automation/scheduler'
 import { getTierLimits } from '@/lib/tier-enforcement'
 
 // GET /api/automation/tasks - Get user's scheduled tasks
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()

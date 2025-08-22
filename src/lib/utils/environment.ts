@@ -58,9 +58,12 @@ export function getBaseUrl(): string {
  * Check if we're in production environment
  */
 export function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production' || 
+  return process.env.NODE_ENV === 'production' ||
          process.env.VERCEL_ENV === 'production' ||
-         (typeof window !== 'undefined' && window.location.hostname === 'crewflow.ai')
+         (typeof window !== 'undefined' && (
+           window.location.hostname === 'crewflow.ai' ||
+           window.location.hostname === 'www.crewflow.ai'
+         ))
 }
 
 /**

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseClient } from '@/lib/supabase/client'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   console.log('👤 AUTH USER: Checking user authentication...')
-  
+
   try {
-    const supabase = createSupabaseClient()
+    const supabase = await createSupabaseServerClientWithCookies()
     
     // Get current user from Supabase
     const { data: { user }, error: authError } = await supabase.auth.getUser()

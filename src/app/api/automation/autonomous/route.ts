@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { autonomousScheduler } from '@/lib/automation/autonomous-scheduler'
 import { getTierLimits } from '@/lib/tier-enforcement'
 
 // GET /api/automation/autonomous - Get autonomous actions and templates
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 // POST /api/automation/autonomous - Schedule new autonomous action
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()

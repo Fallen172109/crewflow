@@ -38,8 +38,9 @@ export async function GET(req: Request) {
         host,
         origin,
         referer,
-        isProduction: host === 'crewflow.ai',
+        isProduction: host === 'crewflow.ai' || host === 'www.crewflow.ai',
         isWww: host?.startsWith('www.'),
+        shouldRedirect: host === 'www.crewflow.ai', // Should redirect to apex
       },
       cookies: {
         total: allCookies.length,

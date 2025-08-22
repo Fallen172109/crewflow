@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { collaborationManager } from '@/lib/automation/collaboration'
 
 // GET /api/automation/collaboration - Get collaboration history and stats
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
