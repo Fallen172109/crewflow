@@ -16,10 +16,10 @@
   - All tables should show ✅ Accessible
 
 ### ✅ Environment Variables (Production)
-- [x] `SHOPIFY_CLIENT_ID=1873049b3cc9829b691afd92310124cf`
-- [x] `SHOPIFY_CLIENT_SECRET=328b2274325dd6cfe2965b343571110e`
-- [x] `SHOPIFY_WEBHOOK_SECRET=CrewFlowShopifyWebhook2024!Maritime`
-- [x] `NEXT_PUBLIC_APP_URL=https://crewflow.ai`
+- [ ] `SHOPIFY_CLIENT_ID=<your_shopify_client_id>`
+- [ ] `SHOPIFY_CLIENT_SECRET=<your_shopify_client_secret>`
+- [ ] `SHOPIFY_WEBHOOK_SECRET=<your_shopify_webhook_secret>`
+- [ ] `NEXT_PUBLIC_APP_URL=https://your-production-domain.com`
 
 ### ✅ Code Fixes Applied
 - [x] API Client field mapping fixed (`shop_domain` vs `facebook_user_id`)

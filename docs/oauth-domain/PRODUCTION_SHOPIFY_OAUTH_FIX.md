@@ -51,9 +51,9 @@
 Check these are set in Vercel production:
 
 ```bash
-SHOPIFY_CLIENT_ID=1873049b3cc9829b691afd92310124cf
-SHOPIFY_CLIENT_SECRET=328b2274325dd6cfe2965b343571110e
-SHOPIFY_WEBHOOK_SECRET=CrewFlowShopifyWebhook2024!Maritime
+SHOPIFY_CLIENT_ID=<your_shopify_client_id>
+SHOPIFY_CLIENT_SECRET=<your_shopify_client_secret>
+SHOPIFY_WEBHOOK_SECRET=<your_shopify_webhook_secret>
 NEXT_PUBLIC_APP_URL=https://crewflow.ai
 ```
 
@@ -98,7 +98,7 @@ https://crewflow.ai/api/auth/shopify?shop=your-store.myshopify.com
 
 **Shopify Authorization**:
 ```
-https://your-store.myshopify.com/admin/oauth/authorize?client_id=1873049b3cc9829b691afd92310124cf&scope=read_products,write_products...&redirect_uri=https://crewflow.ai/api/auth/shopify/callback&state=...
+https://your-store.myshopify.com/admin/oauth/authorize?client_id=<your_shopify_client_id>&scope=read_products,write_products...&redirect_uri=https://crewflow.ai/api/auth/shopify/callback&state=...
 ```
 
 **Callback**:

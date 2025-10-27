@@ -168,9 +168,9 @@ if (accessToken && shopDomain) {
 
 **Production Environment (Vercel):**
 ```bash
-SHOPIFY_CLIENT_ID=1873049b3cc9829b691afd92310124cf
-SHOPIFY_CLIENT_SECRET=328b2274325dd6cfe2965b343571110e
-SHOPIFY_WEBHOOK_SECRET=CrewFlowShopifyWebhook2024!Maritime
+SHOPIFY_CLIENT_ID=<your_shopify_client_id>
+SHOPIFY_CLIENT_SECRET=<your_shopify_client_secret>
+SHOPIFY_WEBHOOK_SECRET=<your_shopify_webhook_secret>
 NEXT_PUBLIC_APP_URL=https://crewflow.ai
 NEXT_PUBLIC_SITE_URL=https://crewflow.ai
 NEXTAUTH_URL=https://crewflow.ai
@@ -458,9 +458,9 @@ Testing:
 ### Environment Variables
 ```bash
 # Required for production
-SHOPIFY_CLIENT_ID=1873049b3cc9829b691afd92310124cf
-SHOPIFY_CLIENT_SECRET=328b2274325dd6cfe2965b343571110e
-SHOPIFY_WEBHOOK_SECRET=CrewFlowShopifyWebhook2024!Maritime
+SHOPIFY_CLIENT_ID=<your_shopify_client_id>
+SHOPIFY_CLIENT_SECRET=<your_shopify_client_secret>
+SHOPIFY_WEBHOOK_SECRET=<your_shopify_webhook_secret>
 NEXT_PUBLIC_APP_URL=https://crewflow.ai
 ```
 
