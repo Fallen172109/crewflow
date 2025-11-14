@@ -1,9 +1,9 @@
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
-import { cookies, headers } from 'next/headers'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 import { upsertInstall, logOAuth } from '@/lib/shopify/install'
 import { normalizeShopDomain } from '@/lib/shopify/constants'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 
 function timingSafeEqual(a: string, b: string) {
   const aBuf = Buffer.from(a)
@@ -13,10 +13,12 @@ function timingSafeEqual(a: string, b: string) {
 }
 
 export async function GET(req: Request) {
-  const cookieStore = cookies()
-  const supabase = createRouteHandlerClient({ cookies })
+  const cookieStore = await cookies()
+  const supabase = await createSupabaseServerClientWithCookies()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?err=no_user`)
+
+  // Allow OAuth callback to proceed even without logged-in user initially
+  // We'll handle user association after validating the OAuth response
 
   const url = new URL(req.url)
   const shop = normalizeShopDomain(url.searchParams.get('shop') || '')
@@ -26,9 +28,14 @@ export async function GET(req: Request) {
 
   // 1) Validate state
   const stateCookie = cookieStore.get('shopify_oauth_state')?.value || ''
+  const storedShop = cookieStore.get('shopify_oauth_shop')?.value || ''
   if (!state || !stateCookie || !timingSafeEqual(state, stateCookie)) {
     logOAuth('callback.state_fail', { state, stateCookie })
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations/shopify/error?reason=state`)
+  }
+  if (storedShop && storedShop !== shop) {
+    logOAuth('callback.shop_mismatch', { shop, storedShop })
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations/shopify/error?reason=shop_mismatch`)
   }
 
   // 2) Validate HMAC (basic implementation)
@@ -61,7 +68,41 @@ export async function GET(req: Request) {
   }
   const data = await resp.json() as { access_token: string; scope: string }
 
-  // 4) Persist token using service role
+  // 4) Handle user authentication and token persistence
+  if (!user) {
+    // User not logged in - store token temporarily and redirect to login
+    logOAuth('callback.no_user', { shop })
+
+    // Store OAuth result temporarily in cookies for post-login processing
+    const res = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?oauth_pending=shopify&shop=${encodeURIComponent(shop)}`)
+    res.cookies.set('shopify_oauth_token', data.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 10 * 60, // 10 minutes
+      path: '/'
+    })
+    res.cookies.set('shopify_oauth_scope', data.scope, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 10 * 60, // 10 minutes
+      path: '/'
+    })
+    res.cookies.set('shopify_oauth_shop_final', shop, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 10 * 60, // 10 minutes
+      path: '/'
+    })
+    // Clear OAuth state cookies
+    res.cookies.set('shopify_oauth_state','', { maxAge: 0, path: '/' })
+    res.cookies.set('shopify_oauth_shop','', { maxAge: 0, path: '/' })
+    return res
+  }
+
+  // User is logged in - persist token immediately
   await upsertInstall({
     user_id: user.id,
     shop_domain: shop,
@@ -70,7 +111,7 @@ export async function GET(req: Request) {
     status: 'connected'
   })
 
-  // 5) Clear install cookies and redirect to dashboard once
+  // 5) Clear install cookies and redirect to dashboard
   const res = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard?connected=shopify&shop=${encodeURIComponent(shop)}`)
   res.cookies.set('shopify_oauth_state','', { maxAge: 0, path: '/' })
   res.cookies.set('shopify_oauth_shop','', { maxAge: 0, path: '/' })

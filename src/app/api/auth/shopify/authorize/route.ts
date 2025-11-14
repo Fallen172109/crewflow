@@ -1,12 +1,11 @@
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { normalizeShopDomain, SHOPIFY_API_VERSION } from '@/lib/shopify/constants'
+import { normalizeShopDomain } from '@/lib/shopify/constants'
 import { getInstallForUserShop, logOAuth } from '@/lib/shopify/install'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 
 export async function GET(req: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = await createSupabaseServerClientWithCookies()
   const { data: { user } } = await supabase.auth.getUser()
 
   // Log session debug info
