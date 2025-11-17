@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   // Get store info for vendor name
   const { data: store } = await supabase
     .from('shopify_stores')
-    .select('id, store_name')
+    .select('id, store_name, shop_domain')
     .eq('id', storeId)
     .maybeSingle();
 
@@ -78,7 +78,23 @@ export async function POST(req: Request) {
     resource_id: String(parsed?.product?.id ?? ''),
   }).catch(() => {});
 
-  return NextResponse.json({ ok: true, product: parsed.product });
+  const shopDomain = store?.shop_domain || auth.shop_domain;
+  const product = parsed.product || {};
+  const productId = product.id;
+
+  const adminUrl =
+    shopDomain && productId ? `https://${shopDomain}/admin/products/${productId}` : undefined;
+  const publicUrl =
+    shopDomain && product.handle ? `https://${shopDomain}/products/${product.handle}` : undefined;
+
+  return NextResponse.json({
+    ok: true,
+    product: {
+      ...product,
+      admin_url: adminUrl,
+      public_url: publicUrl
+    }
+  });
 }
 
 export async function GET(request: NextRequest) {

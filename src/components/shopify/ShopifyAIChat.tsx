@@ -155,6 +155,56 @@ const ShopifyAIChat = forwardRef<ShopifyAIChatRef, ShopifyAIChatProps>(({
   const { selectedStore } = useShopifyStore()
   const { canManageProducts } = useStorePermissions()
 
+  const buildShopifyProductPayload = (preview: ProductPreview) => {
+    const resolvePrice = (value?: number) => {
+      const price = typeof value === 'number' ? value : preview.price ?? 0
+      return price.toFixed(2)
+    }
+
+    const variants =
+      preview.variants && preview.variants.length > 0
+        ? preview.variants.map((variant, index) => {
+            const variantPayload: Record<string, any> = {
+              title: variant.title || (preview.variants!.length > 1 ? `Variant ${index + 1}` : 'Default Title'),
+              price: resolvePrice(variant.price)
+            }
+
+            if (typeof variant.inventory_quantity === 'number') {
+              variantPayload.inventory_quantity = variant.inventory_quantity
+              variantPayload.inventory_management = 'shopify'
+              variantPayload.inventory_policy = 'deny'
+            }
+
+            return variantPayload
+          })
+        : [
+            {
+              title: 'Default Title',
+              price: resolvePrice(preview.price),
+              inventory_management: 'shopify',
+              inventory_policy: 'deny'
+            }
+          ]
+
+    const productPayload: Record<string, any> = {
+      title: preview.title,
+      body_html: preview.description,
+      product_type: preview.category,
+      tags: preview.tags && preview.tags.length > 0 ? preview.tags.join(', ') : undefined,
+      status: 'draft',
+      variants
+    }
+
+    if (preview.images && preview.images.length > 0) {
+      productPayload.images = preview.images.map((imageUrl, index) => ({
+        src: imageUrl,
+        position: index + 1
+      }))
+    }
+
+    return productPayload
+  }
+
   // Get current user
   useEffect(() => {
     const getUser = async () => {
@@ -175,37 +225,37 @@ const ShopifyAIChat = forwardRef<ShopifyAIChatRef, ShopifyAIChatProps>(({
       const welcomeMessage: Message = {
         id: 'welcome',
         type: 'system',
-        content: `🚢 **Welcome to AI Store Manager!**
+        content: `≡ƒÜó **Welcome to AI Store Manager!**
 
 I'm your comprehensive AI assistant for complete store management. I can help you with all aspects of your e-commerce operations:
 
-**🎨 Product Creation & Management**
-• Create products from images or descriptions
-• Generate compelling titles and descriptions
-• Suggest pricing and variants
-• Optimize SEO and categories
+**≡ƒÄ¿ Product Creation & Management**
+ΓÇó Create products from images or descriptions
+ΓÇó Generate compelling titles and descriptions
+ΓÇó Suggest pricing and variants
+ΓÇó Optimize SEO and categories
 
-**📦 Inventory & Orders**
-• Monitor inventory levels
-• Process and track orders
-• Manage fulfillments
-• Handle returns and exchanges
+**≡ƒôª Inventory & Orders**
+ΓÇó Monitor inventory levels
+ΓÇó Process and track orders
+ΓÇó Manage fulfillments
+ΓÇó Handle returns and exchanges
 
-**👥 Customer Service**
-• Respond to customer inquiries
-• Manage customer accounts
-• Handle support tickets
-• Analyze customer feedback
+**≡ƒæÑ Customer Service**
+ΓÇó Respond to customer inquiries
+ΓÇó Manage customer accounts
+ΓÇó Handle support tickets
+ΓÇó Analyze customer feedback
 
-**📊 Store Analytics & Optimization**
-• Review performance metrics
-• Optimize product listings
-• Analyze sales trends
-• Suggest improvements
+**≡ƒôè Store Analytics & Optimization**
+ΓÇó Review performance metrics
+ΓÇó Optimize product listings
+ΓÇó Analyze sales trends
+ΓÇó Suggest improvements
 
-${selectedStore ? `🎯 Currently managing: **${selectedStore.storeName}**` : '⚠️ Please select a store first'}
+${selectedStore ? `≡ƒÄ» Currently managing: **${selectedStore.storeName}**` : 'ΓÜá∩╕Å Please select a store first'}
 
-${canManageProducts ? '✅ Full management permissions active' : '❌ Limited permissions - some features may be restricted'}
+${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limited permissions - some features may be restricted'}
 
 **To get started:** Ask me anything about your store, upload product images, or describe what you need help with!`,
         timestamp: new Date()
@@ -271,7 +321,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
 
   const handleImageUpload = (image: UploadedFile) => {
     setUploadedImages(prev => [...prev, image])
-    console.log('🖼️ Image uploaded:', image.fileName, 'Analysis:', image.analysisResult)
+    console.log('≡ƒû╝∩╕Å Image uploaded:', image.fileName, 'Analysis:', image.analysisResult)
   }
 
   const handleImageRemove = (imageId: string) => {
@@ -387,7 +437,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
   }
 
   const handleSendMessage = async () => {
-    console.log('🛍️ SHOPIFY DEBUG: handleSendMessage called', {
+    console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: handleSendMessage called', {
       inputValue: inputValue.substring(0, 100) + '...',
       attachmentsCount: attachments.length,
       selectedStore: selectedStore?.storeName,
@@ -405,7 +455,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
     const allAttachments = [...attachments, ...uploadedImages]
     const requestType = determineRequestType(inputValue, allAttachments)
 
-    console.log('🛍️ SHOPIFY DEBUG: Request type determined', {
+    console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Request type determined', {
       requestType,
       inputValue: inputValue.substring(0, 50) + '...',
       hasAttachments: attachments.length > 0
@@ -415,7 +465,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       // Auto-create thread if none exists
       let threadIdToUse = activeThreadId
       if (!activeThreadId) {
-        console.log('🛍️ SHOPIFY DEBUG: Auto-creating thread for first message')
+        console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Auto-creating thread for first message')
         try {
           const response = await fetch('/api/chat/threads', {
             method: 'POST',
@@ -435,17 +485,17 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
             const data = await response.json()
             threadIdToUse = data.thread.id
             setActiveThreadId(threadIdToUse)
-            console.log('🛍️ SHOPIFY DEBUG: Auto-created thread:', threadIdToUse)
+            console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Auto-created thread:', threadIdToUse)
             // Refresh thread list to show the new thread
             threadManagerRef.current?.refreshThreads()
           } else {
             const errorText = await response.text()
-            console.error('🛍️ SHOPIFY DEBUG: Failed to create thread:', response.status, errorText)
+            console.error('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Failed to create thread:', response.status, errorText)
             // Use temporary thread as fallback
             threadIdToUse = `temp-${Date.now()}`
           }
         } catch (error) {
-          console.error('🛍️ SHOPIFY DEBUG: Error auto-creating thread:', error)
+          console.error('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Error auto-creating thread:', error)
           // Use temporary thread as fallback
           threadIdToUse = `temp-${Date.now()}`
         }
@@ -488,11 +538,11 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
     if (threadIdToUse && !threadIdToUse.startsWith('temp-')) {
       // Real thread - add to thread messages
       setThreadMessages(prev => [...prev, userMessage])
-      console.log('🛍️ SHOPIFY DEBUG: Added message to thread messages:', threadIdToUse)
+      console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Added message to thread messages:', threadIdToUse)
     } else {
       // No thread or temporary thread - add to general messages
       setMessages(prev => [...prev, userMessage])
-      console.log('🛍️ SHOPIFY DEBUG: Added message to general messages')
+      console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Added message to general messages')
     }
 
     setInputValue('')
@@ -519,7 +569,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       const chatClient = getChatClient()
       let response: any
 
-      console.log('🛍️ SHOPIFY DEBUG: Using unified chat API', {
+      console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Using unified chat API', {
         requestType,
         threadId: threadIdToUse,
         messageLength: userMessage.content.length,
@@ -582,7 +632,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
               })
             }
           } catch (error) {
-            console.error('🛍️ SHOPIFY DEBUG: Unified chat API error:', error)
+            console.error('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Unified chat API error:', error)
 
             if (error instanceof ChatError) {
               response = {
@@ -600,7 +650,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
           break
       }
 
-      console.log('🛍️ SHOPIFY DEBUG: API response received', {
+      console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: API response received', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
@@ -613,7 +663,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
 
       const data = await response.json()
 
-      console.log('🛍️ SHOPIFY DEBUG: Response data', {
+      console.log('≡ƒ¢ì∩╕Å SHOPIFY DEBUG: Response data', {
         hasResponse: !!data.response,
         responseLength: data.response?.length || 0,
         hasProductPreview: !!data.productPreview,
@@ -640,7 +690,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       // Use server-side detected actions if available, otherwise fall back to client-side detection
       let actionDetectionResult
 
-      console.log('🔍 SHOPIFY AI CHAT: Checking for detected actions', {
+      console.log('≡ƒöì SHOPIFY AI CHAT: Checking for detected actions', {
         hasDetectedActions: !!(data.detectedActions && data.detectedActions.length > 0),
         detectedActionsLength: data.detectedActions?.length || 0,
         detectedActions: data.detectedActions,
@@ -658,7 +708,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
             extractedFromText: detectedAction.extractedFromText
           }))
         }
-        console.log('⚡ SHOPIFY AI CHAT: Using server-side detected actions', {
+        console.log('ΓÜí SHOPIFY AI CHAT: Using server-side detected actions', {
           actionsCount: data.detectedActions.length,
           actions: data.detectedActions,
           actionDetectionResult
@@ -673,7 +723,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       }
 
       if (actionDetectionResult.hasActions) {
-        console.log('⚡ SHOPIFY AI CHAT: Actions detected in response', {
+        console.log('ΓÜí SHOPIFY AI CHAT: Actions detected in response', {
           actionsCount: actionDetectionResult.detectedActions.length,
           actions: actionDetectionResult.detectedActions.map((a: any) => ({
             id: a.action.id,
@@ -694,13 +744,13 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
 
       // Handle successful publication
       if (data.publishedProduct) {
-        console.log('🎉 PRODUCT PUBLISHED SUCCESSFULLY:', data.publishedProduct)
+        console.log('≡ƒÄë PRODUCT PUBLISHED SUCCESSFULLY:', data.publishedProduct)
 
         // Show success notification in chat
         const successMessage: Message = {
           id: `success-${Date.now()}`,
           type: 'system',
-          content: `🎉 **Product Published Successfully!**\n\n**Product:** ${data.publishedProduct.title}\n**Shopify ID:** ${data.publishedProduct.id}\n**Status:** Active\n\n${data.publishedProduct.admin_url ? `[View in Shopify Admin](${data.publishedProduct.admin_url})` : ''}\n${data.publishedProduct.store_url ? `[View in Store](${data.publishedProduct.store_url})` : ''}`,
+          content: `≡ƒÄë **Product Published Successfully!**\n\n**Product:** ${data.publishedProduct.title}\n**Shopify ID:** ${data.publishedProduct.id}\n**Status:** Active\n\n${data.publishedProduct.admin_url ? `[View in Shopify Admin](${data.publishedProduct.admin_url})` : ''}\n${data.publishedProduct.store_url ? `[View in Store](${data.publishedProduct.store_url})` : ''}`,
           timestamp: new Date(),
           threadId: activeThreadId || undefined,
           publishedProduct: data.publishedProduct
@@ -718,7 +768,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         type: 'system',
-        content: '❌ Sorry, I encountered an error processing your request. Please try again.',
+        content: 'Γ¥î Sorry, I encountered an error processing your request. Please try again.',
         timestamp: new Date(),
         threadId: activeThreadId || undefined
       }
@@ -755,7 +805,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
   // Action execution handlers
   const handleExecuteAction = async (action: ShopifyAction, confirmed: boolean): Promise<ActionResult> => {
     try {
-      console.log('⚡ SHOPIFY AI CHAT: Executing action', {
+      console.log('ΓÜí SHOPIFY AI CHAT: Executing action', {
         actionId: action.id,
         actionType: action.type,
         confirmed
@@ -784,7 +834,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
         throw new Error(data.error || 'Action execution failed')
       }
 
-      console.log('⚡ SHOPIFY AI CHAT: Action executed successfully', {
+      console.log('ΓÜí SHOPIFY AI CHAT: Action executed successfully', {
         actionId: action.id,
         result: data.result
       })
@@ -792,19 +842,19 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       return data.result
 
     } catch (error) {
-      console.error('⚡ SHOPIFY AI CHAT: Action execution error:', error)
+      console.error('ΓÜí SHOPIFY AI CHAT: Action execution error:', error)
       return {
         success: false,
         actionId: action.id,
         error: error instanceof Error ? error.message : 'Unknown error',
-        maritimeMessage: '⚠️ **Action Failed** - Unable to execute the requested action.'
+        maritimeMessage: 'ΓÜá∩╕Å **Action Failed** - Unable to execute the requested action.'
       }
     }
   }
 
   const handlePreviewAction = async (action: ShopifyAction): Promise<any> => {
     try {
-      console.log('🔍 SHOPIFY AI CHAT: Previewing action', {
+      console.log('≡ƒöì SHOPIFY AI CHAT: Previewing action', {
         actionId: action.id,
         actionType: action.type
       })
@@ -832,7 +882,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
         throw new Error(data.error || 'Action preview failed')
       }
 
-      console.log('🔍 SHOPIFY AI CHAT: Action preview generated', {
+      console.log('≡ƒöì SHOPIFY AI CHAT: Action preview generated', {
         actionId: action.id,
         preview: data.preview
       })
@@ -840,7 +890,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
       return data.preview
 
     } catch (error) {
-      console.error('🔍 SHOPIFY AI CHAT: Action preview error:', error)
+      console.error('≡ƒöì SHOPIFY AI CHAT: Action preview error:', error)
       throw error
     }
   }
@@ -924,7 +974,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                 <div className="mt-2 space-y-2">
                   {message.attachments.map((attachment) => {
                     // Debug logging for attachment structure
-                    console.log('🖼️ Attachment Debug:', {
+                    console.log('≡ƒû╝∩╕Å Attachment Debug:', {
                       id: attachment.id,
                       name: attachment.name,
                       fileName: attachment.fileName,
@@ -939,7 +989,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                     const isImage = attachment.type && attachment.type.startsWith('image/')
                     const imageUrl = attachment.url || attachment.publicUrl
 
-                    console.log('🖼️ Image Check:', {
+                    console.log('≡ƒû╝∩╕Å Image Check:', {
                       isImage,
                       imageUrl,
                       storagePath: attachment.storagePath,
@@ -956,10 +1006,10 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                             style={{ maxHeight: '300px' }}
                             loading="lazy"
                             onLoad={() => {
-                              console.log('✅ Image loaded successfully:', imageUrl)
+                              console.log('Γ£à Image loaded successfully:', imageUrl)
                             }}
                             onError={(e) => {
-                              console.error('❌ Image failed to load:', {
+                              console.error('Γ¥î Image failed to load:', {
                                 url: imageUrl,
                                 fileName: attachment.name || attachment.fileName,
                                 storagePath: attachment.storagePath,
@@ -970,7 +1020,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                               if (container) {
                                 container.innerHTML = `
                                   <div class="flex items-center space-x-2 p-2 bg-red-50 rounded border border-red-200">
-                                    <div class="text-red-400">🖼️</div>
+                                    <div class="text-red-400">≡ƒû╝∩╕Å</div>
                                     <div class="text-sm">
                                       <div class="text-red-600 font-medium">Image could not be loaded</div>
                                       <div class="text-red-500 text-xs">${attachment.name || attachment.fileName || 'Unknown'}</div>
@@ -1128,7 +1178,7 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
                     threadId={message.threadId}
                     compact={true}
                     onFeedbackSubmitted={(feedback) => {
-                      console.log('✅ Feedback submitted:', feedback)
+                      console.log('Γ£à Feedback submitted:', feedback)
                       // Could show a toast notification here
                     }}
                   />
@@ -1521,43 +1571,80 @@ ${canManageProducts ? '✅ Full management permissions active' : '❌ Limited pe
               </button>
               <button
                 onClick={async () => {
-                  if (currentPreview && onProductCreated) {
-                    try {
-                      // Create the product in Shopify
-                      const response = await fetch('/api/shopify/products', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                          storeId: selectedStore?.id,
-                          product: currentPreview
-                        })
+                  if (!currentPreview) {
+                    return
+                  }
+
+                  if (!selectedStore) {
+                    alert('Please select a store before publishing this product.')
+                    return
+                  }
+
+                  try {
+                    const productPayload = buildShopifyProductPayload(currentPreview)
+
+                    const response = await fetch('/api/shopify/products', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        storeId: selectedStore.id,
+                        product: productPayload
                       })
+                    })
 
-                      if (response.ok) {
-                        const data = await response.json()
-                        onProductCreated(data.product)
-                        setShowPreview(false)
-                        setCurrentPreview(null)
+                    const data = await response.json().catch(() => ({}))
 
-                        // Add success message
-                        const successMessage: Message = {
-                          id: `success-${Date.now()}`,
-                          type: 'system',
-                          content: `✅ **Product Created Successfully!**\n\nYour product "${currentPreview.title}" has been created in your Shopify store.\n\n[View in Admin](${data.product.admin_url}) | [View Live](${data.product.public_url})`,
-                          timestamp: new Date(),
-                          threadId: activeThreadId || undefined
-                        }
+                    if (!response.ok) {
+                      const errorMessage = data?.error || 'Failed to create product in Shopify.'
+                      throw new Error(errorMessage)
+                    }
 
-                        if (activeThreadId) {
-                          setThreadMessages(prev => [...prev, successMessage])
-                        } else {
-                          setMessages(prev => [...prev, successMessage])
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Error creating product:', error)
+                    onProductCreated?.(data.product)
+                    setShowPreview(false)
+                    setCurrentPreview(null)
+
+                    const adminUrl =
+                      data.product?.admin_url ||
+                      (selectedStore.shopDomain ? `https://${selectedStore.shopDomain}/admin/products/${data.product?.id}` : undefined)
+                    const storefrontUrl =
+                      data.product?.public_url ||
+                      (selectedStore.shopDomain && data.product?.handle
+                        ? `https://${selectedStore.shopDomain}/products/${data.product.handle}`
+                        : undefined)
+
+                    const links = [adminUrl ? `[View in Admin](${adminUrl})` : null, storefrontUrl ? `[View Live](${storefrontUrl})` : null].filter(Boolean) as string[]
+
+                    const successMessage: Message = {
+                      id: `success-${Date.now()}`,
+                      type: 'system',
+                      content: `�o. **Product Created Successfully!**\n\nYour product "${currentPreview.title}" has been created in your Shopify store.${links.length > 0 ? `\n\n${links.join(' | ')}` : ''}`,
+                      timestamp: new Date(),
+                      threadId: activeThreadId || undefined
+                    }
+
+                    if (activeThreadId) {
+                      setThreadMessages(prev => [...prev, successMessage])
+                    } else {
+                      setMessages(prev => [...prev, successMessage])
+                    }
+                  } catch (error) {
+                    console.error('Error creating product:', error)
+
+                    const errorMessage: Message = {
+                      id: `error-${Date.now()}`,
+                      type: 'system',
+                      content: `�?O **Product Creation Failed**\n\n${error instanceof Error ? error.message : 'An unexpected error occurred while publishing the product.'}`,
+                      timestamp: new Date(),
+                      threadId: activeThreadId || undefined
+                    }
+
+                    if (activeThreadId) {
+                      setThreadMessages(prev => [...prev, errorMessage])
+                    } else {
+                      setMessages(prev => [...prev, errorMessage])
                     }
                   }
                 }}
