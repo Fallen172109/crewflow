@@ -79,18 +79,20 @@ export async function POST(req: Request) {
   }).catch(() => {});
 
   const shopDomain = store?.shop_domain || auth.shop_domain;
-  const product = parsed.product || {};
-  const productId = product.id;
+  const createdProduct = parsed.product || {};
+  const productId = createdProduct.id;
 
   const adminUrl =
     shopDomain && productId ? `https://${shopDomain}/admin/products/${productId}` : undefined;
   const publicUrl =
-    shopDomain && product.handle ? `https://${shopDomain}/products/${product.handle}` : undefined;
+    shopDomain && createdProduct.handle
+      ? `https://${shopDomain}/products/${createdProduct.handle}`
+      : undefined;
 
   return NextResponse.json({
     ok: true,
     product: {
-      ...product,
+      ...createdProduct,
       admin_url: adminUrl,
       public_url: publicUrl
     }
