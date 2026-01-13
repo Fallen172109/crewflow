@@ -4,6 +4,74 @@ All notable changes to CrewFlow will be documented in this file.
 
 ---
 
+## 2026-01-13 - Public Release Preparation & Deployment
+
+### Summary
+Prepared the codebase for public GitHub release and deployed to Vercel production.
+
+### Actions Completed
+
+#### 1. Temp File Cleanup
+- Deleted 251 `tmpclaude-*` temporary files
+- Removed `nul` file (Windows reserved name)
+
+#### 2. .gitignore Updates
+```
+# Claude Code artifacts
+.claude/
+tmpclaude-*
+```
+
+#### 3. README.md Complete Rewrite
+- Added feature comparison table (CrewFlow vs Shopify native)
+- Documented core differentiating features:
+  - AI Image Generator (DALL-E 3)
+  - Competitive Research Hub (Perplexity)
+  - Approval Workflows
+  - Bulk CSV Import
+  - Multi-Store Analytics
+- Added quick start guide
+- Added security section with rate limits
+- Added target user segments
+
+#### 4. Security Audit for Public Release
+- Verified `.env.local` NOT tracked in git
+- No hardcoded API keys in source code
+- Replaced real Facebook App IDs in documentation with `YOUR_FACEBOOK_APP_ID`
+- Files sanitized:
+  - `docs/deployment/CREWFLOW_AI_DEPLOYMENT_STRATEGY.md`
+  - `docs/facebook-page-management-upgrade.md`
+  - `docs/migration/CREWFLOW_AI_MIGRATION_CHECKLIST.md`
+
+#### 5. Next.js Security Update
+- Updated from 15.3.3 to 15.5.9
+- Fixed CVE-2025-66478 vulnerability
+- Required for Vercel deployment
+
+#### 6. Git Commits
+| Commit | Message |
+|--------|---------|
+| `b41a1b1` | feat: Add differentiating features beyond Shopify native AI |
+| `eb357c7` | fix: Update Next.js to 15.5.9 to address CVE-2025-66478 |
+
+#### 7. Vercel Deployment
+- **Status**: ✅ Ready
+- **Production URL**: https://crewflow.ai
+- **Deployment URL**: https://crewflow-production-1xkdyqz74-kamil-borzeckis-projects.vercel.app
+
+### Files Changed Summary
+- **279 files changed**
+- **16,657 insertions**
+- **37,269 deletions**
+- Net reduction of ~20,000 lines (removed deprecated code)
+
+### Repository Status
+- **Safe for public release** - No secrets in tracked files
+- **GitHub**: https://github.com/Fallen172109/crewflow.git
+- **Branch**: main
+
+---
+
 ## 2026-01-13 - Backend Agent: Bulk Import Security Fixes & Product Creation
 
 **Task:** Fixed critical security vulnerabilities and API contract mismatch in the bulk import API at `/api/bulk-import`
