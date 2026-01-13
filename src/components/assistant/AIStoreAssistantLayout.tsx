@@ -38,7 +38,7 @@ export default function AIStoreAssistantLayout({
           >
             <div className="flex items-center gap-2">
               <div className="cf-beacon">
-                <span className="text-orange-500">⚓</span>
+                <span className="text-green-500">⚓</span>
               </div>
               <span>Product Preview Dock</span>
             </div>
@@ -80,7 +80,7 @@ export default function AIStoreAssistantLayout({
           <div className="sticky top-0 bg-white border-b border-slate-200 p-4 rounded-t-lg">
             <div className="flex items-center gap-2">
               <div className="cf-beacon">
-                <span className="text-orange-500">⚓</span>
+                <span className="text-green-500">⚓</span>
               </div>
               <h3 className="font-semibold text-slate-800">Product Preview</h3>
               <div className="ml-auto text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">

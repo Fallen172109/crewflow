@@ -53,7 +53,7 @@ export async function fetchOpenAIUsage(
     // Transform OpenAI usage data to our format
     const transformedData: RealUsageData[] = usageData.data?.map((item: any) => ({
       provider: 'openai',
-      model: item.model || process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
+      model: item.model || process.env.OPENAI_MODEL || 'gpt-5',
       inputTokens: item.prompt_tokens || 0,
       outputTokens: item.completion_tokens || 0,
       totalTokens: item.total_tokens || 0,
@@ -156,7 +156,7 @@ export async function trackRealUsage(
       case 'openai':
         inputTokens = apiResponse?.usage?.prompt_tokens || 0
         outputTokens = apiResponse?.usage?.completion_tokens || 0
-        model = apiResponse?.model || process.env.OPENAI_MODEL || 'gpt-4-turbo-preview'
+        model = apiResponse?.model || process.env.OPENAI_MODEL || 'gpt-5'
         // OpenAI doesn't return cost in response, so we calculate it
         actualCost = calculateCostFromTokens(provider, model, inputTokens, outputTokens)
         break

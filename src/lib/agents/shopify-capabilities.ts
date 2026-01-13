@@ -599,7 +599,7 @@ export const flintCapabilities: ShopifyCapability[] = [
               product_title: product.title,
               keywords: targetKeywords,
               tone,
-              ai_model: 'gpt-4',
+              ai_model: 'gpt-5',
               generation_cost: 0.02
             },
             {
@@ -612,7 +612,7 @@ export const flintCapabilities: ShopifyCapability[] = [
               product_title: product.title,
               keywords: targetKeywords,
               tone,
-              ai_model: 'gpt-4',
+              ai_model: 'gpt-5',
               generation_cost: 0.03
             }
           ])
@@ -904,7 +904,7 @@ export const flintCapabilities: ShopifyCapability[] = [
             word_count: generatedCopy.content.split(/\s+/).length,
             keywords: generatedCopy.keywords || [],
             tone,
-            ai_model: 'gpt-4',
+            ai_model: 'gpt-5',
             generation_cost: 0.02
           }
 

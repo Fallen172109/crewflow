@@ -21,7 +21,7 @@ export function AdminHeader({ adminUser }: AdminHeaderProps) {
             </h1>
             <a
               href="/dashboard"
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -78,7 +78,7 @@ export function AdminHeader({ adminUser }: AdminHeaderProps) {
               <button className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200">
                 Export Data
               </button>
-              <button className="px-3 py-1 text-sm font-medium text-white bg-orange-500 rounded hover:bg-orange-600">
+              <button className="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded hover:bg-green-600">
                 System Health
               </button>
             </div>
@@ -91,7 +91,7 @@ export function AdminHeader({ adminUser }: AdminHeaderProps) {
                 </p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </div>
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-semibold">
                   {adminUser.profile.email.charAt(0).toUpperCase()}
                 </span>

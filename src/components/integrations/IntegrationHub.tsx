@@ -198,7 +198,7 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
         <h2 className="text-xl font-bold text-gray-900 mb-2">Integration Hub</h2>
         <p className="text-gray-600 mb-6">
           Connect your business tools with secure OAuth 2.0 authentication.
-          <span className="text-orange-600 font-medium">One-click setup</span> - no API keys required!
+          <span className="text-green-600 font-medium">One-click setup</span> - no API keys required!
         </p>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -232,15 +232,15 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
 
         {/* Demo Mode Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-green-600 mt-0.5" />
               <div className="flex-1">
-                <h4 className="text-sm font-medium text-orange-900 mb-1">Demo Mode Active</h4>
-                <p className="text-sm text-orange-700 mb-2">
+                <h4 className="text-sm font-medium text-green-900 mb-1">Demo Mode Active</h4>
+                <p className="text-sm text-green-700 mb-2">
                   You're viewing demo integrations. Configure OAuth credentials to enable real connections.
                 </p>
-                <div className="text-xs text-orange-600">
+                <div className="text-xs text-green-600">
                   <span>💡 Click "Connect" to see how the OAuth flow would work</span>
                 </div>
               </div>
@@ -272,7 +272,7 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
                       <div className="flex items-center space-x-2">
                         <h3 className="font-medium text-gray-900">{integration.name}</h3>
                         {integration.features?.webhooks && (
-                          <Zap className="w-3 h-3 text-orange-500" title="Supports webhooks" />
+                          <Zap className="w-3 h-3 text-green-500" title="Supports webhooks" />
                         )}
                       </div>
                       <p className="text-xs text-gray-500 capitalize">
@@ -300,7 +300,7 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
                 <button
                   onClick={() => handleConnect(integration.id)}
                   disabled={isConnecting}
-                  className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white text-sm rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium shadow-sm"
+                  className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium shadow-sm"
                 >
                   {isConnecting ? (
                     <>
@@ -319,7 +319,7 @@ export default function IntegrationHub({ className = '' }: IntegrationHubProps) 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {/* One-click ready indicator for master OAuth integrations */}
                   {['facebook-business', 'google-ads', 'linkedin', 'twitter', 'shopify'].includes(integration.id) ? (
-                    <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700 font-medium">
+                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 font-medium">
                       ⚡ One-Click Ready
                     </span>
                   ) : (

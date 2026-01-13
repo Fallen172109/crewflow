@@ -326,8 +326,8 @@ export default function AdminUserDetailPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-              <span className="text-orange-600 text-2xl font-bold">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <span className="text-green-600 text-2xl font-bold">
                 {user.email.charAt(0).toUpperCase()}
               </span>
             </div>

@@ -95,8 +95,8 @@ const PLAN_FEATURES: Record<string, PlanInfo> = {
   'shopify': {
     name: 'Shopify',
     icon: Zap,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
     features: [
       {
         id: 'products',

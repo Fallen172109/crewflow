@@ -302,7 +302,7 @@ export default function TokenManager({ className = '' }: TokenManagerProps) {
           <button
             onClick={forceMaintenanceCycle}
             disabled={refreshing}
-            className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
           >
             {refreshing ? (
               <RefreshCw className="w-4 h-4 animate-spin" />

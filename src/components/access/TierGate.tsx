@@ -81,7 +81,7 @@ export default function TierGate({
             {showUpgradePrompt && (
               <button
                 onClick={() => setShowUpgradeModal(true)}
-                className="inline-flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                className="inline-flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
               >
                 <Crown className="w-4 h-4" />
                 <span>Upgrade to {requiredTierConfig.name}</span>
@@ -122,7 +122,7 @@ export default function TierGate({
             {showUpgradePrompt && (
               <button
                 onClick={() => setShowUpgradeModal(true)}
-                className="text-xs bg-orange-600 text-white px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors"
+                className="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors"
               >
                 Upgrade
               </button>
@@ -180,7 +180,7 @@ export default function TierGate({
           {showUpgradePrompt && (
             <button
               onClick={() => setShowUpgradeModal(true)}
-              className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+              className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
             >
               Upgrade to {requiredTierConfig.name}
             </button>

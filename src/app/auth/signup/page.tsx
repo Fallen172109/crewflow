@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -13,10 +14,7 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [justSignedUp, setJustSignedUp] = useState(false)
-  const { signUp, loading, user } = useAuth()
-
-  // NO AUTOMATIC REDIRECTS - Let users read the success message
-  // Users will manually navigate using the "Go to Sign In" button
+  const { signUp, loading } = useAuth()
 
   // Password strength checker
   const checkPasswordStrength = (password: string) => {
@@ -90,9 +88,6 @@ export default function SignupPage() {
       const result = await signUp(email, password)
 
       if (result.error) {
-        // Log the actual error message to help debug
-        console.log('Signup error:', result.error.message)
-
         // Provide user-friendly error messages
         switch (result.error.message) {
           case 'User already registered':
@@ -107,20 +102,7 @@ export default function SignupPage() {
           case 'Invalid email':
             setError('Please enter a valid email address.')
             break
-          case 'signup_disabled':
-            setError('Account registration is currently disabled. Please contact support.')
-            break
-          case 'email_address_invalid':
-            setError('Please enter a valid email address.')
-            break
-          case 'password_too_short':
-            setError('Password must be at least 6 characters long.')
-            break
-          case 'weak_password':
-            setError('Please choose a stronger password with uppercase, lowercase, numbers, and symbols.')
-            break
           default:
-            // Handle other common Supabase auth errors
             if (result.error.message.toLowerCase().includes('already') ||
                 result.error.message.toLowerCase().includes('exists') ||
                 result.error.message.toLowerCase().includes('registered')) {
@@ -133,25 +115,14 @@ export default function SignupPage() {
             } else if (result.error.message.toLowerCase().includes('rate limit')) {
               setError('Too many attempts. Please wait a moment before trying again.')
             } else {
-              // Show the actual error message for debugging, but make it user-friendly
-              console.error('Unhandled signup error:', result.error.message)
               setError(`Signup failed: ${result.error.message}`)
             }
         }
         setIsSubmitting(false)
       } else {
-        // Success - Show confirmation screen immediately
-        console.log('✅ Signup successful! Showing success screen...')
-        console.log('Signup result:', result)
-
-        // Show success screen immediately - NO REDIRECTS OR SIGN OUTS
-        console.log('Setting success state to true - user should see confirmation screen')
         setJustSignedUp(true)
         setSuccess(true)
         setIsSubmitting(false)
-
-        // Log to help debug any redirect issues
-        console.log('Success screen should now be visible. No automatic redirects or sign outs.')
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')
@@ -159,116 +130,143 @@ export default function SignupPage() {
     }
   }
 
+  // Success screen
   if (success) {
-    console.log('🎉 Rendering success screen - this should be visible to the user')
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
-
-        <div className="relative w-full max-w-md">
-          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg text-center">
-            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">🎉 Welcome to CrewFlow!</h2>
-            <p className="text-gray-600 mb-6 text-lg">
-              We've sent a confirmation email to<br />
-              <strong className="text-gray-900 text-xl">{email}</strong>
-            </p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-              <p className="text-green-700 text-lg font-medium">✅ Confirmation email sent!</p>
-              <p className="text-green-600 text-sm mt-2">Please check your email and click the confirmation link to activate your account.</p>
-            </div>
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-6 mb-8">
-              <h3 className="text-primary-700 font-semibold mb-3 text-lg">📧 Next Steps:</h3>
-              <ol className="text-gray-600 text-base space-y-2 list-decimal list-inside text-left">
-                <li>Check your email inbox (and spam folder)</li>
-                <li>Click the "Confirm Your Account" link in the email</li>
-                <li>Return here to sign in with your credentials</li>
-              </ol>
-            </div>
-            <div className="space-y-4">
-              <Link
-                href="/auth/login"
-                className="w-full inline-flex items-center justify-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg"
-              >
-                <span>Go to Sign In Page</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-              <button
-                onClick={() => {
-                  console.log('User clicked "try again" - resetting form')
-                  setSuccess(false)
-                  setJustSignedUp(false)
-                  setEmail('')
-                  setPassword('')
-                  setConfirmPassword('')
-                }}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200"
-              >
-                Create Another Account
-              </button>
-              <p className="text-center text-sm text-gray-500">
-                Didn't receive the email? Check your spam folder first.
-              </p>
-            </div>
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md text-center"
+        >
+          {/* Success Icon */}
+          <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-green-500/30">
+            <motion.svg
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-10 h-10 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </motion.svg>
           </div>
-        </div>
+
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to CrewFlow!</h2>
+          <p className="text-gray-600 mb-2">
+            We&apos;ve sent a confirmation email to
+          </p>
+          <p className="text-lg font-semibold text-gray-900 mb-8">{email}</p>
+
+          {/* Instructions Card */}
+          <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6 text-left">
+            <h3 className="text-green-800 font-semibold mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Next Steps
+            </h3>
+            <ol className="text-green-700 text-sm space-y-3">
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold">1</span>
+                <span>Check your email inbox (and spam folder)</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold">2</span>
+                <span>Click the confirmation link in the email</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold">3</span>
+                <span>Return here to sign in with your credentials</span>
+              </li>
+            </ol>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <Link
+              href="/auth/login"
+              className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
+            >
+              <span>Go to Sign In</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
+            <button
+              onClick={() => {
+                setSuccess(false)
+                setJustSignedUp(false)
+                setEmail('')
+                setPassword('')
+                setConfirmPassword('')
+              }}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors"
+            >
+              Create Another Account
+            </button>
+          </div>
+
+          <p className="mt-6 text-sm text-gray-500">
+            Didn&apos;t receive the email? Check your spam folder first.
+          </p>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-ocean-wave opacity-5"></div>
-
-      <div className="relative w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+    <div className="min-h-screen bg-white flex">
+      {/* Left Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          {/* Logo */}
+          <Link href="/" className="inline-flex items-center gap-2 mb-12">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">CrewFlow</h1>
+            <span className="text-xl font-bold text-gray-900">CrewFlow</span>
+          </Link>
+
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create your account</h1>
+            <p className="text-gray-600">Start managing your Shopify store with AI</p>
           </div>
-          <p className="text-gray-600">Join the maritime automation revolution</p>
-        </div>
 
-        {/* Signup Form */}
-        <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Join the Crew</h2>
-
-
-
-
-
-          {/* Processing indicator */}
-          {isSubmitting && !error && (
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 border-2 border-primary-300 border-t-primary-600 rounded-full animate-spin"></div>
-                <p className="text-primary-700 text-sm font-medium">Creating your account...</p>
-              </div>
-            </div>
-          )}
-
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-red-700 text-sm">{error}</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            </motion.div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4">
+          {/* Form */}
+          <form onSubmit={handleSignup} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                Email address
               </label>
               <input
                 id="email"
@@ -276,8 +274,8 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="captain@example.com"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="you@example.com"
               />
             </div>
 
@@ -291,43 +289,43 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => handlePasswordChange(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="Create a strong password"
               />
               {password && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">Password strength:</span>
-                    <span className={getPasswordStrengthText(passwordStrength).color}>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="text-gray-600">Password strength</span>
+                    <span className={getPasswordStrengthText(passwordStrength).color + ' font-medium'}>
                       {getPasswordStrengthText(passwordStrength).text}
                     </span>
                   </div>
-                  <div className="mt-1 flex space-x-1">
+                  <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((level) => (
                       <div
                         key={level}
-                        className={`h-1 flex-1 rounded ${
+                        className={`h-1.5 flex-1 rounded-full transition-colors ${
                           level <= passwordStrength
                             ? passwordStrength <= 2
                               ? 'bg-red-400'
                               : passwordStrength <= 3
                               ? 'bg-yellow-400'
-                              : 'bg-green-400'
+                              : 'bg-green-500'
                             : 'bg-gray-200'
                         }`}
                       />
                     ))}
                   </div>
-                  <div className="mt-1 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-gray-500">
                     Use 8+ characters with uppercase, lowercase, numbers & symbols
-                  </div>
+                  </p>
                 </div>
               )}
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
+                Confirm password
               </label>
               <input
                 id="confirmPassword"
@@ -335,24 +333,28 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="Confirm your password"
               />
+              {confirmPassword && password !== confirmPassword && (
+                <p className="mt-2 text-xs text-red-500">Passwords do not match</p>
+              )}
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading || isSubmitting}
-              className="w-full bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 flex items-center justify-center gap-2"
             >
               {(loading || isSubmitting) ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Creating Account...</span>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Creating account...</span>
                 </>
               ) : (
                 <>
-                  <span>Set Sail</span>
+                  <span>Create account</span>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -361,47 +363,108 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="text-primary-500 hover:text-primary-600 font-medium">
-                Sign in
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-6 text-xs text-gray-500 text-center">
+          {/* Terms */}
+          <p className="mt-6 text-xs text-gray-500 text-center">
             By creating an account, you agree to our{' '}
-            <Link href="/terms" className="text-primary-500 hover:text-primary-600">Terms of Service</Link>
+            <Link href="/terms-of-service" className="text-green-600 hover:text-green-700">Terms of Service</Link>
             {' '}and{' '}
-            <Link href="/privacy" className="text-primary-500 hover:text-primary-600">Privacy Policy</Link>
+            <Link href="/privacy-policy" className="text-green-600 hover:text-green-700">Privacy Policy</Link>
+          </p>
+
+          {/* Divider */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500">Already have an account?</span>
+            </div>
           </div>
+
+          {/* Sign In Link */}
+          <Link
+            href="/auth/login"
+            className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3.5 px-4 rounded-xl transition-all border-2 border-gray-200 hover:border-gray-300"
+          >
+            <span>Sign in instead</span>
+          </Link>
+        </motion.div>
+      </div>
+
+      {/* Right Side - Decorative */}
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-green-500 to-emerald-600 items-center justify-center p-16 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <pattern id="signup-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5"/>
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#signup-grid)" />
+          </svg>
         </div>
 
-        {/* Features Preview */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-500 text-sm mb-4">Start with 3 powerful AI agents</p>
-          <div className="flex justify-center space-x-6 text-gray-500">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">C</span>
-              </div>
-              <span className="text-xs">Coral Support</span>
+        {/* Floating Elements */}
+        <div className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+        <div className="absolute bottom-20 left-20 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="relative z-10 text-center max-w-md"
+        >
+          {/* Icon */}
+          <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Join Thousands of Merchants
+          </h2>
+          <p className="text-white/80 text-lg mb-10 leading-relaxed">
+            Start your journey to effortless store management with our AI-powered platform.
+          </p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-10">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <p className="text-3xl font-bold text-white">500+</p>
+              <p className="text-white/70 text-sm">Active Users</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">M</span>
-              </div>
-              <span className="text-xs">Mariner Marketing</span>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <p className="text-3xl font-bold text-white">10k+</p>
+              <p className="text-white/70 text-sm">Products Managed</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">P</span>
-              </div>
-              <span className="text-xs">Pearl Content</span>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <p className="text-3xl font-bold text-white">99%</p>
+              <p className="text-white/70 text-sm">Satisfaction</p>
             </div>
           </div>
-        </div>
+
+          {/* Features */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-white text-sm">Free 14-day trial, no credit card required</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-white text-sm">Connect your Shopify store in seconds</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-white text-sm">Cancel anytime, no questions asked</span>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   )

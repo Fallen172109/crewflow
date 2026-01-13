@@ -30,7 +30,7 @@ import FileUpload, { UploadedFile } from '@/components/ui/FileUpload'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer'
 import { SmoothStreamingText } from '../ui/SmoothStreamingText'
 import { getChatClient, ChatError } from '@/lib/chat/client'
-import ThreadManager from '@/components/agents/ThreadManager'
+import ThreadManager from '@/components/shopify/ThreadManager'
 import { useAuth } from '@/lib/auth-context'
 
 interface Message {
@@ -533,13 +533,11 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
             setIsStreaming(false);
             setIsLoading(false);
 
-            // Handle product creation if detected
-            if (onProductCreated) {
-              // Try to extract product information from the response text
-              const productInfo = extractProductFromResponse(response.response || '');
-              if (productInfo) {
-                onProductCreated(productInfo);
-              }
+            // Handle product preview / drafts from structured metadata instead of
+            // trying to guess from plain text. For now we disable the old
+            // regex-based extractor to avoid accidental auto-publish.
+            if (onProductCreated && response.metadata?.productPreview) {
+              onProductCreated(response.metadata.productPreview);
             }
 
             // Refresh thread manager if thread was created
@@ -742,7 +740,7 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
               className={cn(
                 "p-2 rounded-lg transition-colors flex items-center space-x-1",
                 showThreadManager
-                  ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                  ? "bg-green-100 text-green-700 hover:bg-green-200"
                   : "text-gray-600 hover:bg-gray-100"
               )}
               title="Thread Management"
@@ -790,9 +788,9 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
 
       {/* Session Info Bar */}
       {contextStatus === 'ready' && selectedStore && (
-        <div className="bg-orange-50 border-b border-orange-200 px-4 py-2 flex-shrink-0">
+        <div className="bg-green-50 border-b border-green-200 px-4 py-2 flex-shrink-0">
           <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-4 text-orange-800">
+            <div className="flex items-center space-x-4 text-green-800">
               <div className="flex items-center space-x-1">
                 <Store className="w-3 h-3" />
                 <span className="font-medium">{selectedStore.store_name}</span>
@@ -806,7 +804,7 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
                 </>
               )}
             </div>
-            <div className="flex items-center space-x-2 text-orange-600">
+            <div className="flex items-center space-x-2 text-green-600">
               <CheckCircle className="w-3 h-3" />
               <span className="font-medium">Connected</span>
             </div>
@@ -854,7 +852,7 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
                 <div className={cn(
                   "max-w-[80%] rounded-lg p-4 shadow-sm overflow-hidden break-words",
                   message.type === 'user'
-                    ? 'bg-orange-500 text-white'
+                    ? 'bg-green-500 text-white'
                     : message.type === 'system'
                     ? 'bg-red-50 text-red-800 border border-red-200'
                     : 'bg-white text-gray-900 border border-gray-200'
@@ -929,7 +927,7 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
               <div className="flex justify-start">
                 <div className="bg-white text-gray-900 border border-gray-200 rounded-lg p-4 shadow-sm">
                   <div className="flex items-center space-x-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                    <Loader2 className="w-4 h-4 animate-spin text-green-500" />
                     <span>Thinking...</span>
                   </div>
                 </div>
@@ -982,21 +980,21 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
 
       {/* Status Indicator */}
       {(isStreaming && !streamingMessage?.content) && (
-        <div className="flex items-center justify-center py-3 px-4 border-t border-gray-200 bg-orange-50">
-          <div className="flex items-center space-x-2 px-3 py-2 bg-white border border-orange-200 rounded-lg shadow-sm">
+        <div className="flex items-center justify-center py-3 px-4 border-t border-gray-200 bg-green-50">
+          <div className="flex items-center space-x-2 px-3 py-2 bg-white border border-green-200 rounded-lg shadow-sm">
             <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             </div>
-            <span className="text-sm text-orange-700 font-medium">AI is thinking...</span>
+            <span className="text-sm text-green-700 font-medium">AI is thinking...</span>
           </div>
         </div>
       )}
 
       {/* Input Area */}
       <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
-        <div className="relative bg-white rounded-xl border border-gray-300 shadow-sm focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 max-w-full">
+        <div className="relative bg-white rounded-xl border border-gray-300 shadow-sm focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 max-w-full">
           <div className="overflow-hidden">
             <Textarea
               ref={textareaRef}
@@ -1030,14 +1028,14 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
                 className={cn(
                   "group p-2 rounded-lg transition-colors flex items-center gap-1",
                   showFileUpload
-                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                    ? "bg-green-100 text-green-700 hover:bg-green-200"
                     : "hover:bg-gray-100 text-gray-600"
                 )}
                 title="Attach files"
               >
                 <Paperclip className="w-4 h-4" />
                 {attachments.length > 0 && (
-                  <span className="text-xs font-medium bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="text-xs font-medium bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
                     {attachments.length}
                   </span>
                 )}
@@ -1072,7 +1070,7 @@ ${selectedStore ? `🎯 Currently managing: **${selectedStore.store_name}**` : '
                 className={cn(
                   "px-4 py-1.5 rounded-lg text-sm transition-colors border flex items-center justify-center gap-2 flex-shrink-0 min-w-[80px]",
                   inputValue.trim() && !isLoading && !isStreaming && sessionState
-                    ? "bg-orange-500 text-white border-orange-500 hover:bg-orange-600 shadow-sm"
+                    ? "bg-green-500 text-white border-green-500 hover:bg-green-600 shadow-sm"
                     : "text-gray-400 border-gray-300 cursor-not-allowed bg-gray-50"
                 )}
               >

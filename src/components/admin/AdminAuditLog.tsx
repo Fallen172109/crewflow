@@ -107,7 +107,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
       case 'DATA_EXPORT':
         return 'bg-yellow-100 text-yellow-800'
       case 'CONFIGURATION_CHANGE':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -132,7 +132,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
           <button
             onClick={fetchAuditLogs}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -149,7 +149,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
             <select
               value={filters.action_type}
               onChange={(e) => handleFilterChange('action_type', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
               <option value="all">All Types</option>
               <option value="SECURITY_ACTION">Security Actions</option>
@@ -170,7 +170,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
               value={filters.action}
               onChange={(e) => handleFilterChange('action', e.target.value)}
               placeholder="Search actions..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
 
@@ -182,7 +182,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
               type="date"
               value={filters.start_date}
               onChange={(e) => handleFilterChange('start_date', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
 
@@ -193,7 +193,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
             <select
               value={filters.success}
               onChange={(e) => handleFilterChange('success', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
               <option value="all">All</option>
               <option value="true">Success</option>
@@ -207,7 +207,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
       <div className="divide-y divide-gray-200">
         {loading ? (
           <div className="p-8 text-center">
-            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-sm text-gray-500">Loading audit logs...</p>
           </div>
         ) : error ? (
@@ -218,7 +218,7 @@ export function AdminAuditLog({ adminUser }: AdminAuditLogProps) {
             <p className="text-sm text-red-600 mb-4">{error}</p>
             <button
               onClick={fetchAuditLogs}
-              className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600"
+              className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600"
             >
               Try Again
             </button>

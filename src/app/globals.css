@@ -8,27 +8,27 @@
   --card-foreground: #1f2937;
   --popover: #ffffff;
   --popover-foreground: #1f2937;
-  --primary: #f97316;
+  --primary: #5BBF46;
   --primary-foreground: #ffffff;
   --secondary: #f9fafb;
   --secondary-foreground: #374151;
   --muted: #f3f4f6;
   --muted-foreground: #6b7280;
-  --accent: #0ea5e9;
+  --accent: #4ade80;
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #e5e7eb;
   --input: #ffffff;
-  --ring: #f97316;
+  --ring: #5BBF46;
   --radius: 0.5rem;
 
-  /* Chart colors for maritime theme */
-  --chart-1: #f97316;
-  --chart-2: #0ea5e9;
-  --chart-3: #14b8a6;
-  --chart-4: #1e40af;
-  --chart-5: #374151;
+  /* Chart colors for green theme */
+  --chart-1: #5BBF46;
+  --chart-2: #4ade80;
+  --chart-3: #22c55e;
+  --chart-4: #16a34a;
+  --chart-5: #15803d;
 }
 
 @theme inline {
@@ -63,7 +63,7 @@ canvas {
   max-height: 100vh !important;
 }
 
-/* Maritime-themed scrollbar */
+/* Green-themed scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -73,12 +73,12 @@ canvas {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #f97316;
+  background: #5BBF46;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
+  background: #4ca83c;
 }
 
 /* Utility classes */
@@ -99,8 +99,8 @@ canvas {
 /* CrewFlow Store Management Hub Styles */
 /* Accent glow (no wobble) */
 @keyframes cf-glow {
-  0% { box-shadow: 0 0 0 0 rgba(255,106,61,.35); }
-  100% { box-shadow: 0 0 0 8px rgba(255,106,61,0); }
+  0% { box-shadow: 0 0 0 0 rgba(91,191,70,.35); }
+  100% { box-shadow: 0 0 0 8px rgba(91,191,70,0); }
 }
 .cf-glow { animation: cf-glow 2s ease-out infinite; }
 @media (prefers-reduced-motion: reduce) { .cf-glow { animation: none !important; } }
@@ -119,8 +119,8 @@ canvas {
   transition: all 0.2s ease;
 }
 .cf-chip:hover {
-  border-color: #ff6a3d;
-  background: #fff7ed;
+  border-color: #5BBF46;
+  background: #f0fdf4;
 }
 .cf-sep {
   height: 1px;
@@ -130,7 +130,7 @@ canvas {
 /* Smooth scrolling for chat areas */
 .cf-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #ff6a3d #f3f4f6;
+  scrollbar-color: #5BBF46 #f3f4f6;
 }
 .cf-scroll::-webkit-scrollbar {
   width: 6px;
@@ -140,20 +140,20 @@ canvas {
   border-radius: 3px;
 }
 .cf-scroll::-webkit-scrollbar-thumb {
-  background: #ff6a3d;
+  background: #5BBF46;
   border-radius: 3px;
 }
 .cf-scroll::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
+  background: #4ca83c;
 }
 
-/* Maritime gradient backgrounds */
-.bg-maritime-gradient {
-  background: linear-gradient(135deg, #0ea5e9 0%, #f97316 100%);
+/* Brand gradient backgrounds */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #5BBF46 0%, #22c55e 100%);
 }
 
-.bg-ocean-wave {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+.bg-subtle-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%235BBF46' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* CrewFlow AI Response Typography Styles - Enhanced */
@@ -171,7 +171,7 @@ canvas {
   color: #1f2937;
   margin: 1.5rem 0 1rem 0;
   line-height: 1.3;
-  border-bottom: 2px solid #f97316;
+  border-bottom: 2px solid #5BBF46;
   padding-bottom: 0.5rem;
 }
 
@@ -259,22 +259,22 @@ canvas {
 }
 
 .crewflow-markdown-content blockquote {
-  border-left: 4px solid #f97316;
+  border-left: 4px solid #5BBF46;
   padding-left: 1rem;
   margin: 1rem 0;
   font-style: italic;
   color: #6b7280;
 }
 
-/* Maritime-themed elements */
-.crewflow-markdown-content .maritime-emoji {
-  color: #f97316;
+/* Brand-themed elements */
+.crewflow-markdown-content .brand-emoji {
+  color: #5BBF46;
   font-size: 1.1em;
 }
 
-.crewflow-markdown-content .maritime-highlight {
-  background-color: #fff7ed;
-  color: #c2410c;
+.crewflow-markdown-content .brand-highlight {
+  background-color: #f0fdf4;
+  color: #166534;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-weight: 500;
@@ -344,7 +344,7 @@ canvas {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: #f97316 #f3f4f6;
+  scrollbar-color: #5BBF46 #f3f4f6;
 }
 
 .cf-scroll::-webkit-scrollbar {
@@ -357,12 +357,12 @@ canvas {
 }
 
 .cf-scroll::-webkit-scrollbar-thumb {
-  background: #f97316;
+  background: #5BBF46;
   border-radius: 3px;
 }
 
 .cf-scroll::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
+  background: #4ca83c;
 }
 
 /* Respect reduced motion preferences */

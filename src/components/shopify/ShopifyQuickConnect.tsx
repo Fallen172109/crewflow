@@ -106,7 +106,7 @@ export default function ShopifyQuickConnect() {
         <button
           onClick={handleConnect}
           disabled={isConnecting || !storeName.trim()}
-          className="bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 disabled:opacity-50 transition-colors flex items-center space-x-1"
+          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center space-x-1"
         >
           {isConnecting ? (
             <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
@@ -123,7 +123,7 @@ export default function ShopifyQuickConnect() {
       <div className="flex space-x-3">
         <button
           onClick={handleConnect}
-          className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 group"
+          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 group"
         >
           <Ship className="w-5 h-5" />
           <span>Connect with Shopify</span>

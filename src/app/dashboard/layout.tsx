@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 import { useAdmin } from '@/hooks/useAdmin'
+import { ShopifyStoreProvider } from '@/contexts/ShopifyStoreContext'
 
 export default function DashboardLayout({
   children,
@@ -50,19 +51,21 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <DashboardNav />
+    <ShopifyStoreProvider>
+      <div className="min-h-screen bg-gray-50">
+        {/* Navigation */}
+        <DashboardNav />
 
-      <div className="flex">
-        {/* Sidebar - key forces re-render when admin status changes */}
-        <DashboardSidebar key={`sidebar-${isAdmin}`} />
+        <div className="flex">
+          {/* Sidebar - key forces re-render when admin status changes */}
+          <DashboardSidebar key={`sidebar-${isAdmin}`} />
 
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+          {/* Main Content */}
+          <main className="flex-1 p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ShopifyStoreProvider>
   )
 }

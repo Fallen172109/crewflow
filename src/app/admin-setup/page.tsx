@@ -69,8 +69,8 @@ export default function AdminSetupPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-lg shadow p-6">
           <div className="text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <span className="text-orange-600 text-xl">🔐</span>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <span className="text-green-600 text-xl">🔐</span>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Authentication Required</h2>
             <p className="text-gray-600 mb-4">
@@ -78,7 +78,7 @@ export default function AdminSetupPage() {
             </p>
             <a
               href="/auth/login"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
             >
               Sign In
             </a>
@@ -92,8 +92,8 @@ export default function AdminSetupPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="max-w-md w-full bg-white rounded-lg shadow p-6">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-orange-600 text-xl">🚢</span>
+          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <span className="text-green-600 text-xl">🚢</span>
           </div>
           <h2 className="text-xl font-bold text-gray-900">CrewFlow Admin Setup</h2>
           <p className="text-gray-600 mt-2">
@@ -125,7 +125,7 @@ export default function AdminSetupPage() {
               value={adminKey}
               onChange={(e) => setAdminKey(e.target.value)}
               placeholder="Enter your admin promotion key"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -148,7 +148,7 @@ export default function AdminSetupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Promoting to Admin...' : 'Promote to Admin'}
           </button>

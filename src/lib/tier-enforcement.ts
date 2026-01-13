@@ -211,7 +211,7 @@ export function getUsageStatus(percentage: number): {
   if (percentage >= 75) {
     return {
       status: 'warning',
-      color: 'orange',
+      color: 'green',
       message: 'Approaching limit'
     }
   }

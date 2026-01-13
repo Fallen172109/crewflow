@@ -87,7 +87,7 @@ export default function ActionExecutionPanel({
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
       case 'low': return 'text-green-600 bg-green-50'
-      case 'medium': return 'text-orange-600 bg-orange-50'
+      case 'medium': return 'text-green-600 bg-green-50'
       case 'high': return 'text-red-600 bg-red-50'
       default: return 'text-gray-600 bg-gray-50'
     }
@@ -111,9 +111,9 @@ export default function ActionExecutionPanel({
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm ${className}`}>
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
-          <Zap className="w-5 h-5 text-orange-500" />
+          <Zap className="w-5 h-5 text-green-500" />
           <h3 className="text-lg font-semibold text-gray-900">Detected Actions</h3>
-          <span className="px-2 py-1 text-xs font-medium text-orange-600 bg-orange-50 rounded-full">
+          <span className="px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded-full">
             {actions.length} action{actions.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -226,7 +226,7 @@ export default function ActionExecutionPanel({
                     <button
                       onClick={() => handleExecuteAction(action)}
                       disabled={state.status === 'executing' || state.status === 'completed'}
-                      className="px-3 py-1.5 text-xs font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {state.status === 'executing' ? (
                         <>

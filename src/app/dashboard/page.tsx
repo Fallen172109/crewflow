@@ -1,40 +1,38 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { AGENTS, getAgentsForTier, isSimplifiedAgentSystem, getShopifyAgents } from '@/lib/agents'
+import { useShopifyStore } from '@/contexts/ShopifyStoreContext'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
 
-// Helper function to get framework badge styling
-const getFrameworkBadge = (framework: string) => {
-  switch (framework) {
-    case 'langchain':
-      return 'bg-blue-100 text-blue-700 border-blue-200'
-    case 'autogen':
-      return 'bg-purple-100 text-purple-700 border-purple-200'
-    case 'perplexity':
-      return 'bg-green-100 text-green-700 border-green-200'
-    case 'hybrid':
-      return 'bg-orange-100 text-orange-700 border-orange-200'
-    default:
-      return 'bg-gray-100 text-gray-700 border-gray-200'
-  }
-}
-
 // Interface for dashboard metrics
 interface DashboardMetrics {
-  requestsToday: number
-  requestsGrowth: number
-  tasksCompleted: number
-  timeSaved: string
-  recentActivity: Array<{
-    id: string
-    agent_name: string
-    message_type: string
-    timestamp: string
-    success: boolean
-  }>
+  totalRevenue: number
+  revenueGrowth: number
+  totalOrders: number
+  ordersGrowth: number
+  totalProducts: number
+  lowStockCount: number
+  pendingOrders: number
+}
+
+// Interface for recent orders
+interface RecentOrder {
+  id: string
+  order_number: string
+  customer_name: string
+  total: number
+  status: string
+  created_at: string
+}
+
+// Helper function to format currency
+const formatCurrency = (amount: number, currency: string = 'USD'): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount)
 }
 
 // Helper function to format time ago
@@ -57,201 +55,199 @@ const formatTimeAgo = (timestamp: string): string => {
   }
 }
 
-// Helper function to format action text based on message type
-const formatActionText = (messageType: string, success: boolean): string => {
-  const baseActions = {
-    'chat': 'had a conversation',
-    'preset_action': 'executed a preset action',
-    'tool_execution': 'used a tool'
+// Get status badge styling
+const getStatusBadge = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'fulfilled':
+      return 'bg-green-100 text-green-700 border-green-200'
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+    case 'cancelled':
+      return 'bg-red-100 text-red-700 border-red-200'
+    case 'refunded':
+      return 'bg-gray-100 text-gray-700 border-gray-200'
+    default:
+      return 'bg-blue-100 text-blue-700 border-blue-200'
   }
-
-  const action = baseActions[messageType as keyof typeof baseActions] || 'performed an action'
-  return success ? action : `attempted to ${action.replace('had', 'have').replace('executed', 'execute').replace('used', 'use')}`
 }
 
 export default function DashboardPage() {
   const { userProfile, user } = useAuth()
-  // Show all agents for admin users or enterprise users
-  const isAdmin = userProfile?.role === 'admin'
-  const isEnterprise = userProfile?.subscription_tier === 'enterprise'
-  const isDebugUser = userProfile?.email === 'borzeckikamil7@gmail.com'
-  const availableAgents = (isAdmin || isEnterprise || isDebugUser) ? Object.values(AGENTS) : getAgentsForTier(userProfile?.subscription_tier)
-  const [showConfirmation, setShowConfirmation] = useState(false)
+  const { selectedStore, stores, isLoading: storesLoading } = useShopifyStore()
   const [dashboardMetrics, setDashboardMetrics] = useState<DashboardMetrics>({
-    requestsToday: 0,
-    requestsGrowth: 0,
-    tasksCompleted: 0,
-    timeSaved: '0h',
-    recentActivity: []
+    totalRevenue: 0,
+    revenueGrowth: 0,
+    totalOrders: 0,
+    ordersGrowth: 0,
+    totalProducts: 0,
+    lowStockCount: 0,
+    pendingOrders: 0
   })
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Debug logging
-  console.log('Dashboard: User Profile:', {
-    email: userProfile?.email,
-    role: userProfile?.role,
-    tier: userProfile?.subscription_tier,
-    status: userProfile?.subscription_status,
-    isAdmin,
-    isEnterprise,
-    isDebugUser,
-    availableAgentsCount: availableAgents.length,
-    allAgentsCount: Object.values(AGENTS).length
-  })
+  // Fetch store data when store is selected
+  useEffect(() => {
+    if (selectedStore?.id) {
+      fetchStoreMetrics()
+    } else {
+      setLoading(false)
+    }
+  }, [selectedStore?.id])
 
-  // Fetch real dashboard metrics
-  const fetchDashboardMetrics = async () => {
-    if (!user?.id) return
+  const fetchStoreMetrics = async () => {
+    if (!selectedStore?.id) return
+    setLoading(true)
 
     try {
-      const supabase = createSupabaseClient()
+      // Fetch store analytics from API
+      const response = await fetch(`/api/shopify/stores/${selectedStore.id}/analytics`)
 
-      // Get today's date for filtering
-      const today = new Date()
-      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
-
-      // Fetch today's requests
-      const { data: todayRequests, error: todayError } = await supabase
-        .from('agent_usage_detailed')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('timestamp', todayStart.toISOString())
-        .lt('timestamp', new Date(todayStart.getTime() + 24 * 60 * 60 * 1000).toISOString())
-
-      if (todayError) {
-        console.error('Error fetching today requests:', todayError)
+      if (response.ok) {
+        const data = await response.json()
+        setDashboardMetrics({
+          totalRevenue: data.totalRevenue || 0,
+          revenueGrowth: data.revenueGrowth || 0,
+          totalOrders: data.totalOrders || 0,
+          ordersGrowth: data.ordersGrowth || 0,
+          totalProducts: data.totalProducts || 0,
+          lowStockCount: data.lowStockCount || 0,
+          pendingOrders: data.pendingOrders || 0
+        })
+        setRecentOrders(data.recentOrders || [])
       }
-
-      // Fetch yesterday's requests for growth calculation
-      const { data: yesterdayRequests, error: yesterdayError } = await supabase
-        .from('agent_usage_detailed')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('timestamp', yesterdayStart.toISOString())
-        .lt('timestamp', todayStart.toISOString())
-
-      if (yesterdayError) {
-        console.error('Error fetching yesterday requests:', yesterdayError)
-      }
-
-      // Fetch recent activity (last 10 records)
-      const { data: recentActivity, error: activityError } = await supabase
-        .from('agent_usage_detailed')
-        .select('id, agent_name, message_type, timestamp, success')
-        .eq('user_id', user.id)
-        .order('timestamp', { ascending: false })
-        .limit(10)
-
-      if (activityError) {
-        console.error('Error fetching recent activity:', activityError)
-      }
-
-      // Calculate metrics
-      const todayCount = todayRequests?.length || 0
-      const yesterdayCount = yesterdayRequests?.length || 0
-      const growth = yesterdayCount > 0 ? ((todayCount - yesterdayCount) / yesterdayCount) * 100 : 0
-
-      // Calculate successful tasks (successful requests)
-      const successfulTasks = todayRequests?.filter(req => req.success).length || 0
-
-      // Calculate estimated time saved (rough estimate: 5 minutes per successful task)
-      const minutesSaved = successfulTasks * 5
-      const hoursSaved = Math.floor(minutesSaved / 60)
-      const remainingMinutes = minutesSaved % 60
-      const timeSaved = hoursSaved > 0 ? `${hoursSaved}h ${remainingMinutes}m` : `${remainingMinutes}m`
-
-      setDashboardMetrics({
-        requestsToday: todayCount,
-        requestsGrowth: Math.round(growth),
-        tasksCompleted: successfulTasks,
-        timeSaved,
-        recentActivity: recentActivity || []
-      })
     } catch (error) {
-      console.error('Error fetching dashboard metrics:', error)
+      console.error('Error fetching store metrics:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  // Check for email confirmation success
-  useEffect(() => {
-    // Check URL parameters using window.location instead of useSearchParams
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const confirmed = urlParams.get('confirmed')
-      if (confirmed === 'true') {
-        setShowConfirmation(true)
-        // Auto-hide after 5 seconds
-        setTimeout(() => setShowConfirmation(false), 5000)
-      }
-    }
-  }, [])
+  // If no stores connected, show connection prompt
+  if (!storesLoading && stores.length === 0) {
+    return (
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Store Overview</h1>
+            <p className="text-gray-600 mt-1">
+              Welcome back! Let's set up your Shopify store.
+            </p>
+          </div>
+        </div>
 
-  // Fetch dashboard data when user is available
-  useEffect(() => {
-    if (user?.id) {
-      fetchDashboardMetrics()
-    }
-  }, [user?.id])
+        {/* Connect Store CTA */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-8 text-center">
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect Your Shopify Store</h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            Connect your Shopify store to start managing products, orders, and inventory with AI-powered automation.
+          </p>
+          <Link
+            href="/dashboard/settings"
+            className="inline-flex items-center px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Connect Store
+          </Link>
+        </div>
 
-  return (
-    <div className="space-y-8">
-      {/* Email Confirmation Success Message */}
-      {showConfirmation && (
-        <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        {/* Features Preview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>
-            <div>
-              <p className="text-green-200 font-semibold">🎉 Welcome aboard, Captain!</p>
-              <p className="text-green-300 text-sm">Your email has been confirmed and your account is now active.</p>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Management</h3>
+            <p className="text-gray-600 text-sm">
+              Create, edit, and manage products with AI-powered descriptions and image optimization.
+            </p>
           </div>
-          <button
-            onClick={() => setShowConfirmation(false)}
-            className="text-green-300 hover:text-green-200 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Command Center</h1>
-          <p className="text-gray-600 mt-1">
-            Welcome back, Captain. Your AI crew is ready for orders.
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="bg-white rounded-lg px-4 py-2 border border-gray-200 shadow-sm">
-            <span className="text-sm text-gray-600">Current Plan: </span>
-            <span className="text-primary-500 font-semibold capitalize">
-              {userProfile?.subscription_tier || 'Free'}
-            </span>
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Order Processing</h3>
+            <p className="text-gray-600 text-sm">
+              Streamline order fulfillment with automated workflows and real-time tracking.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics & Insights</h3>
+            <p className="text-gray-600 text-sm">
+              Get actionable insights with AI-powered analytics and performance recommendations.
+            </p>
           </div>
         </div>
       </div>
+    )
+  }
 
-      {/* Stats Overview */}
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Store Overview</h1>
+          <p className="text-gray-600 mt-1">
+            {selectedStore ? `Managing: ${selectedStore.storeName || selectedStore.shopDomain}` : 'Select a store to view metrics'}
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Link
+            href="/dashboard/shopify"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span>AI Assistant</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Active Agents</p>
-              <p className="text-2xl font-bold text-gray-900">{availableAgents.length}</p>
+              <p className="text-gray-600 text-sm">Total Revenue</p>
+              {loading ? (
+                <div className="w-24 h-8 bg-gray-200 animate-pulse rounded mt-1"></div>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(dashboardMetrics.totalRevenue, selectedStore?.currency || 'USD')}
+                  </p>
+                  {dashboardMetrics.revenueGrowth !== 0 && (
+                    <p className={`text-sm mt-1 ${dashboardMetrics.revenueGrowth > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {dashboardMetrics.revenueGrowth > 0 ? '↗' : '↘'} {Math.abs(dashboardMetrics.revenueGrowth)}% vs last month
+                    </p>
+                  )}
+                </>
+              )}
             </div>
-            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
@@ -260,15 +256,15 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Requests Today</p>
+              <p className="text-gray-600 text-sm">Total Orders</p>
               {loading ? (
-                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded mt-1"></div>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.requestsToday}</p>
-                  {dashboardMetrics.requestsGrowth !== 0 && (
-                    <p className={`text-sm mt-1 ${dashboardMetrics.requestsGrowth > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {dashboardMetrics.requestsGrowth > 0 ? '↗' : '↘'} {Math.abs(dashboardMetrics.requestsGrowth)}% from yesterday
+                  <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.totalOrders}</p>
+                  {dashboardMetrics.pendingOrders > 0 && (
+                    <p className="text-sm mt-1 text-yellow-600">
+                      {dashboardMetrics.pendingOrders} pending
                     </p>
                   )}
                 </>
@@ -276,7 +272,7 @@ export default function DashboardPage() {
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
           </div>
@@ -285,203 +281,198 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Tasks Completed</p>
+              <p className="text-gray-600 text-sm">Total Products</p>
               {loading ? (
-                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded mt-1"></div>
               ) : (
-                <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.tasksCompleted}</p>
+                <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.totalProducts}</p>
+              )}
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Low Stock Alerts</p>
+              {loading ? (
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded mt-1"></div>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.lowStockCount}</p>
+                  {dashboardMetrics.lowStockCount > 0 && (
+                    <Link href="/dashboard/inventory" className="text-sm mt-1 text-green-600 hover:text-green-700">
+                      View inventory →
+                    </Link>
+                  )}
+                </>
               )}
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">Time Saved</p>
-              {loading ? (
-                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
-              ) : (
-                <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.timeSaved}</p>
-              )}
-            </div>
-            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
           </div>
         </div>
       </div>
 
-      {/* AI Agents Grid */}
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Link
+          href="/dashboard/products"
+          className="flex items-center space-x-3 bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-green-300 hover:shadow-md transition-all"
+        >
+          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Add Product</p>
+            <p className="text-sm text-gray-500">Create a new listing</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/dashboard/orders"
+          className="flex items-center space-x-3 bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-green-300 hover:shadow-md transition-all"
+        >
+          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">View Orders</p>
+            <p className="text-sm text-gray-500">Manage fulfillment</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/dashboard/inventory"
+          className="flex items-center space-x-3 bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-green-300 hover:shadow-md transition-all"
+        >
+          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Check Stock</p>
+            <p className="text-sm text-gray-500">Monitor inventory</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/dashboard/analytics"
+          className="flex items-center space-x-3 bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-green-300 hover:shadow-md transition-all"
+        >
+          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">View Analytics</p>
+            <p className="text-sm text-gray-500">See performance</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Recent Orders */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Your AI Crew</h2>
-            {isSimplifiedAgentSystem() && (
-              <p className="text-sm text-gray-600 mt-1">
-                🚢 Specialized Shopify-focused agents for streamlined store management
-              </p>
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            {isSimplifiedAgentSystem() && (
-              <Link
-                href="/dashboard/shopify"
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Go to Store Manager →
-              </Link>
-            )}
-            <Link
-              href="/pricing"
-              className="text-primary-500 hover:text-primary-600 text-sm font-medium"
-            >
-              Upgrade to access more agents →
-            </Link>
-          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Recent Orders</h2>
+          <Link
+            href="/dashboard/orders"
+            className="text-green-500 hover:text-green-600 text-sm font-medium"
+          >
+            View all orders →
+          </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {availableAgents.map((agent) => (
-            <Link
-              key={agent.id}
-              href={`/dashboard/agents/${agent.id}`}
-              className="bg-white rounded-xl p-6 border border-gray-200 hover:border-primary-500/50 transition-all duration-300 group shadow-sm hover:shadow-md"
-            >
-              <div className="flex items-start space-x-4">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform"
-                  style={{ backgroundColor: agent.color }}
-                >
-                  {agent.name[0]}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {loading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-4 p-3">
+                  <div className="w-10 h-10 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="w-3/4 h-4 bg-gray-200 animate-pulse rounded"></div>
+                    <div className="w-1/4 h-3 bg-gray-200 animate-pulse rounded"></div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                    {agent.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-2">{agent.title}</p>
-                  <p className="text-sm text-gray-700 line-clamp-2">
-                    {agent.description}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className={`text-xs px-2 py-1 rounded border ${getFrameworkBadge(agent.framework)}`}>
-                      {agent.framework}
+              ))}
+            </div>
+          ) : recentOrders.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">Order #{order.order_number}</p>
+                      <p className="text-sm text-gray-500">{order.customer_name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">
+                        {formatCurrency(order.total, selectedStore?.currency || 'USD')}
+                      </p>
+                      <p className="text-sm text-gray-500">{formatTimeAgo(order.created_at)}</p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-medium rounded border ${getStatusBadge(order.status)}`}>
+                      {order.status}
                     </span>
-                    <span className="text-xs text-gray-500">
-                      {agent.presetActions.length} actions
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-xs text-gray-500">Online</span>
                   </div>
                 </div>
-
-                {/* Integration Status */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    {agent.integrations.length > 0 && (
-                      <>
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-gray-500">
-                          {agent.integrations.length} integrations
-                        </span>
-                      </>
-                    )}
-                    {agent.requiresApiConnection && (
-                      <>
-                        <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                        <span className="text-xs text-gray-500">API required</span>
-                      </>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    ${agent.costPerRequest}/req
-                  </span>
-                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
               </div>
-            </Link>
-          ))}
+              <p className="text-gray-500">No recent orders</p>
+              <p className="text-gray-400 text-sm mt-1">Orders will appear here once you start receiving them</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="p-6">
-            {loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center space-x-4 p-3">
-                    <div className="w-8 h-8 bg-gray-200 animate-pulse rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="w-3/4 h-4 bg-gray-200 animate-pulse rounded"></div>
-                      <div className="w-1/4 h-3 bg-gray-200 animate-pulse rounded"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : dashboardMetrics.recentActivity.length > 0 ? (
-              <div className="space-y-4">
-                {dashboardMetrics.recentActivity.map((activity) => {
-                  // Get agent info from AGENTS config
-                  const agent = Object.values(AGENTS).find(a => a.name.toLowerCase() === activity.agent_name.toLowerCase())
-                  const agentColor = agent?.color || '#6b7280'
-                  const agentName = activity.agent_name
-
-                  // Format timestamp
-                  const timeAgo = formatTimeAgo(activity.timestamp)
-
-                  // Format action based on message type
-                  const actionText = formatActionText(activity.message_type, activity.success)
-
-                  return (
-                    <div key={activity.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                        style={{ backgroundColor: agentColor }}
-                      >
-                        {agentName[0]?.toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-gray-900 text-sm">
-                          <span className="font-semibold">{agentName}</span> {actionText}
-                          {!activity.success && (
-                            <span className="ml-2 text-red-500 text-xs">(Failed)</span>
-                          )}
-                        </p>
-                        <p className="text-gray-500 text-xs">{timeAgo}</p>
-                      </div>
-                      <div className={`w-2 h-2 rounded-full ${activity.success ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500 text-sm">No recent activity</p>
-                <p className="text-gray-400 text-xs mt-1">Start using your AI agents to see activity here</p>
-              </div>
-            )}
+      {/* AI Assistant Card */}
+      <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
           </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-900">Need help managing your store?</h3>
+            <p className="text-gray-600 text-sm mt-1">
+              Ask the AI Assistant to create products, analyze sales, update inventory, and more.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/shopify"
+            className="flex-shrink-0 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
+          >
+            Chat with AI
+          </Link>
         </div>
       </div>
     </div>

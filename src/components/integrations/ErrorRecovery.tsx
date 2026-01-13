@@ -213,7 +213,7 @@ export default function ErrorRecovery({
               <button
                 onClick={() => attemptRecovery()}
                 disabled={recovering}
-                className="flex items-center space-x-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white text-sm rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm rounded-lg transition-colors"
               >
                 {recovering ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -286,7 +286,7 @@ export default function ErrorRecovery({
               <button
                 onClick={attemptBulkRecovery}
                 disabled={bulkRecovering}
-                className="flex items-center space-x-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white text-sm rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm rounded-lg transition-colors"
               >
                 {bulkRecovering ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />

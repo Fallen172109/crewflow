@@ -67,7 +67,7 @@ export function AdminSidebar({ adminUser }: AdminSidebarProps) {
       {/* Logo/Brand */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">🚢</span>
           </div>
           <div className="ml-3">
@@ -91,7 +91,7 @@ export function AdminSidebar({ adminUser }: AdminSidebarProps) {
               className={`
                 flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
                 ${isActive 
-                  ? 'bg-orange-50 text-orange-700 border border-orange-200' 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }
               `}
@@ -109,7 +109,7 @@ export function AdminSidebar({ adminUser }: AdminSidebarProps) {
       {/* Admin Info */}
       <div className="absolute bottom-0 w-64 p-4 border-t border-gray-200 bg-gray-50">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
             <span className="text-white text-xs font-semibold">
               {adminUser.profile.email.charAt(0).toUpperCase()}
             </span>

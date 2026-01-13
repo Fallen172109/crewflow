@@ -17,7 +17,7 @@ export default function QuickActionsBar({ onAction }: Props) {
         <button
           key={a.label}
           onClick={() => onAction(a.prompt)}
-          className="cf-chip px-3 py-2 text-sm hover:border-[#ff6a3d] hover:text-[#ff6a3d] transition text-slate-700"
+          className="cf-chip px-3 py-2 text-sm hover:border-[#5BBF46] hover:text-[#5BBF46] transition text-slate-700"
         >
           {a.label}
         </button>

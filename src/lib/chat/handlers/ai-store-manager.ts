@@ -18,9 +18,11 @@ import { withAICache } from '@/lib/ai/response-cache'
 import { SmartContextCompressor } from '@/lib/ai/smart-context-compressor'
 import { actionDetector, ActionDetectionResult } from '@/lib/ai/action-detection'
 import { ShopifyActionExecutor, ActionResult } from '@/lib/ai/shopify-action-executor'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('AIStoreManager')
 
 export class AIStoreManagerHandler implements ChatHandler {
-  // DEBUG: Force recompilation v3
   private contextCompressor = new SmartContextCompressor()
 
   canHandle(request: UnifiedChatRequest): boolean {
@@ -30,7 +32,7 @@ export class AIStoreManagerHandler implements ChatHandler {
 
   async process(request: UnifiedChatRequest, user: any): Promise<UnifiedChatResponse> {
     try {
-      console.log('🏪 AI STORE MANAGER HANDLER: Processing request [DEBUG v2]', {
+      log.debug(' Processing request [DEBUG v2]', {
         taskType: request.taskType,
         threadId: request.threadId,
         messageLength: request.message.length,
@@ -55,12 +57,12 @@ export class AIStoreManagerHandler implements ChatHandler {
         updated_at: new Date().toISOString()
       }
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Using bypass thread context:', {
+      log.debug(' Using bypass thread context:', {
         threadId: thread.id,
         userId: user.id
       })
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Thread context ready:', {
+      log.debug(' Thread context ready:', {
         threadId: thread.id
       })
 
@@ -81,7 +83,7 @@ export class AIStoreManagerHandler implements ChatHandler {
         }
       )
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Loaded compressed context', {
+      log.debug(' Loaded compressed context', {
         recentMessages: compressedContext.recentMessages.length,
         summaries: compressedContext.summarizedHistory.length,
         contextItems: compressedContext.relevantContext.length,
@@ -99,11 +101,11 @@ export class AIStoreManagerHandler implements ChatHandler {
       if (request.attachments && request.attachments.length > 0) {
         try {
           fileAnalysis = await analyzeFiles(request.attachments)
-          console.log('🏪 AI STORE MANAGER HANDLER: File analysis completed', {
+          log.debug(' File analysis completed', {
             analysisLength: fileAnalysis.length
           })
         } catch (error) {
-          console.error('🏪 AI STORE MANAGER HANDLER: File analysis error:', error)
+          log.error(' File analysis error:', error)
           // Continue without file analysis
         }
       }
@@ -119,22 +121,21 @@ export class AIStoreManagerHandler implements ChatHandler {
           .single()
 
         if (storeData) {
-          const shopifyAPI = createShopifyAPI(storeData.shop_domain, storeData.access_token)
-          
-          // Get business metrics for context
-          const [storeInfo, orderStats] = await Promise.all([
-            shopifyAPI.getStoreInfo(),
-            shopifyAPI.getOrderStatistics()
-          ])
+          // Pass user.id first, then optional credentials (correct parameter order)
+          const shopifyAPI = await createShopifyAPI(user.id, storeData.access_token, storeData.shop_domain)
 
-          businessContext = `Business Context:
+          if (shopifyAPI) {
+            // Get business metrics for context using getShop()
+            const storeInfo = await shopifyAPI.getShop()
+
+            businessContext = `Business Context:
 Store: ${storeInfo.name} (${storeInfo.domain})
-Plan: ${storeInfo.plan_name}
-Recent Orders: ${orderStats.recent_orders_count}
-Revenue Trend: ${orderStats.revenue_trend}`
+Plan: ${storeInfo.plan_name || 'N/A'}
+Currency: ${storeInfo.currency || 'USD'}`
+          }
         }
       } catch (error) {
-        console.log('🏪 AI STORE MANAGER HANDLER: No business context available:', error)
+        log.debug(' No business context available:', error)
         // Continue without business context
       }
 
@@ -167,14 +168,14 @@ Revenue Trend: ${orderStats.revenue_trend}`
       // Initialize AI model
       const aiConfig = getAIConfig()
 
-      console.log('🏪 AI STORE MANAGER HANDLER: AI Config check', {
+      log.debug(' AI Config check', {
         hasOpenAIKey: !!aiConfig.openai.apiKey,
         keyLength: aiConfig.openai.apiKey?.length || 0,
         model: aiConfig.openai.model
       })
 
       if (!aiConfig.openai.apiKey) {
-        console.error('🏪 AI STORE MANAGER HANDLER: OpenAI API key not configured')
+        log.error(' OpenAI API key not configured')
         return {
           response: "I apologize, but the AI service is not properly configured. Please contact support.",
           success: false,
@@ -194,16 +195,16 @@ Revenue Trend: ${orderStats.revenue_trend}`
         maxTokens: aiConfig.openai.maxTokens,
       })
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Sending to AI model', {
+      log.debug(' Sending to AI model', {
         messageCount: messages.length,
         model: aiConfig.openai.model,
         lastMessage: messages[messages.length - 1]?.content?.substring(0, 100)
       })
 
       // Get AI response
-      console.log('🏪 AI STORE MANAGER HANDLER: About to call AI model...')
+      log.debug(' About to call AI model...')
       const response = await model.invoke(messages)
-      console.log('🏪 AI STORE MANAGER HANDLER: AI model call completed', {
+      log.debug(' AI model call completed', {
         hasResponse: !!response,
         hasContent: !!response?.content,
         contentType: typeof response?.content
@@ -211,7 +212,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
 
       let responseText = response.content as string
 
-      console.log('🏪 AI STORE MANAGER HANDLER: AI response received', {
+      log.debug(' AI response received', {
         responseLength: responseText?.length || 0,
         responsePreview: responseText?.substring(0, 200) || 'NO CONTENT',
         fullResponse: responseText
@@ -219,7 +220,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
 
       // Fallback if no response
       if (!responseText || responseText.trim().length === 0) {
-        console.error('🏪 AI STORE MANAGER HANDLER: Empty AI response, using fallback')
+        log.error(' Empty AI response, using fallback')
         responseText = "I'm ready to help you manage your Shopify store! What would you like me to do?"
       }
 
@@ -231,7 +232,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         detectedActions: []
       }
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Checking for actions', {
+      log.debug(' Checking for actions', {
         hasContext: !!request.context,
         hasStoreId: !!request.context?.storeId,
         contextKeys: request.context ? Object.keys(request.context) : [],
@@ -245,7 +246,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         context: request.context || {}
       })
 
-      console.log('🏪 AI STORE MANAGER HANDLER: User message action detection result', {
+      log.debug(' User message action detection result', {
         hasActions: userMessageActions.hasActions,
         actionsCount: userMessageActions.detectedActions?.length || 0,
         actions: userMessageActions.detectedActions
@@ -270,7 +271,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         actionProcessingResult.hasActions = true
       }
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Final action processing result', {
+      log.debug(' Final action processing result', {
         hasActions: actionProcessingResult.hasActions,
         totalActionsCount: actionProcessingResult.detectedActions?.length || 0,
         detectedActions: actionProcessingResult.detectedActions
@@ -314,7 +315,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
           p_agent_name: 'ai_store_manager'
         })
       } catch (error) {
-        console.error('🏪 AI STORE MANAGER HANDLER: Usage tracking error:', error)
+        log.error(' Usage tracking error:', error)
       }
 
       // Extract product preview if product creation was detected
@@ -356,7 +357,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
       }
 
     } catch (error) {
-      console.error('🏪 AI STORE MANAGER HANDLER: Error:', error)
+      log.error(' Error:', error)
       
       if (error instanceof ChatHandlerError) {
         throw error
@@ -375,7 +376,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
     onChunk: (chunk: { content: string; messageId?: string; metadata?: any }) => void
   ): Promise<UnifiedChatResponse> {
     try {
-      console.log('🏪 AI STORE MANAGER HANDLER: Processing streaming request', {
+      log.debug(' Processing streaming request', {
         taskType: request.taskType,
         threadId: request.threadId,
         messageLength: request.message.length,
@@ -403,7 +404,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         updated_at: new Date().toISOString()
       }
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Using streaming thread context:', {
+      log.debug(' Using streaming thread context:', {
         threadId: thread.id,
         userId: user.id
       })
@@ -425,7 +426,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         }
       )
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Loaded compressed context for streaming', {
+      log.debug(' Loaded compressed context for streaming', {
         recentMessages: compressedContext.recentMessages.length,
         summaries: compressedContext.summarizedHistory.length,
         contextItems: compressedContext.relevantContext.length,
@@ -443,11 +444,11 @@ Revenue Trend: ${orderStats.revenue_trend}`
       if (request.attachments && request.attachments.length > 0) {
         try {
           fileAnalysis = await analyzeFiles(request.attachments)
-          console.log('🏪 AI STORE MANAGER HANDLER: File analysis completed for streaming', {
+          log.debug(' File analysis completed for streaming', {
             analysisLength: fileAnalysis.length
           })
         } catch (error) {
-          console.error('🏪 AI STORE MANAGER HANDLER: File analysis error:', error)
+          log.error(' File analysis error:', error)
           // Continue without file analysis
         }
       }
@@ -463,22 +464,21 @@ Revenue Trend: ${orderStats.revenue_trend}`
           .single()
 
         if (storeData) {
-          const shopifyAPI = createShopifyAPI(storeData.shop_domain, storeData.access_token)
+          // Pass user.id first, then optional credentials (correct parameter order)
+          const shopifyAPI = await createShopifyAPI(user.id, storeData.access_token, storeData.shop_domain)
 
-          // Get business metrics for context
-          const [storeInfo, orderStats] = await Promise.all([
-            shopifyAPI.getStoreInfo(),
-            shopifyAPI.getOrderStatistics()
-          ])
+          if (shopifyAPI) {
+            // Get business metrics for context using getShop()
+            const storeInfo = await shopifyAPI.getShop()
 
-          businessContext = `Business Context:
+            businessContext = `Business Context:
 Store: ${storeInfo.name} (${storeInfo.domain})
-Plan: ${storeInfo.plan_name}
-Recent Orders: ${orderStats.recent_orders_count}
-Revenue Trend: ${orderStats.revenue_trend}`
+Plan: ${storeInfo.plan_name || 'N/A'}
+Currency: ${storeInfo.currency || 'USD'}`
+          }
         }
       } catch (error) {
-        console.log('🏪 AI STORE MANAGER HANDLER: No business context available for streaming:', error)
+        log.debug(' No business context available for streaming:', error)
         // Continue without business context
       }
 
@@ -511,14 +511,14 @@ Revenue Trend: ${orderStats.revenue_trend}`
       // Initialize AI model
       const aiConfig = getAIConfig()
 
-      console.log('🏪 AI STORE MANAGER HANDLER: AI Config check for streaming', {
+      log.debug(' AI Config check for streaming', {
         hasOpenAIKey: !!aiConfig.openai.apiKey,
         keyLength: aiConfig.openai.apiKey?.length || 0,
         model: aiConfig.openai.model
       })
 
       if (!aiConfig.openai.apiKey) {
-        console.error('🏪 AI STORE MANAGER HANDLER: OpenAI API key not configured for streaming')
+        log.error(' OpenAI API key not configured for streaming')
         // Send error chunk
         onChunk({
           content: "I apologize, but the AI service is not properly configured. Please contact support.",
@@ -546,7 +546,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         streaming: true, // Enable streaming
       })
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Starting streaming response', {
+      log.debug(' Starting streaming response', {
         messageCount: messages.length,
         model: aiConfig.openai.model,
         lastMessage: messages[messages.length - 1]?.content?.substring(0, 100)
@@ -578,7 +578,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         }
       }
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Streaming completed', {
+      log.debug(' Streaming completed', {
         responseLength: fullResponse.length,
         chunks: tokenCount
       })
@@ -591,7 +591,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         detectedActions: []
       }
 
-      console.log('🏪 AI STORE MANAGER HANDLER: Checking storeId for action processing', {
+      log.debug(' Checking storeId for action processing', {
         hasContext: !!request.context,
         storeId: request.context?.storeId,
         storeIdType: typeof request.context?.storeId,
@@ -599,7 +599,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
       })
 
       if (request.context?.storeId && request.context.storeId !== 'no-store') {
-        console.log('🏪 AI STORE MANAGER HANDLER: Valid storeId found, processing actions')
+        log.debug(' Valid storeId found, processing actions')
 
         // First check the user's original message for actions
         const userMessageActions = actionDetector.detectActions(request.message, {
@@ -609,7 +609,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
         })
 
         // Then check the AI response for actions
-        console.log('🏪 AI STORE MANAGER HANDLER: About to process actions in response', {
+        log.debug(' About to process actions in response', {
           responseLength: fullResponse.length,
           userId: user.id,
           storeId: request.context.storeId,
@@ -623,7 +623,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
           request
         )
 
-        console.log('🏪 AI STORE MANAGER HANDLER: Action processing completed', {
+        log.debug(' Action processing completed', {
           hasActions: actionProcessingResult.hasActions,
           actionsCount: actionProcessingResult.detectedActions?.length || 0,
           enhancedResponse: actionProcessingResult.enhancedResponse !== fullResponse
@@ -656,7 +656,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
 
         fullResponse = actionProcessingResult.enhancedResponse
       } else {
-        console.log('🏪 AI STORE MANAGER HANDLER: No valid storeId, skipping action processing', {
+        log.debug(' No valid storeId, skipping action processing', {
           hasContext: !!request.context,
           storeId: request.context?.storeId,
           reason: !request.context?.storeId ? 'No storeId in context' : 'StoreId is no-store'
@@ -699,26 +699,29 @@ Revenue Trend: ${orderStats.revenue_trend}`
           p_agent_name: 'ai_store_manager'
         })
       } catch (error) {
-        console.error('🏪 AI STORE MANAGER HANDLER: Usage tracking error:', error)
+        log.error(' Usage tracking error:', error)
       }
 
-      // Extract product preview if product creation was detected
+      // Extract product preview if product creation was detected.
+      // This is used purely for building/updating drafts in the UI – it
+      // does NOT mean anything has been published to Shopify.
       let productPreview = null
       if (actionProcessingResult.detectedActions) {
         for (const detectedAction of actionProcessingResult.detectedActions) {
           if (detectedAction.action.type === 'product' && detectedAction.action.action.includes('create')) {
-            const params = detectedAction.action.parameters
+            const params = detectedAction.action.parameters || {}
             productPreview = {
               title: params.title || 'New Product',
               description: params.description || 'Product created via AI assistant',
-              price: parseFloat(params.price) || 0,
+              price: params.price ? parseFloat(params.price) : 0,
               category: params.product_type || params.category,
               tags: params.tags || [],
               variants: params.variants || [{
                 title: 'Default Title',
-                price: parseFloat(params.price) || 0,
+                price: params.price ? parseFloat(params.price) : 0,
                 inventory_quantity: params.inventory_quantity || 0
-              }]
+              }],
+              status: 'draft'
             }
             break // Only return the first product preview
           }
@@ -741,7 +744,7 @@ Revenue Trend: ${orderStats.revenue_trend}`
       }
 
     } catch (error) {
-      console.error('🏪 AI STORE MANAGER HANDLER: Streaming error:', error)
+      log.error(' Streaming error:', error)
 
       if (error instanceof ChatHandlerError) {
         throw error
@@ -794,12 +797,56 @@ BUSINESS AUTOMATION FOCUS:
 - Design scalable processes that grow with the business
 - Monitor and optimize automated systems for maximum efficiency
 
+HONESTY AND DATA QUALITY:
+- Never invent concrete business data (prices, stock levels, dates, metrics) if you are not sure.
+- If you do not know something, say so clearly and ask the user for the missing details.
+- When you estimate or approximate, clearly label it as an estimate and explain your reasoning.
+- Prefer clarifying questions over making assumptions about their store, products, or customers.
+
+CONVERSATIONAL STORE MANAGEMENT:
+- You are not only an automation engine; you are also a strategic conversation partner.
+- Support open-ended questions about strategy, marketing, operations, and Shopify in general.
+- Ask smart follow-up questions to better understand the merchant's goals before proposing actions.
+- Adapt your tone and depth based on how experienced the merchant seems.
+
+PRODUCT CREATION & EDITING WORKFLOW:
+- Treat product creation and editing as a multi-step conversation, not a single shot.
+- When the user describes a new product, first restate your understanding in plain language.
+- Then, ask targeted questions to fill in missing essentials one by one, for example:
+  - Title / name
+  - Description and key benefits
+  - Category / product type
+  - Variants (sizes, colors, materials)
+  - Stock level / inventory strategy
+  - Tags / collections
+- For any field the user is unsure about, propose sensible options instead of guessing.
+
+PRICING BEHAVIOUR (VERY IMPORTANT):
+- Never assign a random price.
+- If the user already has a price, respect it and only suggest adjustments with reasoning.
+- If the user does not know the price or explicitly asks for help with pricing:
+  - Explain that you can research the current market to suggest a realistic range.
+  - Describe the kind of information you will consider (competing products, quality, positioning).
+  - Present the result as a price range and a recommended point with a short explanation.
+  - Make it clear that the user makes the final decision.
+- Always separate "suggested" prices from "final" prices chosen by the user in your wording.
+
+DRAFT → PREVIEW → CONFIRM FLOW:
+- When you are moving towards creating or updating a product, follow this pattern:
+  1) Talk it through with the user and collect all important details.
+  2) Summarize the product as a **draft** in a clear, structured way.
+  3) Clearly label it as a draft / preview, not yet live in Shopify.
+  4) Ask explicitly if the user wants to proceed with creating/updating the product.
+- Never imply that you have already created or changed a Shopify product unless the system confirms execution.
+- Use language like "I can create..." / "I can update..." rather than "I have created..." until confirmation.
+
 ACTIONABLE LANGUAGE FOR SHOPIFY OPERATIONS:
 When suggesting Shopify actions, use clear, actionable language such as:
-- "I will create a product..." or "Let me create a new product..."
-- "I'll add this product to your store..."
-- "I can set up this product listing..."
-This enables automatic action detection and execution with user confirmation.`
+- "I will create a product draft..." or "Let me prepare a new product draft..."
+- "I can add this product to your store once you confirm the details."
+- "I can set up this product listing as described and wait for your go-ahead to publish."
+This enables automatic action detection and execution with explicit user confirmation.
+`
 
     // Add task-specific context
     const taskPrompts = {
@@ -920,7 +967,7 @@ CURRENT FOCUS: Operations Management
   }> {
     try {
       // Detect actions in the response
-      console.log('⚡ AI STORE MANAGER HANDLER: About to detect actions', {
+      log.debug('Action: About to detect actions', {
         responseText: responseText.substring(0, 100) + '...',
         storeId,
         userId,
@@ -933,7 +980,7 @@ CURRENT FOCUS: Operations Management
         context: request?.context
       })
 
-      console.log('⚡ AI STORE MANAGER HANDLER: Action detection result', {
+      log.debug('Action: Action detection result', {
         hasActions: detectionResult.hasActions,
         actionsCount: detectionResult.detectedActions?.length || 0,
         storeId,
@@ -941,7 +988,7 @@ CURRENT FOCUS: Operations Management
       })
 
       if (!detectionResult.hasActions || !storeId) {
-        console.log('⚡ AI STORE MANAGER HANDLER: Skipping action processing', {
+        log.debug('Action: Skipping action processing', {
           reason: !detectionResult.hasActions ? 'No actions detected' : 'No storeId provided',
           hasActions: detectionResult.hasActions,
           storeId
@@ -953,7 +1000,7 @@ CURRENT FOCUS: Operations Management
         }
       }
 
-      console.log('⚡ AI STORE MANAGER HANDLER: Actions detected', {
+      log.debug('Action: Actions detected', {
         actionsCount: detectionResult.detectedActions.length,
         storeId
       })
@@ -966,7 +1013,7 @@ CURRENT FOCUS: Operations Management
       for (const detectedAction of detectionResult.detectedActions) {
         const { action, confidence, requiresUserConfirmation } = detectedAction
 
-        console.log('⚡ AI STORE MANAGER HANDLER: Processing action', {
+        log.debug('Action: Processing action', {
           actionId: action.id,
           actionType: action.type,
           confidence,
@@ -993,7 +1040,7 @@ CURRENT FOCUS: Operations Management
             enhancedResponse += `\n*⚠️ This action requires your confirmation before execution.*`
 
           } catch (error) {
-            console.error('⚡ AI STORE MANAGER HANDLER: Preview generation error:', error)
+            log.error('Action: Preview generation error:', error)
             enhancedResponse += `\n\n🎯 **Suggested Action**: ${action.description}`
             enhancedResponse += `\n*⚠️ This action requires your confirmation before execution.*`
           }
@@ -1012,7 +1059,7 @@ CURRENT FOCUS: Operations Management
                 enhancedResponse += `\n\n❌ **Action Failed**: ${result.error || 'Unknown error occurred'}`
               }
             } catch (error) {
-              console.error('⚡ AI STORE MANAGER HANDLER: Action execution error:', error)
+              log.error('Action: Action execution error:', error)
               enhancedResponse += `\n\n⚠️ **Action Error**: Failed to execute ${action.description}`
             }
           } else {
@@ -1035,7 +1082,7 @@ CURRENT FOCUS: Operations Management
       }
 
     } catch (error) {
-      console.error('⚡ AI STORE MANAGER HANDLER: Action processing error:', error)
+      log.error('Action: Action processing error:', error)
       return {
         hasActions: false,
         executedActions: [],

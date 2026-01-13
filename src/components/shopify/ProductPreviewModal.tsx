@@ -120,8 +120,8 @@ export default function ProductPreviewModal({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Package className="w-5 h-5 text-orange-600" />
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Package className="w-5 h-5 text-green-600" />
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -197,7 +197,7 @@ export default function ProductPreviewModal({
                       type="text"
                       value={editedData.title}
                       onChange={(e) => handleFieldChange('title', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                   ) : (
                     <p className="text-lg font-semibold text-gray-900">{editedData.title}</p>
@@ -218,7 +218,7 @@ export default function ProductPreviewModal({
                           step="0.01"
                           value={editedData.price}
                           onChange={(e) => handleFieldChange('price', parseFloat(e.target.value) || 0)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         />
                       </div>
                     ) : (
@@ -239,7 +239,7 @@ export default function ProductPreviewModal({
                             step="0.01"
                             value={editedData.compareAtPrice}
                             onChange={(e) => handleFieldChange('compareAtPrice', parseFloat(e.target.value) || undefined)}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           />
                         </div>
                       ) : (
@@ -259,7 +259,7 @@ export default function ProductPreviewModal({
                       value={editedData.description}
                       onChange={(e) => handleFieldChange('description', e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                   ) : (
                     <div className="text-gray-700 whitespace-pre-wrap">{editedData.description}</div>
@@ -277,7 +277,7 @@ export default function ProductPreviewModal({
                       value={editedData.tags.join(', ')}
                       onChange={(e) => handleFieldChange('tags', e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
                       placeholder="Enter tags separated by commas"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                   ) : (
                     <div className="flex flex-wrap gap-2">
@@ -302,7 +302,7 @@ export default function ProductPreviewModal({
                     <select
                       value={editedData.status}
                       onChange={(e) => handleFieldChange('status', e.target.value as 'draft' | 'active' | 'archived')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
                       <option value="draft">Draft</option>
                       <option value="active">Active</option>
@@ -328,7 +328,7 @@ export default function ProductPreviewModal({
           <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center space-x-2">
               {hasChanges && (
-                <div className="flex items-center space-x-1 text-sm text-orange-600">
+                <div className="flex items-center space-x-1 text-sm text-green-600">
                   <AlertCircle className="w-4 h-4" />
                   <span>Unsaved changes</span>
                 </div>
@@ -359,7 +359,7 @@ export default function ProductPreviewModal({
               <button
                 onClick={handlePublish}
                 disabled={isLoading}
-                className="flex items-center space-x-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                className="flex items-center space-x-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
                 {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 <CheckCircle className="w-4 h-4" />

@@ -302,7 +302,7 @@ export default function WorkflowBuilder() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-            <Zap className="w-8 h-8 text-orange-600" />
+            <Zap className="w-8 h-8 text-green-600" />
             <span>Automation Workflow Builder</span>
           </h2>
           <p className="text-gray-600 mt-1">Create custom automation workflows for your maritime operations</p>
@@ -317,7 +317,7 @@ export default function WorkflowBuilder() {
           </button>
           <button
             onClick={createNewWorkflow}
-            className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
             <Plus className="w-4 h-4" />
             <span>New Workflow</span>
@@ -342,7 +342,7 @@ export default function WorkflowBuilder() {
                       onClick={() => setSelectedWorkflow(template)}
                       className={`w-full text-left p-3 rounded-lg border transition-colors ${
                         selectedWorkflow?.id === template.id
-                          ? 'border-orange-300 bg-orange-50'
+                          ? 'border-green-300 bg-green-50'
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -355,8 +355,8 @@ export default function WorkflowBuilder() {
                         <span className="text-xs text-gray-500">{template.category}</span>
                         {template.agentId && (
                           <div className="flex items-center space-x-1">
-                            <Anchor className="w-3 h-3 text-orange-600" />
-                            <span className="text-xs text-orange-600 capitalize">{template.agentId}</span>
+                            <Anchor className="w-3 h-3 text-green-600" />
+                            <span className="text-xs text-green-600 capitalize">{template.agentId}</span>
                           </div>
                         )}
                       </div>
@@ -379,7 +379,7 @@ export default function WorkflowBuilder() {
                       onClick={() => setSelectedWorkflow(workflow)}
                       className={`w-full text-left p-3 rounded-lg border transition-colors ${
                         selectedWorkflow?.id === workflow.id
-                          ? 'border-orange-300 bg-orange-50'
+                          ? 'border-green-300 bg-green-50'
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -411,7 +411,7 @@ export default function WorkflowBuilder() {
                     <button
                       onClick={() => setIsEditing(!isEditing)}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                        isEditing ? 'bg-orange-50 border-orange-200 text-orange-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        isEditing ? 'bg-green-50 border-green-200 text-green-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <Settings className="w-4 h-4" />
@@ -421,7 +421,7 @@ export default function WorkflowBuilder() {
                       <Play className="w-4 h-4" />
                       <span>Test</span>
                     </button>
-                    <button className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                    <button className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                       <Save className="w-4 h-4" />
                       <span>Save</span>
                     </button>
@@ -504,7 +504,7 @@ export default function WorkflowBuilder() {
                     {isEditing && (
                       <button
                         onClick={() => addNode('trigger', 'order_created')}
-                        className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                       >
                         Add First Node
                       </button>
@@ -555,7 +555,7 @@ export default function WorkflowBuilder() {
               <p className="text-gray-600 mb-6">Choose a workflow from the list or create a new one to get started</p>
               <button
                 onClick={createNewWorkflow}
-                className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700"
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
               >
                 Create New Workflow
               </button>

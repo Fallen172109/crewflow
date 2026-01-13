@@ -283,7 +283,7 @@ ${canManageProducts ? '✅ You have product management permissions' : '❌ You n
             <div
               className={`max-w-3xl rounded-lg p-4 overflow-hidden break-words ${
                 message.type === 'user'
-                  ? 'bg-orange-600 text-white'
+                  ? 'bg-green-600 text-white'
                   : message.type === 'system'
                   ? 'bg-blue-50 text-blue-900 border border-blue-200'
                   : 'bg-gray-100 text-gray-900'
@@ -394,7 +394,7 @@ ${canManageProducts ? '✅ You have product management permissions' : '❌ You n
             <button
               onClick={handleSendMessage}
               disabled={(!inputValue.trim() && attachments.length === 0) || isLoading || !selectedStore || !canManageProducts}
-              className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-5 h-5" />
             </button>
@@ -481,7 +481,7 @@ ${canManageProducts ? '✅ You have product management permissions' : '❌ You n
                     <button
                       onClick={handlePublishProduct}
                       disabled={isLoading}
-                      className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 flex items-center space-x-2"
+                      className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
                     >
                       {isLoading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

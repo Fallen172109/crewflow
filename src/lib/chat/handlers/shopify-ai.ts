@@ -18,15 +18,15 @@ import { ShopifyActionExecutor, ActionResult } from '@/lib/ai/shopify-action-exe
 
 export class ShopifyAIHandler implements ChatHandler {
   canHandle(request: UnifiedChatRequest): boolean {
-    return request.chatType === 'shopify-ai' || 
-           (request.agentId && this.isShopifyAgent(request.agentId))
+    // Handle shopify-ai chat type or known Shopify agent IDs
+    return request.chatType === 'shopify-ai' ||
+           (request.agentId ? this.isShopifyAgent(request.agentId) : false)
   }
 
   private isShopifyAgent(agentId: string): boolean {
-    // Check if agent is Shopify-specialized
-    const { getAgent } = require('@/lib/agents')
-    const agent = getAgent(agentId)
-    return agent?.shopifySpecialized === true
+    // Known Shopify-specialized agent IDs (no longer depends on agents.ts)
+    const shopifyAgentIds = ['shopify-ai', 'ai-store-manager', 'store-manager']
+    return shopifyAgentIds.includes(agentId)
   }
 
   async process(request: UnifiedChatRequest, user: any): Promise<UnifiedChatResponse> {
@@ -112,10 +112,13 @@ export class ShopifyAIHandler implements ChatHandler {
           .single()
 
         if (storeData) {
-          const shopifyAPI = createShopifyAPI(storeData.shop_domain, storeData.access_token)
-          // Get basic store info for context
-          const storeInfo = await shopifyAPI.getStoreInfo()
-          shopifyContext = `Connected Shopify Store: ${storeInfo.name} (${storeInfo.domain})`
+          // Pass user.id first, then optional credentials (correct parameter order)
+          const shopifyAPI = await createShopifyAPI(user.id, storeData.access_token, storeData.shop_domain)
+          if (shopifyAPI) {
+            // Get basic store info for context using getShop()
+            const storeInfo = await shopifyAPI.getShop()
+            shopifyContext = `Connected Shopify Store: ${storeInfo.name} (${storeInfo.domain})`
+          }
         }
       } catch (error) {
         console.log('🛍️ SHOPIFY AI HANDLER: No Shopify store connected or error:', error)

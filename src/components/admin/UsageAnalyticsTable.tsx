@@ -27,7 +27,7 @@ export function UsageAnalyticsTable({ records }: UsageAnalyticsTableProps) {
       case 'autogen':
         return 'bg-green-100 text-green-800'
       case 'hybrid':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }

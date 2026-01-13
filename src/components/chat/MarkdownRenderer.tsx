@@ -95,7 +95,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
       <em className="italic text-gray-700" {...props}>{children}</em>
     ),
     code: ({ children, ...props }: any) => (
-      <code className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded text-sm font-mono" {...props}>
+      <code className="bg-green-50 text-green-600 px-1 py-0.5 rounded text-sm font-mono" {...props}>
         {children}
       </code>
     ),
@@ -123,7 +123,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
   }
 
   return (
-    <div className={`prose prose-base max-w-none font-chat leading-extra-loose prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:font-chat prose-p:text-gray-700 prose-p:leading-extra-loose prose-p:font-chat prose-strong:text-gray-900 prose-strong:font-semibold prose-strong:font-chat prose-ul:text-gray-700 prose-ul:font-chat prose-ol:text-gray-700 prose-ol:font-chat prose-li:text-gray-700 prose-li:font-chat prose-code:text-orange-600 prose-code:bg-orange-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-blockquote:border-orange-500 prose-blockquote:text-gray-700 prose-blockquote:font-chat break-words overflow-wrap-anywhere ${className}`}>
+    <div className={`prose prose-base max-w-none font-chat leading-extra-loose prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:font-chat prose-p:text-gray-700 prose-p:leading-extra-loose prose-p:font-chat prose-strong:text-gray-900 prose-strong:font-semibold prose-strong:font-chat prose-ul:text-gray-700 prose-ul:font-chat prose-ol:text-gray-700 prose-ol:font-chat prose-li:text-gray-700 prose-li:font-chat prose-code:text-green-600 prose-code:bg-green-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-blockquote:border-green-500 prose-blockquote:text-gray-700 prose-blockquote:font-chat break-words overflow-wrap-anywhere ${className}`}>
       {renderContent(content)}
     </div>
   )

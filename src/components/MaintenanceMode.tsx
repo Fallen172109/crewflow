@@ -51,12 +51,12 @@ export default function MaintenanceMode({ onAccessGranted }: MaintenanceModeProp
 
   return (
     <div className="relative min-h-screen bg-black text-white flex items-center justify-center overflow-hidden">
-      {/* Orange particles background */}
+      {/* Green particles background */}
       <Particles
         className="absolute inset-0"
         quantity={150}
         ease={80}
-        color="#FF6A3D"
+        color="#5BBF46"
         size={1.2}
         staticity={60}
         refresh
@@ -82,7 +82,7 @@ export default function MaintenanceMode({ onAccessGranted }: MaintenanceModeProp
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password to continue"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent backdrop-blur-sm text-center"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent backdrop-blur-sm text-center"
                   disabled={isLoading}
                   autoFocus
                 />

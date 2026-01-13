@@ -19,7 +19,7 @@ export default function MaintenanceTypewriter({
   cursorColor = 'white',
   textColor = 'white',
   highlightWord = 'development',
-  highlightColor = '#FF6A3D',
+  highlightColor = '#5BBF46',
   onComplete
 }: MaintenanceTypewriterProps) {
   const [displayedText, setDisplayedText] = useState('');
@@ -58,7 +58,7 @@ export default function MaintenanceTypewriter({
     const result = [];
 
     // Characters 0-13: "We are under " (white)
-    // Characters 14+: "development" (orange)
+    // Characters 14+: "development" (green)
 
     for (let i = 0; i < chars.length; i++) {
       if (i < 14) {
@@ -69,7 +69,7 @@ export default function MaintenanceTypewriter({
           </span>
         );
       } else {
-        // Orange part: "development"
+        // Green part: "development"
         result.push(
           <span key={i} style={{ color: highlightColor }}>
             {chars[i]}

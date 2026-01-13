@@ -120,7 +120,7 @@
 # Time: 20-30 minutes | Rollback: Medium
 ```
 
-1. **Facebook OAuth (App ID: 1077201217686511)**:
+1. **Facebook OAuth (App ID: YOUR_FACEBOOK_APP_ID)**:
    - Add `https://crewflow.ai/auth/callback` to Valid OAuth Redirect URIs
    - **Keep crewflow.dev URLs active during transition**
 

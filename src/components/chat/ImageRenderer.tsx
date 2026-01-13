@@ -84,7 +84,7 @@ export default function ImageRenderer({
             <p className="text-xs text-gray-400 mt-1">The image URL may have expired</p>
             <button
               onClick={handleOpenFullSize}
-              className="text-xs text-orange-600 hover:text-orange-700 underline mt-2 inline-flex items-center gap-1"
+              className="text-xs text-green-600 hover:text-green-700 underline mt-2 inline-flex items-center gap-1"
             >
               <ExternalLink className="w-3 h-3" />
               Try opening in new tab

@@ -219,7 +219,7 @@ export default function ProductManagement() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <Package className="w-12 h-12 text-orange-600 animate-pulse mx-auto mb-4" />
+          <Package className="w-12 h-12 text-green-600 animate-pulse mx-auto mb-4" />
           <p className="text-gray-600">Loading cargo manifest...</p>
         </div>
       </div>
@@ -232,12 +232,12 @@ export default function ProductManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-            <Package className="w-8 h-8 text-orange-600" />
+            <Package className="w-8 h-8 text-green-600" />
             <span>Cargo Manifest</span>
           </h2>
           <p className="text-gray-600 mt-1">Manage your maritime product inventory</p>
         </div>
-        <button className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2">
+        <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2">
           <Plus className="w-5 h-5" />
           <span>Add Product</span>
         </button>
@@ -253,13 +253,13 @@ export default function ProductManagement() {
               placeholder="Search products by name, vendor, or tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-              showFilters ? 'bg-orange-50 border-orange-200 text-orange-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              showFilters ? 'bg-green-50 border-green-200 text-green-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -335,9 +335,9 @@ export default function ProductManagement() {
 
       {/* Bulk Actions */}
       {selectedProducts.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
-            <span className="text-orange-700 font-medium">
+            <span className="text-green-700 font-medium">
               {selectedProducts.length} product(s) selected
             </span>
             <div className="flex items-center space-x-3">
@@ -375,7 +375,7 @@ export default function ProductManagement() {
                     type="checkbox"
                     checked={selectedProducts.length === products.length && products.length > 0}
                     onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -411,7 +411,7 @@ export default function ProductManagement() {
                         type="checkbox"
                         checked={selectedProducts.includes(product.id)}
                         onChange={() => handleSelectProduct(product.id)}
-                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                       />
                     </td>
                     <td className="px-6 py-4">
@@ -495,7 +495,7 @@ export default function ProductManagement() {
               }
             </p>
             {!searchQuery && Object.values(filters).every(f => f === 'all' || f === '') && (
-              <button className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 mx-auto">
+              <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 mx-auto">
                 <Plus className="w-5 h-5" />
                 <span>Add First Product</span>
               </button>

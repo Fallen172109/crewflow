@@ -25,7 +25,7 @@ export default function ShopifyError() {
         <h1 className="text-2xl font-bold text-red-600">⚠️ Connection Failed</h1>
         <p className="mt-2 opacity-80">{getErrorMessage(reason)}</p>
         <div className="mt-6 space-x-4">
-          <a href="/dashboard/shopify" className="inline-block rounded-xl px-4 py-2 bg-orange-600 text-white">
+          <a href="/dashboard/shopify" className="inline-block rounded-xl px-4 py-2 bg-green-600 text-white">
             Try Again
           </a>
           <a href="/dashboard" className="inline-block rounded-xl px-4 py-2 bg-gray-600 text-white">

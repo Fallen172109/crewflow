@@ -74,8 +74,8 @@ export default function ProductPreviewPanel({
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-              <Package className="w-5 h-5 text-orange-600" />
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <Package className="w-5 h-5 text-green-600" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-black">Product Preview</h3>
@@ -85,7 +85,7 @@ export default function ProductPreviewPanel({
             </div>
           </div>
           {isGenerating && (
-            <Loader2 className="w-5 h-5 text-orange-600 animate-spin" />
+            <Loader2 className="w-5 h-5 text-green-600 animate-spin" />
           )}
         </div>
       </div>
@@ -101,8 +101,8 @@ export default function ProductPreviewPanel({
               exit={{ opacity: 0, y: -20 }}
               className="flex flex-col items-center justify-center h-full text-center space-y-4"
             >
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
               </div>
               <div>
                 <h4 className="text-black font-medium mb-2">Creating Product</h4>
@@ -172,7 +172,7 @@ export default function ProductPreviewPanel({
                     {productPreview.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs border border-orange-200"
+                        className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs border border-green-200"
                       >
                         {tag}
                       </span>
@@ -197,7 +197,7 @@ export default function ProductPreviewPanel({
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                         />
                         {index === 0 && (
-                          <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
                             Main
                           </div>
                         )}
@@ -234,8 +234,8 @@ export default function ProductPreviewPanel({
               exit={{ opacity: 0, y: -20 }}
               className="flex flex-col items-center justify-center h-full text-center space-y-4"
             >
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
               </div>
               <div>
                 <h4 className="text-black font-medium mb-2">Loading Products</h4>
@@ -331,8 +331,8 @@ export default function ProductPreviewPanel({
             className={cn(
               "w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200",
               isPublishing
-                ? "bg-orange-300 text-orange-700 cursor-not-allowed"
-                : "bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                ? "bg-green-300 text-green-700 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
             )}
           >
             {isPublishing ? (

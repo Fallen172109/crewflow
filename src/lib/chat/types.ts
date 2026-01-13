@@ -3,38 +3,24 @@
 
 import { UploadedFile } from '@/components/ui/FileUpload'
 
-export type ChatType = 'agent' | 'shopify-ai' | 'ai-store-manager' | 'meal-planning'
-
-export interface MealPlanningContext {
-  conversation_history?: any[]
-  user_profile?: any
-  pantry_items?: any[]
-  recent_meal_plans?: any[]
-  dietary_restrictions?: any[]
-  nutritional_targets?: any
-  context_summary?: string
-  request_intent?: string
-}
+export type ChatType = 'shopify-ai' | 'ai-store-manager'
 
 export interface UnifiedChatRequest {
   // Core message data
   message: string
-  
+
   // Routing parameters
-  agentId?: string           // For general agents (coral, sage, helm, etc.)
+  agentId?: string           // For Shopify agents
   chatType?: ChatType        // Explicit chat type
-  
+
   // Context parameters
   taskType?: string          // Task context (general, business_automation, etc.)
   threadId: string           // Required for all conversations
-  
+
   // Optional parameters
   attachments?: UploadedFile[]
   userId?: string            // Legacy support
   context?: any              // General context (storeId, etc.)
-
-  // Meal planning specific (when chatType = 'meal-planning')
-  mealPlanningContext?: MealPlanningContext
 }
 
 export interface AgentInfo {
@@ -47,24 +33,23 @@ export interface UnifiedChatResponse {
   // Core response
   response: string
   success: boolean
-  
+
   // Context information
   threadId: string
   messageId?: string
-  
+
   // Agent information
   agent?: AgentInfo
-  
+
   // Usage tracking
   usage?: number
   limit?: number
   tokensUsed?: number
-  
+
   // Specialized responses
-  meal_plan?: any           // For meal planning
-  context_used?: boolean    // For meal planning
   detectedActions?: any[]   // For Shopify actions
   productPreview?: any      // For product creation previews
+  metadata?: any            // Additional response metadata
 
   // Error handling
   error?: string
@@ -97,31 +82,12 @@ export interface UsageInfo {
 }
 
 // Legacy request formats for backward compatibility
-export interface LegacyAgentChatRequest {
-  message: string
-  taskType?: string
-  userId?: string
-  threadId?: string
-}
-
 export interface LegacyShopifyAIChatRequest {
   message: string
   taskType: string
   threadId: string
   attachments?: UploadedFile[]
   userId?: string
-}
-
-export interface LegacyMealPlanningChatRequest {
-  message: string
-  conversation_history?: any[]
-  user_profile?: any
-  pantry_items?: any[]
-  recent_meal_plans?: any[]
-  dietary_restrictions?: any[]
-  nutritional_targets?: any
-  context_summary?: string
-  request_intent?: string
 }
 
 // Error types

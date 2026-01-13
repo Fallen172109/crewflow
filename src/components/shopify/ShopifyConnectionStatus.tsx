@@ -160,7 +160,7 @@ export default function ShopifyConnectionStatus({
             <h3 className="text-lg font-semibold text-gray-900">Connected Stores</h3>
             <button
               onClick={onConnect}
-              className="text-orange-600 hover:text-orange-700 flex items-center space-x-2 text-sm font-medium"
+              className="text-green-600 hover:text-green-700 flex items-center space-x-2 text-sm font-medium"
             >
               <Ship className="w-4 h-4" />
               <span>Add Store</span>
@@ -178,7 +178,7 @@ export default function ShopifyConnectionStatus({
                   key={store.id}
                   className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
                     isSelected
-                      ? 'border-orange-500 bg-orange-50'
+                      ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                   }`}
                   onClick={() => onStoreSelect(store)}
@@ -186,7 +186,7 @@ export default function ShopifyConnectionStatus({
                   {/* Store Header */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center">
+                      <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
                         <Store className="w-6 h-6 text-white" />
                       </div>
                       <div>
@@ -263,7 +263,7 @@ export default function ShopifyConnectionStatus({
                         handleSync(store)
                       }}
                       disabled={syncing || store.sync_status === 'syncing'}
-                      className="flex items-center space-x-1 text-orange-600 hover:text-orange-700 disabled:opacity-50"
+                      className="flex items-center space-x-1 text-green-600 hover:text-green-700 disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
                       <span>Sync</span>

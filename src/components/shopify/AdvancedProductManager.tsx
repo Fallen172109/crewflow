@@ -173,7 +173,7 @@ export default function AdvancedProductManager({ className = '' }: AdvancedProdu
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>Create Product</span>
@@ -193,14 +193,14 @@ export default function AdvancedProductManager({ className = '' }: AdvancedProdu
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -214,7 +214,7 @@ export default function AdvancedProductManager({ className = '' }: AdvancedProdu
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'grid' 
-                  ? 'bg-orange-100 text-orange-600' 
+                  ? 'bg-green-100 text-green-600' 
                   : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -224,7 +224,7 @@ export default function AdvancedProductManager({ className = '' }: AdvancedProdu
               onClick={() => setViewMode('list')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'list' 
-                  ? 'bg-orange-100 text-orange-600' 
+                  ? 'bg-green-100 text-green-600' 
                   : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -254,7 +254,7 @@ export default function AdvancedProductManager({ className = '' }: AdvancedProdu
           {canManageProducts && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 mx-auto"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 mx-auto"
             >
               <Sparkles className="w-5 h-5" />
               <span>Create with AI</span>

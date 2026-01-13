@@ -62,7 +62,7 @@ export default function PlanInfoCard({
     free: 'from-gray-400 to-gray-600',
     starter: 'from-blue-400 to-blue-600',
     professional: 'from-purple-400 to-purple-600',
-    enterprise: 'from-orange-400 to-orange-600'
+    enterprise: 'from-green-400 to-green-600'
   }
 
   const getNextTier = () => {
@@ -146,8 +146,8 @@ export default function PlanInfoCard({
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Headphones className="w-4 h-4 text-orange-600" />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Headphones className="w-4 h-4 text-green-600" />
             </div>
             <div>
               <div className="font-medium text-gray-900">Support</div>
@@ -175,7 +175,7 @@ export default function PlanInfoCard({
             animate={{ opacity: 1, y: 0 }}
             className="border-t border-gray-200 pt-6"
           >
-            <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4 mb-4">
+            <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 mb-4">
               <div className="flex items-start space-x-3">
                 <div className="text-2xl">{tierIcons[nextTier as keyof typeof tierIcons]}</div>
                 <div className="flex-1">
@@ -192,7 +192,7 @@ export default function PlanInfoCard({
                     </div>
                     <button
                       onClick={() => handleUpgrade(nextTier!)}
-                      className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                      className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                     >
                       <span>Upgrade Now</span>
                       <ArrowRight className="w-4 h-4" />
@@ -235,7 +235,7 @@ export default function PlanInfoCard({
                     <span>Premium integrations</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Crown className="w-4 h-4 text-orange-500" />
+                    <Crown className="w-4 h-4 text-green-500" />
                     <span>White-label options</span>
                   </div>
                 </>

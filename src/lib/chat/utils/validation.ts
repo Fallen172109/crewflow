@@ -1,15 +1,17 @@
 // Chat Request Validation Utilities
 // Comprehensive validation for unified chat requests
 
-import { 
-  UnifiedChatRequest, 
-  ValidationResult, 
+import {
+  UnifiedChatRequest,
+  ValidationResult,
   ChatValidationError,
   CHAT_CONFIG,
   SUPPORTED_FILE_TYPES,
   SupportedFileType
 } from '../types'
-import { getAgent } from '@/lib/agents'
+
+// Known valid agent IDs for Shopify-focused system
+const VALID_AGENT_IDS = ['shopify-ai', 'ai-store-manager', 'store-manager']
 
 export function validateChatRequest(request: UnifiedChatRequest): ValidationResult {
   const errors: string[] = []
@@ -33,15 +35,10 @@ export function validateChatRequest(request: UnifiedChatRequest): ValidationResu
     errors.push('Agent ID is required when chat type is "agent"')
   }
 
+  // Validate agent ID if provided
   if (request.agentId) {
-    const agent = getAgent(request.agentId)
-    if (!agent) {
+    if (!VALID_AGENT_IDS.includes(request.agentId)) {
       errors.push(`Agent with ID "${request.agentId}" not found`)
-    } else {
-      // Validate agent-specific requirements
-      if (agent.requiresApiConnection && !request.taskType) {
-        warnings.push(`Agent "${agent.name}" typically requires a task type for optimal performance`)
-      }
     }
   }
 
@@ -64,23 +61,6 @@ export function validateChatRequest(request: UnifiedChatRequest): ValidationResu
         warnings.push(`Attachment "${attachment.name}" has unsupported file type: ${attachment.type}`)
       }
     })
-  }
-
-  // Validate meal planning context
-  if (request.chatType === 'meal-planning' && request.mealPlanningContext) {
-    const context = request.mealPlanningContext
-    
-    if (context.conversation_history && !Array.isArray(context.conversation_history)) {
-      errors.push('Meal planning conversation history must be an array')
-    }
-
-    if (context.pantry_items && !Array.isArray(context.pantry_items)) {
-      errors.push('Meal planning pantry items must be an array')
-    }
-
-    if (context.dietary_restrictions && !Array.isArray(context.dietary_restrictions)) {
-      errors.push('Meal planning dietary restrictions must be an array')
-    }
   }
 
   // Validate task type
@@ -112,10 +92,10 @@ export function sanitizeMessage(message: string): string {
 export function validateThreadAccess(threadId: string, userId: string): boolean {
   // Basic validation - actual implementation would check database
   if (!threadId || !userId) return false
-  
+
   // Temporary threads are always accessible
   if (threadId.startsWith('temp-')) return true
-  
+
   // UUID format validation
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
   return uuidRegex.test(threadId)
@@ -124,20 +104,20 @@ export function validateThreadAccess(threadId: string, userId: string): boolean 
 export function detectChatType(request: UnifiedChatRequest): string {
   // Explicit chat type provided
   if (request.chatType) return request.chatType
-  
-  // Agent-based detection
+
+  // Agent-based detection for Shopify-focused system
   if (request.agentId) {
-    const agent = getAgent(request.agentId)
-    if (agent?.shopifySpecialized) return 'shopify-ai'
-    return 'agent'
+    if (VALID_AGENT_IDS.includes(request.agentId)) {
+      return request.agentId === 'ai-store-manager' ? 'ai-store-manager' : 'shopify-ai'
+    }
+    return 'shopify-ai' // Default to shopify-ai for unknown agents
   }
-  
+
   // Context-based detection
-  if (request.mealPlanningContext) return 'meal-planning'
   if (request.taskType === 'business_automation') return 'ai-store-manager'
-  
-  // Default fallback
-  return 'agent'
+
+  // Default fallback to AI Store Manager
+  return 'ai-store-manager'
 }
 
 export function normalizeRequest(request: any): UnifiedChatRequest {
@@ -150,30 +130,7 @@ export function normalizeRequest(request: any): UnifiedChatRequest {
     taskType: request.taskType,
     attachments: request.attachments,
     userId: request.userId,
-    context: request.context,
-    mealPlanningContext: request.mealPlanningContext
-  }
-
-  // Handle legacy meal planning format
-  if (!normalized.chatType && (
-    request.conversation_history || 
-    request.user_profile || 
-    request.pantry_items ||
-    request.recent_meal_plans ||
-    request.dietary_restrictions ||
-    request.nutritional_targets
-  )) {
-    normalized.chatType = 'meal-planning'
-    normalized.mealPlanningContext = {
-      conversation_history: request.conversation_history,
-      user_profile: request.user_profile,
-      pantry_items: request.pantry_items,
-      recent_meal_plans: request.recent_meal_plans,
-      dietary_restrictions: request.dietary_restrictions,
-      nutritional_targets: request.nutritional_targets,
-      context_summary: request.context_summary,
-      request_intent: request.request_intent
-    }
+    context: request.context
   }
 
   // Auto-detect chat type if not provided
@@ -201,13 +158,10 @@ export function validateRateLimit(userId: string, requestCount: number, windowMs
 // Security validation
 export function validateSecurityConstraints(request: UnifiedChatRequest, user: any): ValidationResult {
   const errors: string[] = []
-  
-  // Check if user has access to the requested agent
-  if (request.agentId) {
-    const agent = getAgent(request.agentId)
-    if (agent && !canUserAccessAgent(user.subscription_tier, request.agentId)) {
-      errors.push(`Access denied to agent "${request.agentId}" for subscription tier "${user.subscription_tier}"`)
-    }
+
+  // Check if user has access to the requested agent (simplified - all Shopify agents accessible)
+  if (request.agentId && !VALID_AGENT_IDS.includes(request.agentId)) {
+    errors.push(`Access denied to agent "${request.agentId}"`)
   }
 
   // Validate thread ownership (would check database in real implementation)
@@ -219,11 +173,4 @@ export function validateSecurityConstraints(request: UnifiedChatRequest, user: a
     isValid: errors.length === 0,
     errors
   }
-}
-
-// Import the function we need
-function canUserAccessAgent(userTier: string | null, agentId: string): boolean {
-  // Import here to avoid circular dependency
-  const { canUserAccessAgent: checkAccess } = require('@/lib/agents')
-  return checkAccess(userTier, agentId)
 }

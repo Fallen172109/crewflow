@@ -126,7 +126,7 @@ export function AdminUsersFilters({ onFiltersChange }: AdminUsersFiltersProps) {
           <div className="flex items-center space-x-2 flex-wrap">
             <span className="text-xs text-gray-600">Active filters:</span>
             {filters.role !== 'all' && (
-              <span className="px-2 py-1 text-xs bg-orange-50 text-orange-700 rounded border border-orange-200">
+              <span className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded border border-green-200">
                 Role: {filters.role}
               </span>
             )}

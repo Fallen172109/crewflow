@@ -39,7 +39,7 @@ export function AdminAnalyticsCharts({ analytics }: AdminAnalyticsChartsProps) {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">User Growth</h2>
             <div className="flex space-x-2">
-              <button className="px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded">
+              <button className="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded">
                 7D
               </button>
               <button className="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded">
@@ -58,7 +58,7 @@ export function AdminAnalyticsCharts({ analytics }: AdminAnalyticsChartsProps) {
             {chartData.users.map((point, index) => (
               <div key={index} className="flex-1 flex flex-col items-center">
                 <div 
-                  className="w-full bg-orange-500 rounded-t"
+                  className="w-full bg-green-500 rounded-t"
                   style={{ 
                     height: `${(point.value / Math.max(...chartData.users.map(p => p.value))) * 200}px` 
                   }}

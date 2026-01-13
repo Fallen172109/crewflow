@@ -21,7 +21,7 @@ export default async function AdminUsersPage() {
             <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
               Export Users
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600">
+            <button className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600">
               Send Announcement
             </button>
           </div>
@@ -58,8 +58,8 @@ export default async function AdminUsersPage() {
 
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-              <span className="text-orange-600 text-sm">⭐</span>
+            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+              <span className="text-green-600 text-sm">⭐</span>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-600">Enterprise Users</p>

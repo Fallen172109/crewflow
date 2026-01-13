@@ -12,28 +12,18 @@ export interface ModelConfig {
 }
 
 export const AI_MODELS: Record<string, ModelConfig> = {
-  // Budget-friendly models for development and testing
-  'gpt-3.5-turbo': {
-    name: 'gpt-3.5-turbo',
+  // GPT-5 - Primary model for all features
+  'gpt-5': {
+    name: 'gpt-5',
     provider: 'openai',
-    maxTokens: 1500,
+    maxTokens: 8000,
     temperature: 0.7,
-    costTier: 'budget',
-    useCase: ['product-creation', 'general-chat', 'testing'],
-    estimatedCostPer1kTokens: 0.002
-  },
-  
-  'gpt-3.5-turbo-16k': {
-    name: 'gpt-3.5-turbo-16k',
-    provider: 'openai',
-    maxTokens: 4000,
-    temperature: 0.7,
-    costTier: 'standard',
-    useCase: ['product-creation', 'long-content', 'analysis'],
-    estimatedCostPer1kTokens: 0.004
+    costTier: 'premium',
+    useCase: ['product-creation', 'general-chat', 'complex-analysis', 'creative-writing', 'enterprise'],
+    estimatedCostPer1kTokens: 0.02
   },
 
-  // Standard models for production
+  // Legacy models (kept for fallback compatibility)
   'gpt-4': {
     name: 'gpt-4',
     provider: 'openai',
@@ -44,13 +34,12 @@ export const AI_MODELS: Record<string, ModelConfig> = {
     estimatedCostPer1kTokens: 0.03
   },
 
-  // Premium models for high-quality output
   'gpt-4-turbo-preview': {
     name: 'gpt-4-turbo-preview',
     provider: 'openai',
     maxTokens: 4000,
     temperature: 0.7,
-    costTier: 'premium',
+    costTier: 'standard',
     useCase: ['premium-product-creation', 'complex-analysis', 'enterprise'],
     estimatedCostPer1kTokens: 0.01
   },
@@ -60,7 +49,7 @@ export const AI_MODELS: Record<string, ModelConfig> = {
     provider: 'openai',
     maxTokens: 2000,
     temperature: 0.7,
-    costTier: 'premium',
+    costTier: 'standard',
     useCase: ['image-analysis', 'product-image-description'],
     estimatedCostPer1kTokens: 0.01
   }
@@ -74,29 +63,23 @@ export interface ModelSelectionOptions {
 }
 
 export function selectOptimalModel(options: ModelSelectionOptions): ModelConfig {
-  const { useCase, environment = 'development', userTier = 'starter', costPreference = 'budget' } = options
+  const { useCase } = options
 
-  // Use GPT-4 for all environments for better quality
-  // Keep the infrastructure for future cost optimization if needed
-
+  // Use GPT-5 for all use cases except image analysis
   if (useCase === 'image-analysis') {
     return AI_MODELS['gpt-4-vision-preview']
   }
 
-  if (useCase === 'product-creation' || useCase === 'complex-analysis') {
-    return AI_MODELS['gpt-4']
-  }
-
-  // For general chat, GPT-4 is still preferred for consistency
-  return AI_MODELS['gpt-4']
+  // GPT-5 is the primary model for all features
+  return AI_MODELS['gpt-5']
 }
 
 export function getModelForProductCreation(
   environment: string = process.env.NODE_ENV || 'development',
   userTier: string = 'starter'
 ): ModelConfig {
-  // Always use GPT-4 for product creation for best quality
-  return AI_MODELS['gpt-4']
+  // Use GPT-5 for product creation
+  return AI_MODELS['gpt-5']
 }
 
 export function estimateRequestCost(
@@ -111,27 +94,27 @@ export function estimateRequestCost(
   return (totalTokens / 1000) * model.estimatedCostPer1kTokens
 }
 
-// Environment-based model selection - Updated to use GPT-4 for quality
+// Environment-based model selection - GPT-5 is the primary model
 export const MODEL_PRESETS = {
   development: {
-    productCreation: 'gpt-4',
+    productCreation: 'gpt-5',
     imageAnalysis: 'gpt-4-vision-preview',
-    generalChat: 'gpt-4',
-    complexAnalysis: 'gpt-4'
+    generalChat: 'gpt-5',
+    complexAnalysis: 'gpt-5'
   },
 
   staging: {
-    productCreation: 'gpt-4',
+    productCreation: 'gpt-5',
     imageAnalysis: 'gpt-4-vision-preview',
-    generalChat: 'gpt-4',
-    complexAnalysis: 'gpt-4'
+    generalChat: 'gpt-5',
+    complexAnalysis: 'gpt-5'
   },
 
   production: {
-    productCreation: 'gpt-4',
+    productCreation: 'gpt-5',
     imageAnalysis: 'gpt-4-vision-preview',
-    generalChat: 'gpt-4',
-    complexAnalysis: 'gpt-4-turbo-preview'
+    generalChat: 'gpt-5',
+    complexAnalysis: 'gpt-5'
   }
 }
 
@@ -184,7 +167,7 @@ export function logCostEstimate(
       outputTokens,
       estimatedCost: `$${cost.toFixed(4)}`,
       tier: AI_MODELS[modelName]?.costTier || 'unknown',
-      note: 'Using GPT-4 for optimal quality'
+      note: 'Using GPT-5 for optimal quality'
     })
   }
 }

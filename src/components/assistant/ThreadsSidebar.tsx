@@ -49,7 +49,7 @@ export default function ThreadsSidebar({ storeId, threadId, onSelect, onNewThrea
         <button
           onClick={create}
           disabled={creating}
-          className="text-xs px-2 py-1 rounded-md bg-[#ff6a3d] text-white hover:opacity-90 disabled:opacity-50"
+          className="text-xs px-2 py-1 rounded-md bg-[#5BBF46] text-white hover:opacity-90 disabled:opacity-50"
         >
           {creating ? "…" : "New"}
         </button>
@@ -65,7 +65,7 @@ export default function ThreadsSidebar({ storeId, threadId, onSelect, onNewThrea
               onClick={() => onSelect(t.id)}
               className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
                 t.id === threadId 
-                  ? "border-[#ff6a3d] bg-orange-50 text-slate-800" 
+                  ? "border-[#5BBF46] bg-green-50 text-slate-800" 
                   : "border-slate-200 hover:border-slate-300 text-slate-700"
               }`}
             >

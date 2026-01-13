@@ -259,15 +259,15 @@ export default function ProductionConfig({ className = '' }: ProductionConfigPro
           </div>
 
           {/* Monitoring */}
-          <div className="bg-orange-50 rounded-lg p-4">
+          <div className="bg-green-50 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600">Monitoring</p>
-                <p className="text-lg font-bold text-orange-900">
+                <p className="text-sm font-medium text-green-600">Monitoring</p>
+                <p className="text-lg font-bold text-green-900">
                   {environment?.monitoringEnabled ? 'Active' : 'Inactive'}
                 </p>
               </div>
-              <Activity className="w-6 h-6 text-orange-500" />
+              <Activity className="w-6 h-6 text-green-500" />
             </div>
           </div>
         </div>

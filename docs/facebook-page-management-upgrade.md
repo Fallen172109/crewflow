@@ -38,7 +38,7 @@
 ### Step 1: Update Facebook App Configuration
 
 1. **Go to Facebook Developer Console:**
-   - Visit: https://developers.facebook.com/apps/1077201217686511
+   - Visit: https://developers.facebook.com/apps/YOUR_FACEBOOK_APP_ID
    - Navigate to "App Review" → "Permissions and Features"
 
 2. **Request Advanced Permissions:**

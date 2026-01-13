@@ -218,14 +218,14 @@ export default function UsageLimitEnforcer({
       {usageData && !isOverLimit && (
         <div className="absolute top-2 right-2">
           <div className={`bg-white rounded-full p-2 shadow-sm border-2 ${
-            isNearLimit ? 'border-orange-200' : 'border-gray-200'
+            isNearLimit ? 'border-green-200' : 'border-gray-200'
           }`}>
             <div className="relative">
               <Zap className={`w-4 h-4 ${
-                isNearLimit ? 'text-orange-600' : 'text-gray-400'
+                isNearLimit ? 'text-green-600' : 'text-gray-400'
               }`} />
               {isNearLimit && (
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               )}
             </div>
           </div>

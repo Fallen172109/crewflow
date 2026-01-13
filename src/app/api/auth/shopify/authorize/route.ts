@@ -22,18 +22,22 @@ export async function GET(req: Request) {
   const force = url.searchParams.get('force') === 'true'
   const shop = normalizeShopDomain(rawShop)
 
+  // Determine base URL for redirects based on the actual request origin.
+  // This keeps dev flows on localhost and prod flows on crewflow.ai.
+  const baseUrl = url.origin
+
   // 1) If we already have a token and not forcing, DO NOT re-authorize
   const existing = await getInstallForUserShop(user.id, shop)
   if (existing?.access_token && existing?.status === 'connected' && !force) {
     logOAuth('authorize.skip', { shop, reason: 'already_connected' })
-    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?connected=shopify&shop=${encodeURIComponent(shop)}`
+    const redirectUrl = `${baseUrl}/dashboard/shopify?connected=shopify&shop=${encodeURIComponent(shop)}`
     return NextResponse.redirect(redirectUrl)
   }
 
   // 2) Build Shopify install URL (replace with your actual values/helpers)
   const clientId = process.env.SHOPIFY_CLIENT_ID!
   const scopes = encodeURIComponent('read_products,write_products,read_files,write_files,read_inventory,write_inventory,read_orders,write_orders,read_customers,write_customers')
-  const redirectUri = encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/shopify/callback`)
+  const redirectUri = encodeURIComponent(`${baseUrl}/api/auth/shopify/callback`)
   const state = crypto.randomUUID()
 
   const installUrl =

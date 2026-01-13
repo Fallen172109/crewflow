@@ -35,17 +35,17 @@ export default function ShopifyInstallPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
       <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center">
+            <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center">
               <Ship className="w-8 h-8 text-white" />
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold text-gray-900">CrewFlow</h1>
-              <p className="text-orange-600 font-medium">Maritime AI Automation</p>
+              <p className="text-green-600 font-medium">Maritime AI Automation</p>
             </div>
           </div>
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -61,7 +61,7 @@ export default function ShopifyInstallPage() {
         <div className="max-w-md mx-auto mb-12">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
             <div className="text-center mb-6">
-              <Store className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+              <Store className="w-12 h-12 text-green-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Connect Your Store</h3>
               <p className="text-gray-600 text-sm">Enter your Shopify store name to get started</p>
             </div>
@@ -74,7 +74,7 @@ export default function ShopifyInstallPage() {
                   onChange={(e) => setStoreName(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="your-store-name"
-                  className="w-full px-4 py-4 pr-32 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg"
+                  className="w-full px-4 py-4 pr-32 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg"
                   disabled={isInstalling}
                 />
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
@@ -85,7 +85,7 @@ export default function ShopifyInstallPage() {
               <button
                 onClick={handleInstall}
                 disabled={isInstalling || !storeName.trim()}
-                className="w-full bg-orange-600 text-white py-4 px-6 rounded-xl hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-lg font-medium"
+                className="w-full bg-green-600 text-white py-4 px-6 rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-lg font-medium"
               >
                 {isInstalling ? (
                   <>

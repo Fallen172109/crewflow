@@ -139,7 +139,7 @@ export default function ShopifySetupPage() {
               </div>
               
               <div className="flex items-start space-x-3 p-3 bg-white rounded-lg border">
-                <Settings className="w-6 h-6 text-orange-600 mt-1" />
+                <Settings className="w-6 h-6 text-green-600 mt-1" />
                 <div>
                   <h4 className="font-medium text-gray-900">Configure AI Agents</h4>
                   <p className="text-sm text-gray-600">

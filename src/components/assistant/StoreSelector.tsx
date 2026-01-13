@@ -40,7 +40,7 @@ export default function StoreSelector({ currentStoreId, initialStores, navigateT
     <div className="inline-flex items-center gap-2">
       <span className="text-xs text-slate-600">Store</span>
       <select
-        className="cf-chip px-3 py-2 text-sm outline-none focus:border-[#ff6a3d] text-slate-700"
+        className="cf-chip px-3 py-2 text-sm outline-none focus:border-[#5BBF46] text-slate-700"
         value={currentStoreId}
         disabled={loading}
         onChange={(e) => go(e.target.value)}

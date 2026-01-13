@@ -2,6 +2,8 @@
 // Handles high-risk actions that require user approval before execution
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { executeShopifyCapability, getAgentShopifyCapabilities } from './shopify-capabilities'
+import { createShopifyAPI } from '@/lib/integrations/shopify-admin-api'
 
 export interface ApprovalRequest {
   id: string
@@ -402,31 +404,76 @@ async function sendApprovalNotification(request: ApprovalRequest): Promise<void>
   console.log(`Approval notification sent for ${request.actionType} to user ${request.userId}`)
 }
 
+// Map action types to Shopify capability IDs and agent IDs
+const ACTION_TO_CAPABILITY: Record<string, { agentId: string; capabilityId: string }> = {
+  'price_update': { agentId: 'flint', capabilityId: 'product_optimization' },
+  'product_update': { agentId: 'splash', capabilityId: 'content_creation' },
+  'product_create': { agentId: 'splash', capabilityId: 'content_creation' },
+  'inventory_update': { agentId: 'anchor', capabilityId: 'inventory_management' },
+  'order_fulfill': { agentId: 'anchor', capabilityId: 'order_fulfillment' },
+  'bulk_operations': { agentId: 'anchor', capabilityId: 'inventory_management' },
+  'marketing_campaign': { agentId: 'flint', capabilityId: 'discount_management' },
+  'discount_create': { agentId: 'flint', capabilityId: 'discount_management' }
+}
+
 // Execute approved action
 async function executeApprovedAction(
-  request: any, 
+  request: any,
   response: ApprovalResponse
 ): Promise<void> {
   const supabase = createSupabaseServerClient()
-  
+
   try {
     // Use modified parameters if provided
     const actionData = response.modifiedParams || request.action_data
-    
-    // TODO: Implement actual action execution based on integration and action type
-    // This would call the appropriate service (Shopify API, etc.)
-    
-    console.log(`Executing approved action: ${request.action_type}`, actionData)
-    
+    const userId = request.user_id
+    const actionType = request.action_type
+
+    console.log(`Executing approved action: ${actionType}`, actionData)
+
+    let executionResult: any = null
+
+    // Check if this is a Shopify integration action
+    if (request.integration_id === 'shopify' || actionType.includes('product') || actionType.includes('inventory') || actionType.includes('order')) {
+      // Get the capability mapping
+      const mapping = ACTION_TO_CAPABILITY[actionType]
+
+      if (mapping) {
+        // Execute via Shopify capability system
+        try {
+          executionResult = await executeShopifyCapability(
+            mapping.agentId,
+            mapping.capabilityId,
+            userId,
+            {
+              action: getActionFromType(actionType),
+              ...actionData
+            }
+          )
+        } catch (capabilityError) {
+          console.error('Capability execution failed, trying direct API:', capabilityError)
+          // Fallback to direct Shopify API call
+          executionResult = await executeDirectShopifyAction(userId, actionType, actionData)
+        }
+      } else {
+        // Direct Shopify API execution for unmapped actions
+        executionResult = await executeDirectShopifyAction(userId, actionType, actionData)
+      }
+    } else {
+      // For non-Shopify integrations, use generic execution
+      executionResult = await executeGenericAction(request, actionData)
+    }
+
     // Mark as executed
     await supabase
       .from('approval_requests')
-      .update({ 
+      .update({
         status: 'executed',
-        executed_at: new Date().toISOString()
+        executed_at: new Date().toISOString(),
+        execution_result: executionResult
       })
       .eq('id', request.id)
-    
+
     // Log execution
     await supabase.from('agent_actions').insert({
       user_id: request.user_id,
@@ -439,21 +486,138 @@ async function executeApprovedAction(
         approval_request_id: request.id,
         original_data: request.action_data,
         modified_data: response.modifiedParams,
-        conditions: response.conditions
+        conditions: response.conditions,
+        execution_result: executionResult
       }
     })
-    
+
+    console.log(`Action executed successfully: ${actionType}`, executionResult)
+
   } catch (error) {
     console.error('Error executing approved action:', error)
-    
+
     // Mark as failed
     await supabase
       .from('approval_requests')
-      .update({ 
+      .update({
         status: 'failed',
         execution_error: error instanceof Error ? error.message : 'Unknown error'
       })
       .eq('id', request.id)
+
+    // Log failed execution
+    await supabase.from('agent_actions').insert({
+      user_id: request.user_id,
+      agent_id: request.agent_id,
+      integration_id: request.integration_id,
+      action_type: request.action_type,
+      action_description: `Failed to execute: ${request.action_description}`,
+      status: 'failed',
+      metadata: {
+        approval_request_id: request.id,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    })
+  }
+}
+
+// Map action type to capability action parameter
+function getActionFromType(actionType: string): string {
+  const actionMap: Record<string, string> = {
+    'price_update': 'optimize_existing',
+    'product_update': 'update',
+    'product_create': 'create',
+    'inventory_update': 'update_stock',
+    'order_fulfill': 'fulfill',
+    'bulk_operations': 'bulk_update',
+    'marketing_campaign': 'create_discount',
+    'discount_create': 'create_discount'
+  }
+  return actionMap[actionType] || actionType
+}
+
+// Execute direct Shopify API actions for types without capability mapping
+async function executeDirectShopifyAction(
+  userId: string,
+  actionType: string,
+  actionData: any
+): Promise<any> {
+  const shopifyAPI = await createShopifyAPI(userId)
+  if (!shopifyAPI) {
+    throw new Error('Shopify connection required for this action')
+  }
+
+  switch (actionType) {
+    case 'product_update':
+      if (!actionData.productId) {
+        throw new Error('Product ID required for product update')
+      }
+      return await shopifyAPI.updateProduct(actionData.productId, actionData.updates || actionData)
+
+    case 'product_create':
+      return await shopifyAPI.createProduct(actionData)
+
+    case 'inventory_update':
+      if (!actionData.inventoryItemId || !actionData.locationId) {
+        throw new Error('Inventory item ID and location ID required')
+      }
+      return await shopifyAPI.updateInventoryLevel(
+        actionData.inventoryItemId,
+        actionData.locationId,
+        actionData.quantity
+      )
+
+    case 'order_fulfill':
+      if (!actionData.orderId) {
+        throw new Error('Order ID required for fulfillment')
+      }
+      return await shopifyAPI.createFulfillment(actionData.orderId, {
+        tracking_number: actionData.trackingNumber,
+        tracking_company: actionData.trackingCompany,
+        notify_customer: actionData.notifyCustomer !== false
+      })
+
+    case 'price_update':
+      if (!actionData.productId && !actionData.variantId) {
+        throw new Error('Product ID or Variant ID required for price update')
+      }
+      if (actionData.variantId) {
+        return await shopifyAPI.updateVariant(actionData.variantId, {
+          price: actionData.price,
+          compare_at_price: actionData.compareAtPrice
+        })
+      } else {
+        // Update all variants of a product
+        const product = await shopifyAPI.getProduct(actionData.productId)
+        const results = []
+        for (const variant of product.variants || []) {
+          const updated = await shopifyAPI.updateVariant(variant.id, {
+            price: actionData.price,
+            compare_at_price: actionData.compareAtPrice
+          })
+          results.push(updated)
+        }
+        return { updated_variants: results }
+      }
+
+    default:
+      throw new Error(`Unknown action type: ${actionType}`)
+  }
+}
+
+// Execute generic actions for non-Shopify integrations
+async function executeGenericAction(
+  request: any,
+  actionData: any
+): Promise<any> {
+  // For now, log and return success for generic actions
+  // This can be extended to support other integrations
+  console.log(`Executing generic action: ${request.action_type}`, actionData)
+
+  return {
+    success: true,
+    message: `Action ${request.action_type} executed`,
+    actionData
   }
 }
 

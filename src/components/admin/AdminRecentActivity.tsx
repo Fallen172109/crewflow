@@ -26,7 +26,7 @@ export function AdminRecentActivity({ analytics }: AdminRecentActivityProps) {
     const colors = {
       starter: 'bg-blue-50 text-blue-700 border-blue-200',
       professional: 'bg-purple-50 text-purple-700 border-purple-200',
-      enterprise: 'bg-orange-50 text-orange-700 border-orange-200'
+      enterprise: 'bg-green-50 text-green-700 border-green-200'
     }
 
     const statusColors = {
@@ -61,7 +61,7 @@ export function AdminRecentActivity({ analytics }: AdminRecentActivityProps) {
           <h2 className="text-lg font-semibold text-gray-900">👥 Recent Users</h2>
           <Link
             href="/dashboard/admin/users"
-            className="text-sm font-medium text-orange-600 hover:text-orange-700"
+            className="text-sm font-medium text-green-600 hover:text-green-700"
           >
             View all users →
           </Link>
@@ -117,7 +117,7 @@ export function AdminRecentActivity({ analytics }: AdminRecentActivityProps) {
             </span>
             <Link
               href="/dashboard/admin/users"
-              className="font-medium text-orange-600 hover:text-orange-700"
+              className="font-medium text-green-600 hover:text-green-700"
             >
               Manage all users
             </Link>

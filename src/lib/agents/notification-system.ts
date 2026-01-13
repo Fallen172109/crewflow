@@ -381,7 +381,7 @@ async function queueNotification(notification: Notification): Promise<void> {
 function generateEmailTemplate(notification: Notification): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #ea580c, #f97316); padding: 20px; text-align: center;">
+      <div style="background: linear-gradient(135deg, #4ca83c, #5BBF46); padding: 20px; text-align: center;">
         <h1 style="color: white; margin: 0;">⚓ CrewFlow</h1>
         <p style="color: white; margin: 5px 0 0 0;">Maritime AI Automation Platform</p>
       </div>
@@ -398,7 +398,7 @@ function generateEmailTemplate(notification: Notification): string {
         
         ${notification.actionUrl ? `
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${notification.actionUrl}" style="background: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+            <a href="${notification.actionUrl}" style="background: #4ca83c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
               Take Action
             </a>
           </div>
@@ -413,7 +413,7 @@ function generateEmailTemplate(notification: Notification): string {
       
       <div style="padding: 20px; background: #f9fafb; text-align: center; color: #6b7280; font-size: 12px;">
         <p>You're receiving this because you have notifications enabled for ${notification.category} alerts.</p>
-        <p><a href="#" style="color: #ea580c;">Manage notification preferences</a></p>
+        <p><a href="#" style="color: #4ca83c;">Manage notification preferences</a></p>
       </div>
     </div>
   `

@@ -182,7 +182,7 @@ export default function OrderManagement() {
       case 'paid': return 'bg-green-100 text-green-700'
       case 'pending': return 'bg-yellow-100 text-yellow-700'
       case 'authorized': return 'bg-blue-100 text-blue-700'
-      case 'partially_paid': return 'bg-orange-100 text-orange-700'
+      case 'partially_paid': return 'bg-green-100 text-green-700'
       case 'refunded': return 'bg-red-100 text-red-700'
       case 'voided': return 'bg-gray-100 text-gray-700'
       default: return 'bg-gray-100 text-gray-700'
@@ -258,7 +258,7 @@ export default function OrderManagement() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <ShoppingCart className="w-12 h-12 text-orange-600 animate-pulse mx-auto mb-4" />
+          <ShoppingCart className="w-12 h-12 text-green-600 animate-pulse mx-auto mb-4" />
           <p className="text-gray-600">Loading ship orders...</p>
         </div>
       </div>
@@ -271,7 +271,7 @@ export default function OrderManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-            <ShoppingCart className="w-8 h-8 text-orange-600" />
+            <ShoppingCart className="w-8 h-8 text-green-600" />
             <span>Ship Orders</span>
           </h2>
           <p className="text-gray-600 mt-1">Manage order processing and fulfillment</p>
@@ -301,13 +301,13 @@ export default function OrderManagement() {
               placeholder="Search orders by number, customer name, or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-              showFilters ? 'bg-orange-50 border-orange-200 text-orange-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              showFilters ? 'bg-green-50 border-green-200 text-green-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -372,9 +372,9 @@ export default function OrderManagement() {
 
       {/* Bulk Actions */}
       {selectedOrders.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
-            <span className="text-orange-700 font-medium">
+            <span className="text-green-700 font-medium">
               {selectedOrders.length} order(s) selected
             </span>
             <div className="flex items-center space-x-3">
@@ -403,7 +403,7 @@ export default function OrderManagement() {
                     type="checkbox"
                     checked={selectedOrders.length === orders.length && orders.length > 0}
                     onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -438,7 +438,7 @@ export default function OrderManagement() {
                         type="checkbox"
                         checked={selectedOrders.includes(order.id)}
                         onChange={() => handleSelectOrder(order.id)}
-                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                       />
                     </td>
                     <td className="px-6 py-4">

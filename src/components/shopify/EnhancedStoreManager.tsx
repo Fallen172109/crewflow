@@ -114,7 +114,7 @@ export default function EnhancedStoreManager({
       case 'advanced':
         return <Star className="w-4 h-4 text-blue-600" />
       case 'professional':
-        return <Zap className="w-4 h-4 text-orange-600" />
+        return <Zap className="w-4 h-4 text-green-600" />
       default:
         return <Store className="w-4 h-4 text-gray-600" />
     }
@@ -152,7 +152,7 @@ export default function EnhancedStoreManager({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
               <Store className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -196,7 +196,7 @@ export default function EnhancedStoreManager({
             >
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="w-6 h-6 text-orange-600 animate-spin" />
+                  <RefreshCw className="w-6 h-6 text-green-600 animate-spin" />
                   <span className="ml-2 text-gray-600">Loading stores...</span>
                 </div>
               ) : !hasStores ? (
@@ -207,7 +207,7 @@ export default function EnhancedStoreManager({
                   {onConnect && (
                     <button
                       onClick={onConnect}
-                      className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 flex items-center space-x-2 mx-auto"
+                      className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center space-x-2 mx-auto"
                     >
                       <Plus className="w-5 h-5" />
                       <span>Connect Your First Store</span>
@@ -222,7 +222,7 @@ export default function EnhancedStoreManager({
                       key={store.id}
                       className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${
                         selectedStore?.id === store.id
-                          ? 'border-orange-300 bg-orange-50 shadow-sm'
+                          ? 'border-green-300 bg-green-50 shadow-sm'
                           : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                       }`}
                       onClick={() => setSelectedStore(store)}
@@ -234,7 +234,7 @@ export default function EnhancedStoreManager({
                             <div className="flex items-center space-x-2">
                               <h4 className="font-medium text-gray-900">{store.storeName}</h4>
                               {store.isPrimary && (
-                                <span className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                                <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full font-medium">
                                   Primary
                                 </span>
                               )}
@@ -297,7 +297,7 @@ export default function EnhancedStoreManager({
                   {onConnect && (
                     <button
                       onClick={onConnect}
-                      className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-all duration-200 flex items-center justify-center space-x-2 text-gray-600 hover:text-orange-600"
+                      className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all duration-200 flex items-center justify-center space-x-2 text-gray-600 hover:text-green-600"
                     >
                       <Plus className="w-5 h-5" />
                       <span>Connect Another Store</span>

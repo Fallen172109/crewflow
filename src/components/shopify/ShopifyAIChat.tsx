@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import {
@@ -29,7 +29,7 @@ import FileUpload, { UploadedFile } from '@/components/ui/FileUpload'
 import ImageUpload from '@/components/shopify/ImageUpload'
 import ImageMessageDisplay from '@/components/chat/ImageMessageDisplay'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer'
-import ThreadManager, { ThreadManagerRef } from '@/components/agents/ThreadManager'
+import ThreadManager, { ThreadManagerRef } from '@/components/shopify/ThreadManager'
 import FeedbackCollector from '@/components/ai/FeedbackCollector'
 import { getChatClient, ChatError } from '@/lib/chat/client'
 import { actionDetector } from '@/lib/ai/action-detection'
@@ -37,7 +37,14 @@ import { ShopifyAction, ActionResult } from '@/lib/ai/shopify-action-executor'
 import ActionExecutionPanel from './ActionExecutionPanel'
 import { createSupabaseClient } from '@/lib/supabase/client'
 
-import { Agent } from '@/lib/agents'
+// Local interface for store manager configuration (not dependent on deleted agents module)
+interface StoreManagerConfig {
+  id: string
+  name: string
+  title: string
+  description: string
+  capabilities: string[]
+}
 
 interface Message {
   id: string
@@ -104,20 +111,13 @@ interface ShopifyAIChatProps {
   onProductCreated?: (product: any) => void
 }
 
-// Create a virtual agent for AI Store Management (not tied to specific agents)
-const storeManagerAgent: Agent = {
+// Store manager configuration for AI Store Management
+const storeManagerAgent: StoreManagerConfig = {
   id: 'ai-store-manager',
   name: 'AI Store Manager',
   title: 'Complete Store Management Assistant',
   description: 'Comprehensive AI-powered store management with intelligent routing to specialized capabilities',
-  framework: 'hybrid',
-  optimalAiModules: ['LangChain', 'OpenAI GPT-4', 'Perplexity AI', 'AutoGen'],
-  capabilities: ['product_creation', 'inventory_management', 'order_processing', 'customer_service', 'analytics', 'marketing'],
-  personality: 'Professional maritime-themed assistant focused on comprehensive e-commerce management',
-  systemPrompt: 'You are the AI Store Manager - a comprehensive assistant that can handle all aspects of store management with intelligent routing to specialized capabilities when needed.',
-  tools: [],
-  integrations: ['shopify', 'analytics', 'marketing'],
-  isActive: true
+  capabilities: ['product_creation', 'inventory_management', 'order_processing', 'customer_service', 'analytics', 'marketing']
 }
 
 export interface ShopifyAIChatRef {
@@ -553,19 +553,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
     setIsLoading(true)
 
     try {
-      let apiEndpoint = ''
-      let requestBody: any = {
-        message: userMessage.content,
-        attachments: userMessage.attachments,
-        images: userMessage.images,
-        imageAnalysis: userMessage.imageAnalysis,
-        storeId: selectedStore.id,
-        storeCurrency: selectedStore.currency,
-        storePlan: selectedStore.planName,
-        requestType
-      }
-
-      // Use unified chat API
+      // Use unified chat API for all Shopify AI interactions, including product creation
       const chatClient = getChatClient()
       let response: any
 
@@ -579,23 +567,6 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
       // Route to appropriate handler based on request type
       switch (requestType) {
         case 'product_creation':
-          // Still use direct agent endpoint for product creation
-          response = await fetch('/api/agents/splash/product-creation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              message: userMessage.content,
-              attachments: userMessage.attachments,
-              storeId: selectedStore?.id,
-              storeCurrency: selectedStore?.currency,
-              storePlan: selectedStore?.planName
-            })
-          })
-          break
-
         case 'inventory_management':
         case 'order_management':
         case 'customer_service':
@@ -614,7 +585,8 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                 context: {
                   storeId: selectedStore.id,
                   storeCurrency: selectedStore.currency,
-                  storePlan: selectedStore.planName
+                  storePlan: selectedStore.planName,
+                  requestType
                 }
               }
             )
@@ -628,7 +600,8 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                 threadId: chatResponse.threadId,
                 messageId: chatResponse.messageId,
                 usage: chatResponse.usage,
-                detectedActions: chatResponse.detectedActions
+                detectedActions: chatResponse.detectedActions,
+                productPreview: chatResponse.productPreview
               })
             }
           } catch (error) {
@@ -654,7 +627,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: response.headers ? Object.fromEntries(response.headers.entries()) : undefined
       })
 
       if (!response.ok) {
@@ -900,9 +873,9 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
   return (
     <div className={`flex flex-col h-full bg-white rounded-lg border border-gray-200 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-orange-100">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
             <Ship className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -918,14 +891,14 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowThreadManager(!showThreadManager)}
-            className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
             title="Thread Management"
           >
             <History className="w-5 h-5" />
           </button>
           <button
             onClick={() => setShowNewThreadModal(true)}
-            className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
             title="New Thread"
           >
             <Plus className="w-5 h-5" />
@@ -938,7 +911,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
         <div className="border-b border-gray-200 bg-gray-50">
           <ThreadManager
             ref={threadManagerRef}
-            agent={storeManagerAgent}
+            agentName={storeManagerAgent.id}
             taskType="business_automation"
             activeThreadId={activeThreadId}
             onThreadSelect={handleThreadSelect}
@@ -957,7 +930,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
             <div
               className={`max-w-[80%] rounded-lg p-3 overflow-hidden break-words ${
                 message.type === 'user'
-                  ? 'bg-orange-600 text-white'
+                  ? 'bg-green-600 text-white'
                   : message.type === 'system'
                   ? 'bg-blue-50 text-blue-900 border border-blue-200'
                   : 'bg-gray-100 text-gray-900'
@@ -1116,7 +1089,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                     <Package className="w-4 h-4" />
                     <span className="text-sm font-medium">Product Preview</span>
                     {message.productPreview.images && message.productPreview.images.length > 0 && (
-                      <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
                         {message.productPreview.images.length} images
                       </span>
                     )}
@@ -1335,7 +1308,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                   ? "Continue the conversation..."
                   : "Ask about products, inventory, orders, customers, or store optimization..."
               }
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               rows={3}
               disabled={isLoading}
             />
@@ -1344,7 +1317,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
           <div className="flex flex-col space-y-2">
             <button
               onClick={() => setShowFileUpload(!showFileUpload)}
-              className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
               title="Attach Files"
             >
               <Upload className="w-5 h-5" />
@@ -1354,14 +1327,14 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
               onClick={() => setShowImageUpload(!showImageUpload)}
               className={`p-2 rounded-lg transition-colors relative ${
                 showImageUpload
-                  ? 'text-orange-600 bg-orange-50 border border-orange-200'
-                  : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                  ? 'text-green-600 bg-green-50 border border-green-200'
+                  : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
               }`}
               title={showImageUpload ? "Hide Image Upload" : "Upload Product Images"}
             >
               <ImageIcon className="w-5 h-5" />
               {uploadedImages.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {uploadedImages.length}
                 </span>
               )}
@@ -1373,14 +1346,14 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                 onClick={() => setShowActionPanel(!showActionPanel)}
                 className={`p-2 rounded-lg transition-colors relative ${
                   showActionPanel
-                    ? 'text-orange-600 bg-orange-50'
-                    : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
                 }`}
                 title={`${showActionPanel ? 'Hide' : 'Show'} Detected Actions`}
               >
                 <Sparkles className="w-5 h-5" />
                 {detectedActions.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-600 text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white text-xs rounded-full flex items-center justify-center">
                     {detectedActions.length}
                   </span>
                 )}
@@ -1390,7 +1363,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
             <button
               onClick={handleSendMessage}
               disabled={isLoading || (!inputValue.trim() && attachments.length === 0 && uploadedImages.length === 0)}
-              className="p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-5 h-5" />
             </button>
@@ -1416,7 +1389,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                   value={newThreadTitle}
                   onChange={(e) => setNewThreadTitle(e.target.value)}
                   placeholder="e.g., Product Creation for Summer Collection"
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
 
@@ -1428,7 +1401,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                   value={newThreadContext}
                   onChange={(e) => setNewThreadContext(e.target.value)}
                   placeholder="Provide context for this conversation..."
-                  className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   rows={3}
                 />
               </div>
@@ -1448,7 +1421,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
               <button
                 onClick={handleCreateThread}
                 disabled={!newThreadTitle.trim()}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Create Thread
               </button>
@@ -1475,7 +1448,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
               <div>
                 <h4 className="font-medium text-gray-900">{currentPreview.title}</h4>
                 {currentPreview.price && (
-                  <p className="text-2xl font-bold text-orange-600">${currentPreview.price}</p>
+                  <p className="text-2xl font-bold text-green-600">${currentPreview.price}</p>
                 )}
               </div>
 
@@ -1495,7 +1468,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                         />
                         {index === 0 && (
-                          <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
                             Main Image
                           </div>
                         )}
@@ -1538,7 +1511,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                     {currentPreview.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm"
+                        className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm"
                       >
                         {tag}
                       </span>
@@ -1648,7 +1621,7 @@ ${canManageProducts ? 'Γ£à Full management permissions active' : 'Γ¥î Limi
                     }
                   }
                 }}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 Create Product
               </button>

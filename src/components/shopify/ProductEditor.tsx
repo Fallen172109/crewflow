@@ -218,7 +218,7 @@ export default function ProductEditor({
             <button
               onClick={handleSave}
               disabled={!hasChanges || isLoading || Object.keys(errors).length > 0}
-              className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
             >
               <Save className="w-4 h-4" />
               <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
@@ -245,7 +245,7 @@ export default function ProductEditor({
                   onClick={() => setActiveSection(section.id)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
                     activeSection === section.id
-                      ? 'bg-orange-100 text-orange-700'
+                      ? 'bg-green-100 text-green-700'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
@@ -273,7 +273,7 @@ export default function ProductEditor({
                   type="text"
                   value={editedProduct.title}
                   onChange={(e) => updateField('title', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                     errors.title ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Enter product title..."
@@ -291,7 +291,7 @@ export default function ProductEditor({
                   value={editedProduct.description}
                   onChange={(e) => updateField('description', e.target.value)}
                   rows={6}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                     errors.description ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Describe your product..."
@@ -309,7 +309,7 @@ export default function ProductEditor({
                   type="text"
                   value={editedProduct.category || ''}
                   onChange={(e) => updateField('category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Product category..."
                 />
               </div>
@@ -331,7 +331,7 @@ export default function ProductEditor({
                     min="0"
                     value={editedProduct.price || ''}
                     onChange={(e) => updateField('price', parseFloat(e.target.value) || 0)}
-                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.price ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="0.00"
@@ -356,7 +356,7 @@ export default function ProductEditor({
                 <h3 className="text-lg font-medium text-gray-900">Product Variants</h3>
                 <button
                   onClick={addVariant}
-                  className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Variant</span>
@@ -386,7 +386,7 @@ export default function ProductEditor({
                             type="text"
                             value={variant.title}
                             onChange={(e) => updateVariant(index, 'title', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                               errors[`variant_${index}_title`] ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="Variant title..."
@@ -406,7 +406,7 @@ export default function ProductEditor({
                             min="0"
                             value={variant.price}
                             onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                               errors[`variant_${index}_price`] ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="0.00"
@@ -425,7 +425,7 @@ export default function ProductEditor({
                             min="0"
                             value={variant.inventory_quantity || 0}
                             onChange={(e) => updateVariant(index, 'inventory_quantity', parseInt(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                             placeholder="0"
                           />
                         </div>
@@ -438,7 +438,7 @@ export default function ProductEditor({
                             type="text"
                             value={variant.sku || ''}
                             onChange={(e) => updateVariant(index, 'sku', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                             placeholder="SKU..."
                           />
                         </div>
@@ -519,7 +519,7 @@ export default function ProductEditor({
                   <input
                     type="text"
                     placeholder="Add a tag..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()

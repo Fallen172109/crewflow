@@ -55,7 +55,7 @@ export function AdminUserActivity({ user, adminUser }: AdminUserActivityProps) {
       case 'login':
         return 'bg-green-100 text-green-800'
       case 'subscription':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -66,7 +66,7 @@ export function AdminUserActivity({ user, adminUser }: AdminUserActivityProps) {
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-          <button className="text-sm font-medium text-orange-600 hover:text-orange-700">
+          <button className="text-sm font-medium text-green-600 hover:text-green-700">
             View All Activity
           </button>
         </div>
@@ -86,7 +86,7 @@ export function AdminUserActivity({ user, adminUser }: AdminUserActivityProps) {
                     <p className="text-sm font-medium text-gray-900">
                       {activity.action}
                       {activity.agent && (
-                        <span className="ml-2 px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">
+                        <span className="ml-2 px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
                           {activity.agent}
                         </span>
                       )}
@@ -126,7 +126,7 @@ export function AdminUserActivity({ user, adminUser }: AdminUserActivityProps) {
             <span className="text-gray-500">
               Showing {activities.length} recent activities
             </span>
-            <button className="font-medium text-orange-600 hover:text-orange-700">
+            <button className="font-medium text-green-600 hover:text-green-700">
               Export Activity Log
             </button>
           </div>

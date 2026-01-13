@@ -24,7 +24,7 @@ export default function DebugTypewriter() {
       <div>After highlight: "{text.substring(highlightIndex)}"</div>
       <div className="mt-4">
         <span className="text-white">{text.substring(0, highlightIndex)}</span>
-        <span className="text-orange-500">{text.substring(highlightIndex)}</span>
+        <span className="text-green-500">{text.substring(highlightIndex)}</span>
       </div>
     </div>
   );

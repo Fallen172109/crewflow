@@ -146,7 +146,7 @@ Provide a comprehensive JSON response with all elements needed for immediate Sho
 
 export class ProductListingGenerator {
   private openai: OpenAI
-  private model: string = 'gpt-4-turbo-preview'
+  private model: string = 'gpt-5'
 
   constructor() {
     const aiConfig = getAIConfig()

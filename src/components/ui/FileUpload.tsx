@@ -308,7 +308,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       <div
         className={`
           border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
-          ${isDragOver ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}
+          ${isDragOver ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-gray-400'}
           ${disabled || !isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}
         `}
         onDrop={handleDrop}
@@ -371,14 +371,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   <p className="text-xs text-red-600">{file.error}</p>
                 )}
                 {(!file.name || file.name.includes('NaN') || file.name.includes('undefined') || !file.size || isNaN(file.size)) && (
-                  <p className="text-xs text-orange-600">⚠️ Corrupted file data</p>
+                  <p className="text-xs text-green-600">⚠️ Corrupted file data</p>
                 )}
               </div>
 
               {/* Status */}
               <div className="flex-shrink-0 flex items-center space-x-2">
                 {file.uploadStatus === 'uploading' && (
-                  <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
                 )}
                 {file.uploadStatus === 'completed' && (
                   <CheckCircle className="w-4 h-4 text-green-500" />

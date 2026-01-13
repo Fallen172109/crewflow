@@ -43,7 +43,7 @@ export default function MyUsagePage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading usage data...</p>
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function MyUsagePage() {
               📊 {totalRequests} requests made
             </span>
             {mostExpensiveProvider && (
-              <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full">
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
                 🏆 Most used: {mostExpensiveProvider[0]} (${mostExpensiveProvider[1].cost.toFixed(4)})
               </span>
             )}
@@ -204,8 +204,8 @@ export default function MyUsagePage() {
                 {Object.keys(usageByProvider).length}
               </p>
             </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <span className="text-orange-600 text-xl">🔗</span>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <span className="text-green-600 text-xl">🔗</span>
             </div>
           </div>
         </div>

@@ -159,7 +159,7 @@ const ProductPreviewDock = forwardRef<ProductPreviewDockRef, ProductPreviewDockP
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="flex-1 text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="flex-1 text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSaveEdit()
                     if (e.key === 'Escape') handleCancelEdit()
@@ -199,7 +199,7 @@ const ProductPreviewDock = forwardRef<ProductPreviewDockRef, ProductPreviewDockP
                     step="0.01"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
-                    className="w-full text-sm border border-slate-300 rounded pl-8 pr-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full text-sm border border-slate-300 rounded pl-8 pr-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleSaveEdit()
                       if (e.key === 'Escape') handleCancelEdit()
@@ -239,7 +239,7 @@ const ProductPreviewDock = forwardRef<ProductPreviewDockRef, ProductPreviewDockP
                 <textarea
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                  className="w-full text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                   rows={3}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.ctrlKey) handleSaveEdit()
@@ -289,8 +289,8 @@ const ProductPreviewDock = forwardRef<ProductPreviewDockRef, ProductPreviewDockP
               )}
               {draft.status === 'publishing' && (
                 <div className="flex items-center gap-1">
-                  <Loader2 className="w-3 h-3 animate-spin text-orange-500" />
-                  <span className="text-xs text-orange-600">Publishing...</span>
+                  <Loader2 className="w-3 h-3 animate-spin text-green-500" />
+                  <span className="text-xs text-green-600">Publishing...</span>
                 </div>
               )}
               {draft.status === 'published' && (
@@ -310,7 +310,7 @@ const ProductPreviewDock = forwardRef<ProductPreviewDockRef, ProductPreviewDockP
             {draft.status === 'draft' && (
               <button
                 onClick={() => handlePublish(draft)}
-                className="flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded transition-colors"
+                className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded transition-colors"
               >
                 <Send className="w-3 h-3" />
                 Publish to Shopify

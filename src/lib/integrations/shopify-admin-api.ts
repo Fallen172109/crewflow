@@ -292,6 +292,12 @@ export class ShopifyAdminAPI {
     return response.product
   }
 
+  async deleteProduct(productId: number): Promise<void> {
+    await this.makeRequest(`/products/${productId}.json`, {
+      method: 'DELETE'
+    })
+  }
+
   // Order management
   async getOrders(limit: number = 50, status: string = 'any'): Promise<ShopifyOrder[]> {
     const response = await this.makeRequest(`/orders.json?limit=${limit}&status=${status}`)
@@ -300,6 +306,25 @@ export class ShopifyAdminAPI {
 
   async getOrder(orderId: number): Promise<ShopifyOrder> {
     const response = await this.makeRequest(`/orders/${orderId}.json`)
+    return response.order
+  }
+
+  async cancelOrder(orderId: number, reason: string = 'other', email: boolean = true, refund: boolean = false): Promise<ShopifyOrder> {
+    const response = await this.makeRequest(`/orders/${orderId}/cancel.json`, {
+      method: 'POST',
+      body: JSON.stringify({
+        reason,
+        email,
+        refund
+      })
+    })
+    return response.order
+  }
+
+  async closeOrder(orderId: number): Promise<ShopifyOrder> {
+    const response = await this.makeRequest(`/orders/${orderId}/close.json`, {
+      method: 'POST'
+    })
     return response.order
   }
 
@@ -1014,12 +1039,26 @@ export async function createShopifyAPI(userId: string, accessToken?: string, sho
   return api
 }
 
-// Helper function to validate Shopify webhook
+// Helper function to validate Shopify webhook using timing-safe comparison
 export function validateShopifyWebhook(body: string, signature: string, secret: string): boolean {
   const crypto = require('crypto')
   const hmac = crypto.createHmac('sha256', secret)
   hmac.update(body, 'utf8')
   const calculatedSignature = hmac.digest('base64')
-  
-  return calculatedSignature === signature
+
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    const signatureBuffer = Buffer.from(signature, 'base64')
+    const calculatedBuffer = Buffer.from(calculatedSignature, 'base64')
+
+    // Buffers must be same length for timingSafeEqual
+    if (signatureBuffer.length !== calculatedBuffer.length) {
+      return false
+    }
+
+    return crypto.timingSafeEqual(calculatedBuffer, signatureBuffer)
+  } catch {
+    // If buffer conversion fails, signatures are invalid
+    return false
+  }
 }

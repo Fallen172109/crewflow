@@ -242,7 +242,7 @@ export default function MultiStoreManager({
       case 'advanced':
         return <Star className="w-4 h-4 text-blue-600" />
       case 'shopify':
-        return <Zap className="w-4 h-4 text-orange-600" />
+        return <Zap className="w-4 h-4 text-green-600" />
       default:
         return <Store className="w-4 h-4 text-gray-600" />
     }
@@ -325,7 +325,7 @@ export default function MultiStoreManager({
             {onConnect && (
               <button
                 onClick={onConnect}
-                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Store</span>
@@ -360,7 +360,7 @@ export default function MultiStoreManager({
             {onConnect && (
               <button
                 onClick={onConnect}
-                className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 mx-auto"
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 mx-auto"
               >
                 <Ship className="w-5 h-5" />
                 <span>Connect Store</span>
@@ -380,7 +380,7 @@ export default function MultiStoreManager({
                     removingStoreId === store.id
                       ? 'border-gray-200 bg-gray-50 opacity-50 pointer-events-none'
                       : selectedStore?.id === store.id
-                      ? 'border-orange-500 bg-orange-50'
+                      ? 'border-green-500 bg-green-50'
                       : store.isActive
                       ? 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                       : 'border-gray-200 bg-gray-50 opacity-75'
@@ -395,7 +395,7 @@ export default function MultiStoreManager({
                           {getPlanIcon(store.planName)}
                           <h3 className="font-semibold text-gray-900">{store.storeName}</h3>
                           {store.isPrimary && (
-                            <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-medium">
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
                               Primary
                             </span>
                           )}

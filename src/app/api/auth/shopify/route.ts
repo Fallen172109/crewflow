@@ -14,7 +14,11 @@ export async function GET(req: Request) {
     // Validate environment variables
     const clientId = process.env.SHOPIFY_CLIENT_ID
     const clientSecret = process.env.SHOPIFY_CLIENT_SECRET
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+
+    // Derive the app URL from the incoming request origin so localhost and prod
+    // both loop back to the correct host. This avoids relying on NEXT_PUBLIC_APP_URL
+    // being different between environments.
+    const appUrl = url.origin
 
     if (!clientId || !clientSecret || !appUrl) {
       console.error('Missing Shopify OAuth environment variables:', {
@@ -27,10 +31,10 @@ export async function GET(req: Request) {
 
     // Generate state parameter for OAuth security
     const state = crypto.randomUUID()
-    
+
     // Build OAuth redirect URI
     const redirectUri = `${appUrl}/api/auth/shopify/callback`
-    
+
     // Shopify OAuth scopes
     const scopes = 'read_products,write_products,read_files,write_files,read_inventory,write_inventory,read_orders,write_orders,read_customers,write_customers'
     

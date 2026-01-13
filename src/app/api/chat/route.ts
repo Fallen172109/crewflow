@@ -58,31 +58,37 @@ export async function POST(request: NextRequest) {
 
     // Return standardized response
     if (response.success) {
-      return createSuccessResponse(
-        {
-          response: response.response,
-          threadId: response.threadId,
-          agent: response.agent,
-          tokensUsed: response.tokensUsed,
-          metadata: response.metadata,
-          detectedActions: response.detectedActions,
-          productPreview: response.productPreview,
-          // DEBUG: Add debugging info to response
-          debug: {
-            routerResponse: {
-              success: response.success,
-              responseLength: response.response?.length || 0,
-              responseContent: response.response?.substring(0, 200) || 'NO CONTENT',
-              hasAgent: !!response.agent,
-              agentId: response.agent?.id,
-              hasError: !!response.error,
-              error: response.error,
-              hasDetectedActions: !!(response.detectedActions && response.detectedActions.length > 0),
-              detectedActionsCount: response.detectedActions?.length || 0,
-              hasProductPreview: !!response.productPreview
-            }
+      // Build response payload - only include debug info in development
+      const responsePayload: Record<string, unknown> = {
+        response: response.response,
+        threadId: response.threadId,
+        agent: response.agent,
+        tokensUsed: response.tokensUsed,
+        metadata: response.metadata,
+        detectedActions: response.detectedActions,
+        productPreview: response.productPreview
+      }
+
+      // Only include debug information in development mode
+      if (process.env.NODE_ENV === 'development') {
+        responsePayload.debug = {
+          routerResponse: {
+            success: response.success,
+            responseLength: response.response?.length || 0,
+            responseContent: response.response?.substring(0, 200) || 'NO CONTENT',
+            hasAgent: !!response.agent,
+            agentId: response.agent?.id,
+            hasError: !!response.error,
+            error: response.error,
+            hasDetectedActions: !!(response.detectedActions && response.detectedActions.length > 0),
+            detectedActionsCount: response.detectedActions?.length || 0,
+            hasProductPreview: !!response.productPreview
           }
-        },
+        }
+      }
+
+      return createSuccessResponse(
+        responsePayload,
         'Chat message processed successfully'
       )
     } else {
@@ -172,23 +178,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const action = searchParams.get('action')
 
-    // Authenticate user for most actions
+    // Authenticate user for all actions (security fix)
     let user = null
     try {
-      user = await requireAuth()
+      user = await requireAuthAPI()
     } catch (error) {
-      // Only allow health check without authentication
-      if (action !== 'health') {
-        return NextResponse.json({
-          error: 'Authentication required'
-        }, { status: 401 })
-      }
+      return NextResponse.json({
+        error: 'Authentication required'
+      }, { status: 401 })
     }
 
     const router = getChatRouter()
 
     switch (action) {
       case 'health':
+        // Health check now requires authentication
         const healthStatus = await router.healthCheck()
         return NextResponse.json(healthStatus)
 
@@ -240,12 +244,22 @@ export async function GET(request: NextRequest) {
 
 // OPTIONS endpoint for CORS support
 export async function OPTIONS(request: NextRequest) {
+  // Get allowed origins from environment or default to same-origin only
+  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || []
+  const origin = request.headers.get('origin') || ''
+
+  // Only allow specific origins, not wildcard
+  const isAllowedOrigin = allowedOrigins.includes(origin) ||
+    origin.startsWith('http://localhost:') ||
+    origin.startsWith('https://localhost:')
+
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': isAllowedOrigin ? origin : '',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
     },
   })
 }

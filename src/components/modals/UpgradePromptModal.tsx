@@ -54,7 +54,7 @@ const reasonMessages = {
     title: 'Store Connection Limit',
     description: 'You\'ve reached the maximum number of connected stores. Upgrade to connect more stores.',
     icon: Shield,
-    color: 'text-orange-600'
+    color: 'text-green-600'
   }
 }
 
@@ -107,7 +107,7 @@ export default function UpgradePromptModal({
     const colors = {
       starter: 'from-blue-400 to-blue-600',
       professional: 'from-purple-400 to-purple-600',
-      enterprise: 'from-orange-400 to-orange-600'
+      enterprise: 'from-green-400 to-green-600'
     }
     return colors[tier as keyof typeof colors] || 'from-gray-400 to-gray-600'
   }
@@ -187,7 +187,7 @@ export default function UpgradePromptModal({
             {/* Recommended Plan */}
             <div className="mb-6">
               <div className="flex items-center space-x-2 mb-3">
-                <Star className="w-5 h-5 text-orange-500" />
+                <Star className="w-5 h-5 text-green-500" />
                 <span className="font-semibold text-gray-900">Recommended for You</span>
               </div>
               
@@ -226,7 +226,7 @@ export default function UpgradePromptModal({
                   whileHover={{ scale: 1.02 }}
                   className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                     selectedTier === tier
-                      ? 'border-orange-500 bg-orange-50'
+                      ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                   onClick={() => setSelectedTier(tier)}
@@ -272,7 +272,7 @@ export default function UpgradePromptModal({
                   </div>
 
                   {tier === recommendedTier && (
-                    <div className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full text-center">
+                    <div className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full text-center">
                       Recommended
                     </div>
                   )}
@@ -301,7 +301,7 @@ export default function UpgradePromptModal({
                 <button
                   onClick={() => handleUpgrade(selectedTier)}
                   disabled={loading}
-                  className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                  className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                   <span>

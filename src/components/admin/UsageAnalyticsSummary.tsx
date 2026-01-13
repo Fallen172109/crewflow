@@ -70,8 +70,8 @@ export function UsageAnalyticsSummary({ summary }: UsageAnalyticsSummaryProps) {
                 {card.value}
               </p>
             </div>
-            <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
-              <span className="text-orange-600 text-xl">{card.icon}</span>
+            <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+              <span className="text-green-600 text-xl">{card.icon}</span>
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between">
@@ -130,7 +130,7 @@ export function TokenUsageBreakdown({ summary }: UsageAnalyticsSummaryProps) {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div
-              className="bg-orange-600 h-3 rounded-full transition-all duration-300"
+              className="bg-green-600 h-3 rounded-full transition-all duration-300"
               style={{ width: `${outputPercentage}%` }}
             ></div>
           </div>
@@ -308,7 +308,7 @@ export function UsageByAgentChart({ summary }: UsageAnalyticsSummaryProps) {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
-                      className="bg-orange-600 h-3 rounded-full transition-all duration-300"
+                      className="bg-green-600 h-3 rounded-full transition-all duration-300"
                       style={{ width: `${percentage}%` }}
                     ></div>
                   </div>

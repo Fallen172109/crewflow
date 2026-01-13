@@ -93,7 +93,7 @@ export default function ManageStorePage() {
               </span>
             </div>
             <button
-              className="text-xs px-2 py-1 rounded-md bg-[#ff6a3d] text-white hover:opacity-90"
+              className="text-xs px-2 py-1 rounded-md bg-[#5BBF46] text-white hover:opacity-90"
               onClick={async () => setThreadId(await createThread(storeId))}
             >
               New Thread
@@ -110,7 +110,7 @@ export default function ManageStorePage() {
               renderToolbar={({ text, setText, busy, submit }) => (
                 <div className="flex items-center gap-2">
                   <input
-                    className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#ff6a3d] focus:ring-2 focus:ring-orange-100"
+                    className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#5BBF46] focus:ring-2 focus:ring-green-100"
                     placeholder={pendingPrompt ? pendingPrompt : 'Ask me to create products, manage orders…'}
                     value={pendingPrompt ? pendingPrompt : text}
                     onChange={(e) => { setPendingPrompt(""); setText(e.target.value); }}
@@ -120,7 +120,7 @@ export default function ManageStorePage() {
                   <button
                     onClick={() => { if (pendingPrompt) { setText(pendingPrompt); setPendingPrompt(""); } submit(); }}
                     disabled={busy}
-                    className="rounded-lg px-4 py-2 bg-[#ff6a3d] text-white hover:opacity-90 disabled:opacity-50 cf-glow"
+                    className="rounded-lg px-4 py-2 bg-[#5BBF46] text-white hover:opacity-90 disabled:opacity-50 cf-glow"
                   >
                     {busy ? "Sending…" : "Send"}
                   </button>

@@ -417,7 +417,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         className={`
           border-2 border-dashed rounded-lg text-center transition-colors cursor-pointer
           ${compact ? 'p-3' : 'p-6'}
-          ${isDragOver ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}
+          ${isDragOver ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-gray-400'}
           ${disabled || !isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}
         `}
         onDrop={handleDrop}
@@ -495,7 +495,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   {/* Analysis Status */}
                   {analyzingImages.has(image.id) && (
                     <div className="absolute top-2 left-2">
-                      <div className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs flex items-center space-x-1">
+                      <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs flex items-center space-x-1">
                         <Sparkles className="w-3 h-3 animate-pulse" />
                         <span>Analyzing</span>
                       </div>

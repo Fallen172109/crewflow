@@ -68,15 +68,15 @@ export default function AnimatedBoat() {
           {/* Sail */}
           <path 
             d="M60,10 L85,25 L60,35 Z" 
-            fill="#FF6A3D" 
-            stroke="#FF6A3D"
+            fill="#5BBF46" 
+            stroke="#5BBF46"
           />
           
           {/* Flag */}
           <path 
             d="M60,10 L70,5 L60,15" 
-            fill="#FF6A3D" 
-            stroke="#FF6A3D"
+            fill="#5BBF46" 
+            stroke="#5BBF46"
           />
         </svg>
       </div>

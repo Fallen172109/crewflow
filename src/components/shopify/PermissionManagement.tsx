@@ -193,7 +193,7 @@ export default function PermissionManagement() {
     switch (riskLevel) {
       case 'low': return 'text-green-600 bg-green-100'
       case 'medium': return 'text-yellow-600 bg-yellow-100'
-      case 'high': return 'text-orange-600 bg-orange-100'
+      case 'high': return 'text-green-600 bg-green-100'
       case 'critical': return 'text-red-600 bg-red-100'
       default: return 'text-gray-600 bg-gray-100'
     }
@@ -266,7 +266,7 @@ export default function PermissionManagement() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <Shield className="w-12 h-12 text-orange-600 animate-pulse mx-auto mb-4" />
+          <Shield className="w-12 h-12 text-green-600 animate-pulse mx-auto mb-4" />
           <p className="text-gray-600">Loading permission settings...</p>
         </div>
       </div>
@@ -279,7 +279,7 @@ export default function PermissionManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-            <Shield className="w-8 h-8 text-orange-600" />
+            <Shield className="w-8 h-8 text-green-600" />
             <span>Agent Permissions</span>
           </h2>
           <p className="text-gray-600 mt-1">Control what your AI crew can do with your Shopify store</p>
@@ -298,7 +298,7 @@ export default function PermissionManagement() {
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               emergencyStopActive 
                 ? 'bg-red-600 text-white hover:bg-red-700' 
-                : 'bg-orange-600 text-white hover:bg-orange-700'
+                : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
             {emergencyStopActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
@@ -326,8 +326,8 @@ export default function PermissionManagement() {
           <div key={group.agentId} className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Anchor className="w-5 h-5 text-orange-600" />
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Anchor className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">{group.agentName}</h3>
@@ -336,7 +336,7 @@ export default function PermissionManagement() {
               </div>
               <button
                 onClick={() => setSelectedAgent(group.agentId)}
-                className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                className="text-green-600 hover:text-green-700 text-sm font-medium"
               >
                 Configure
               </button>
@@ -357,7 +357,7 @@ export default function PermissionManagement() {
             
             <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
               <div 
-                className="bg-orange-600 h-2 rounded-full" 
+                className="bg-green-600 h-2 rounded-full" 
                 style={{ width: `${(group.totalEnabled / group.permissions.length) * 100}%` }}
               ></div>
             </div>
@@ -438,7 +438,7 @@ export default function PermissionManagement() {
                       <div className="text-sm text-gray-900">
                         <div>Max: {permission.restrictions.maxActions} actions</div>
                         {permission.restrictions.requiresApproval && (
-                          <div className="text-xs text-orange-600">Requires approval</div>
+                          <div className="text-xs text-green-600">Requires approval</div>
                         )}
                         {permission.restrictions.allowedHours && (
                           <div className="text-xs text-gray-500">Hours: {permission.restrictions.allowedHours.join(', ')}</div>
@@ -450,8 +450,8 @@ export default function PermissionManagement() {
                         <button
                           onClick={() => handlePermissionToggle(permission.id, !permission.enabled)}
                           disabled={saving || emergencyStopActive}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
-                            permission.enabled ? 'bg-orange-600' : 'bg-gray-200'
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                            permission.enabled ? 'bg-green-600' : 'bg-gray-200'
                           } ${(saving || emergencyStopActive) ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <span
@@ -528,15 +528,15 @@ export default function PermissionManagement() {
               </label>
               <div className="space-y-2">
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" defaultChecked />
+                  <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" defaultChecked />
                   <span className="ml-2 text-sm text-gray-700">Email notifications</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" defaultChecked />
+                  <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" defaultChecked />
                   <span className="ml-2 text-sm text-gray-700">In-app notifications</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+                  <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" />
                   <span className="ml-2 text-sm text-gray-700">SMS for critical actions</span>
                 </label>
               </div>

@@ -89,7 +89,7 @@ export function SmoothStreamingText({
           dangerouslySetInnerHTML={{
             __html: displayedContent +
               ((isStreaming || isAnimating)
-                ? '<span class="inline-block w-0.5 h-4 bg-orange-500 animate-pulse ml-0.5" style="vertical-align: text-bottom;"></span>'
+                ? '<span class="inline-block w-0.5 h-4 bg-green-500 animate-pulse ml-0.5" style="vertical-align: text-bottom;"></span>'
                 : ''
               )
           }}

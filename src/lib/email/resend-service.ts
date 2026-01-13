@@ -158,7 +158,7 @@ export class ResendEmailService {
       <body style="margin: 0; padding: 0; font-family: 'Source Sans Pro', Arial, sans-serif; background-color: #f8fafc;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           <!-- Header -->
-          <div style="background: linear-gradient(135deg, #FF6A3D, #e55a2b); padding: 40px 20px; text-align: center;">
+          <div style="background: linear-gradient(135deg, #5BBF46, #e55a2b); padding: 40px 20px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 600;">⚓ CrewFlow</h1>
             <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Maritime AI Automation Platform</p>
           </div>
@@ -178,14 +178,14 @@ export class ResendEmailService {
             <!-- CTA Button -->
             <div style="text-align: center; margin: 30px 0;">
               <a href="${confirmationUrl}" 
-                 style="display: inline-block; background-color: #FF6A3D; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: 600; transition: background-color 0.3s;">
+                 style="display: inline-block; background-color: #5BBF46; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: 600; transition: background-color 0.3s;">
                 Confirm Your Account
               </a>
             </div>
             
             <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 30px 0 0 0;">
               If the button doesn't work, you can also copy and paste this link into your browser:<br>
-              <a href="${confirmationUrl}" style="color: #FF6A3D; word-break: break-all;">${confirmationUrl}</a>
+              <a href="${confirmationUrl}" style="color: #5BBF46; word-break: break-all;">${confirmationUrl}</a>
             </p>
           </div>
           
@@ -234,7 +234,7 @@ export class ResendEmailService {
       <body style="margin: 0; padding: 0; font-family: 'Source Sans Pro', Arial, sans-serif; background-color: #f8fafc;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           <!-- Header -->
-          <div style="background: linear-gradient(135deg, #FF6A3D, #e55a2b); padding: 40px 20px; text-align: center;">
+          <div style="background: linear-gradient(135deg, #5BBF46, #e55a2b); padding: 40px 20px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 600;">⚓ CrewFlow</h1>
             <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Password Reset Request</p>
           </div>
@@ -250,7 +250,7 @@ export class ResendEmailService {
             <!-- CTA Button -->
             <div style="text-align: center; margin: 30px 0;">
               <a href="${resetUrl}" 
-                 style="display: inline-block; background-color: #FF6A3D; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                 style="display: inline-block; background-color: #5BBF46; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                 Reset Password
               </a>
             </div>
@@ -311,7 +311,7 @@ export class ResendEmailService {
       <body style="margin: 0; padding: 0; font-family: 'Source Sans Pro', Arial, sans-serif; background-color: #f8fafc;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           <!-- Header -->
-          <div style="background: linear-gradient(135deg, #FF6A3D, #e55a2b); padding: 40px 20px; text-align: center;">
+          <div style="background: linear-gradient(135deg, #5BBF46, #e55a2b); padding: 40px 20px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 600;">⚓ CrewFlow</h1>
             <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Alert from ${agentName}</p>
           </div>
@@ -320,7 +320,7 @@ export class ResendEmailService {
           <div style="padding: 40px 20px;">
             <h2 style="color: #000000; font-size: 24px; font-weight: 600; margin: 0 0 20px 0;">${title}</h2>
             
-            <div style="background-color: #f8fafc; border-left: 4px solid #FF6A3D; padding: 20px; margin: 20px 0;">
+            <div style="background-color: #f8fafc; border-left: 4px solid #5BBF46; padding: 20px; margin: 20px 0;">
               <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0;">
                 ${message}
               </p>

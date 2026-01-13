@@ -129,7 +129,7 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="text-sm font-medium text-orange-600 hover:text-orange-700"
+              className="text-sm font-medium text-green-600 hover:text-green-700"
             >
               Edit
             </button>
@@ -143,7 +143,7 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
               </button>
               <button
                 onClick={handleSave}
-                className="px-3 py-1 text-sm font-medium text-white bg-orange-500 rounded hover:bg-orange-600"
+                className="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded hover:bg-green-600"
               >
                 Save
               </button>
@@ -155,8 +155,8 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
       <div className="p-6 space-y-6">
         {/* User Avatar and Basic Info */}
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-            <span className="text-orange-600 text-xl font-semibold">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+            <span className="text-green-600 text-xl font-semibold">
               {user.email.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -177,7 +177,7 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
               <select
                 value={editData.role}
                 onChange={(e) => setEditData(prev => ({ ...prev, role: e.target.value as 'user' | 'admin' }))}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -204,7 +204,7 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
               <select
                 value={editData.subscription_tier || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, subscription_tier: e.target.value || null }))}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
                 <option value="">Free</option>
                 <option value="starter">Starter</option>
@@ -214,7 +214,7 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
             ) : (
               <div className="flex items-center">
                 <span className={`px-2 py-1 text-xs font-medium rounded ${
-                  user.subscription_tier === 'enterprise' ? 'bg-orange-100 text-orange-800' :
+                  user.subscription_tier === 'enterprise' ? 'bg-green-100 text-green-800' :
                   user.subscription_tier === 'professional' ? 'bg-purple-100 text-purple-800' :
                   user.subscription_tier === 'starter' ? 'bg-blue-100 text-blue-800' :
                   'bg-gray-100 text-gray-800'
@@ -237,7 +237,7 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
               <select
                 value={editData.subscription_status || ''}
                 onChange={(e) => setEditData(prev => ({ ...prev, subscription_status: e.target.value || null }))}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
                 <option value="">None</option>
                 <option value="active">Active</option>
@@ -350,7 +350,7 @@ export function AdminUserProfile({ user, adminUser }: AdminUserProfileProps) {
                 value={suspensionReason}
                 onChange={(e) => setSuspensionReason(e.target.value)}
                 placeholder="Enter the reason for suspending this account..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 rows={3}
                 disabled={isLoading}
               />

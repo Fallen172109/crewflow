@@ -66,8 +66,8 @@ export function AdminOverviewCards({ analytics }: AdminOverviewCardsProps) {
                 {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
               </p>
             </div>
-            <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
-              <span className="text-orange-600 text-xl">{card.icon}</span>
+            <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+              <span className="text-green-600 text-xl">{card.icon}</span>
             </div>
           </div>
 

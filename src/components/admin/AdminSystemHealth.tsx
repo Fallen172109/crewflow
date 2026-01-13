@@ -112,7 +112,7 @@ export function AdminSystemHealth() {
           <button className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50">
             🔍 Run Diagnostics
           </button>
-          <button className="flex-1 px-3 py-2 text-sm font-medium text-white bg-orange-500 rounded hover:bg-orange-600">
+          <button className="flex-1 px-3 py-2 text-sm font-medium text-white bg-green-500 rounded hover:bg-green-600">
             📋 View Logs
           </button>
         </div>

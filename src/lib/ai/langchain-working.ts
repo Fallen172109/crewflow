@@ -2,11 +2,7 @@
 import { ChatOpenAI } from '@langchain/openai'
 import { getAIConfig } from './config'
 import { createImageGenerationService, type ImageGenerationRequest, type ImageGenerationResponse } from './image-generation'
-import { createMealPlanningService, type MealPlanRequest } from './meal-planning'
-import { createFitnessPlanningService, type FitnessPlanRequest } from './fitness-planning'
-import { createProductivityPlanningService, type ProductivityPlanRequest } from './productivity-planning'
-import { withAICache } from './response-cache'
-import type { Agent } from '../agents'
+import { withAICache, Agent } from './response-cache'
 
 export interface LangChainResponse {
   response: string
@@ -512,7 +508,7 @@ This meal plan has been customized based on your preferences and nutritional nee
           response: `I apologize, but I encountered an error while generating your meal plan: ${mealPlanResult.error || 'Unknown error'}. Please try again with different preferences or contact support if the issue persists.`,
           tokensUsed: 0,
           latency: Date.now() - startTime,
-          model: 'gpt-4-turbo-preview',
+          model: 'gpt-5',
           success: false,
           error: mealPlanResult.error
         }
@@ -523,7 +519,7 @@ This meal plan has been customized based on your preferences and nutritional nee
         response: 'I apologize, but I encountered an error while generating your meal plan. Please try again.',
         tokensUsed: 0,
         latency: Date.now() - startTime,
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-5',
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       }
@@ -615,7 +611,7 @@ This fitness plan has been customized based on your fitness level, goals, and av
           response: `I apologize, but I encountered an error while generating your fitness plan: ${fitnessResult.error || 'Unknown error'}. Please try again with different preferences or contact support if the issue persists.`,
           tokensUsed: 0,
           latency: Date.now() - startTime,
-          model: 'gpt-4-turbo-preview',
+          model: 'gpt-5',
           success: false,
           error: fitnessResult.error
         }
@@ -626,7 +622,7 @@ This fitness plan has been customized based on your fitness level, goals, and av
         response: 'I apologize, but I encountered an error while generating your fitness plan. Please try again.',
         tokensUsed: 0,
         latency: Date.now() - startTime,
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-5',
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       }
@@ -723,7 +719,7 @@ This productivity plan has been customized to your work style and goals. It incl
           response: `I apologize, but I encountered an error while generating your productivity plan: ${productivityResult.error || 'Unknown error'}. Please try again with different preferences or contact support if the issue persists.`,
           tokensUsed: 0,
           latency: Date.now() - startTime,
-          model: 'gpt-4-turbo-preview',
+          model: 'gpt-5',
           success: false,
           error: productivityResult.error
         }
@@ -734,7 +730,7 @@ This productivity plan has been customized to your work style and goals. It incl
         response: 'I apologize, but I encountered an error while generating your productivity plan. Please try again.',
         tokensUsed: 0,
         latency: Date.now() - startTime,
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-5',
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       }

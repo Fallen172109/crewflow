@@ -203,7 +203,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
               <Settings className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -247,7 +247,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
                     onClick={() => setActiveTab(tab.id as TabType)}
                     className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
                       activeTab === tab.id
-                        ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                        ? 'bg-green-100 text-green-700 border border-green-200'
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
@@ -316,7 +316,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
                       <button
                         onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.isActive ? 'bg-orange-600' : 'bg-gray-200'
+                          formData.isActive ? 'bg-green-600' : 'bg-gray-200'
                         }`}
                       >
                         <span
@@ -368,7 +368,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
                             <button
                               onClick={() => handlePermissionToggle(permission as keyof ShopifyStore['permissions'])}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                enabled ? 'bg-orange-600' : 'bg-gray-200'
+                                enabled ? 'bg-green-600' : 'bg-gray-200'
                               }`}
                             >
                               <span
@@ -410,7 +410,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
                               <button
                                 onClick={() => handleAgentToggle(agentId)}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  agentAccess.enabled ? 'bg-orange-600' : 'bg-gray-200'
+                                  agentAccess.enabled ? 'bg-green-600' : 'bg-gray-200'
                                 }`}
                               >
                                 <span
@@ -428,7 +428,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
                                   {agent.permissions.map((permission) => (
                                     <span
                                       key={permission}
-                                      className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full"
+                                      className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
                                     >
                                       {permission.replace(/_/g, ' ')}
                                     </span>
@@ -486,7 +486,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
                             // TODO: Implement manual sync
                             console.log('Manual sync triggered for store:', store.id)
                           }}
-                          className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                          className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
                           <RefreshCw className="w-4 h-4" />
                           <span>Sync Now</span>
@@ -512,7 +512,7 @@ export default function StoreSettingsModal({ isOpen, onClose, store, onSave }: S
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
+            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
           >
             {saving ? (
               <>

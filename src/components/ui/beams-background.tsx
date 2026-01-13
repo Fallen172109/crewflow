@@ -22,8 +22,8 @@ interface Beam {
     pulseSpeed: number;
 }
 
-// Convert CrewFlow orange (#FF6A3D) to HSL: hue=16, saturation=100%, lightness=62%
-const CREWFLOW_ORANGE_HUE = 16;
+// Convert Shopify green (#5BBF46) to HSL: hue=110, saturation=53%, lightness=51%
+const CREWFLOW_GREEN_HUE = 110;
 
 function createBeam(width: number, height: number): Beam {
     const angle = -35 + Math.random() * 8; // Reduced randomness for consistency
@@ -133,11 +133,11 @@ export function BeamsBackground({
             // Simplified gradient with fewer color stops for better performance
             const gradient = ctx.createLinearGradient(0, 0, 0, beam.length);
 
-            // Use CrewFlow orange color theme
-            gradient.addColorStop(0, `hsla(${CREWFLOW_ORANGE_HUE}, 100%, 62%, 0)`);
-            gradient.addColorStop(0.3, `hsla(${CREWFLOW_ORANGE_HUE}, 100%, 62%, ${pulsingOpacity})`);
-            gradient.addColorStop(0.7, `hsla(${CREWFLOW_ORANGE_HUE}, 100%, 62%, ${pulsingOpacity})`);
-            gradient.addColorStop(1, `hsla(${CREWFLOW_ORANGE_HUE}, 100%, 62%, 0)`);
+            // Use CrewFlow green color theme
+            gradient.addColorStop(0, `hsla(${CREWFLOW_GREEN_HUE}, 100%, 62%, 0)`);
+            gradient.addColorStop(0.3, `hsla(${CREWFLOW_GREEN_HUE}, 100%, 62%, ${pulsingOpacity})`);
+            gradient.addColorStop(0.7, `hsla(${CREWFLOW_GREEN_HUE}, 100%, 62%, ${pulsingOpacity})`);
+            gradient.addColorStop(1, `hsla(${CREWFLOW_GREEN_HUE}, 100%, 62%, 0)`);
 
             ctx.fillStyle = gradient;
             ctx.fillRect(-beam.width / 2, 0, beam.width, beam.length);

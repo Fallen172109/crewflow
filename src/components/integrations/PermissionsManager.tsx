@@ -115,7 +115,7 @@ export default function PermissionsManager({ userId, className = '' }: Permissio
   const getFrequencyColor = (frequency: string) => {
     switch (frequency) {
       case 'hourly': return 'text-red-600 bg-red-50'
-      case 'daily': return 'text-orange-600 bg-orange-50'
+      case 'daily': return 'text-green-600 bg-green-50'
       case 'weekly': return 'text-green-600 bg-green-50'
       default: return 'text-gray-600 bg-gray-50'
     }
@@ -140,7 +140,7 @@ export default function PermissionsManager({ userId, className = '' }: Permissio
     <div className={`bg-white rounded-xl border border-gray-200 shadow-sm ${className}`}>
       <div className="p-6">
         <div className="flex items-center space-x-3 mb-6">
-          <Shield className="w-6 h-6 text-orange-600" />
+          <Shield className="w-6 h-6 text-green-600" />
           <div>
             <h2 className="text-xl font-bold text-gray-900">AI Agent Permissions</h2>
             <p className="text-gray-600">Control what your AI agents can do autonomously</p>
@@ -198,8 +198,8 @@ export default function PermissionsManager({ userId, className = '' }: Permissio
                   <button
                     onClick={() => updatePermission(permission.id, { enabled: !permission.enabled })}
                     disabled={saving === permission.id}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
-                      permission.enabled ? 'bg-orange-600' : 'bg-gray-200'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                      permission.enabled ? 'bg-green-600' : 'bg-gray-200'
                     }`}
                   >
                     <span
@@ -220,8 +220,8 @@ export default function PermissionsManager({ userId, className = '' }: Permissio
               </div>
 
               {saving === permission.id && (
-                <div className="mt-3 flex items-center space-x-2 text-orange-600">
-                  <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="mt-3 flex items-center space-x-2 text-green-600">
+                  <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
                   <span className="text-sm">Updating...</span>
                 </div>
               )}
@@ -230,12 +230,12 @@ export default function PermissionsManager({ userId, className = '' }: Permissio
         </div>
 
         {/* Warning Notice */}
-        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-emerald-600 mt-0.5" />
             <div>
-              <h4 className="font-medium text-amber-900">Important Security Notice</h4>
-              <p className="text-sm text-amber-700 mt-1">
+              <h4 className="font-medium text-emerald-900">Important Security Notice</h4>
+              <p className="text-sm text-emerald-700 mt-1">
                 AI agents will perform these actions autonomously in the background. 
                 You can view all actions in your activity log and disable permissions anytime.
               </p>
@@ -252,7 +252,7 @@ export default function PermissionsManager({ userId, className = '' }: Permissio
             <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
               Disable All
             </button>
-            <button className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg">
+            <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg">
               Save Changes
             </button>
           </div>

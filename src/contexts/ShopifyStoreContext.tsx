@@ -35,11 +35,11 @@ interface ShopifyStore {
     read_inventory: boolean
     write_inventory: boolean
   }
-  agent_access: {
+  agentAccess: {
     [agentId: string]: {
       enabled: boolean
       permissions: string[]
-      last_activity?: string
+      lastActivity?: string
     }
   }
 }
@@ -68,9 +68,9 @@ export function ShopifyStoreProvider({ children }: ShopifyStoreProviderProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const primaryStore = stores.find(store => store.is_primary) || null
+  const primaryStore = stores.find(store => store.isPrimary) || null
   const hasStores = stores.length > 0
-  const hasActiveStores = stores.some(store => store.is_active)
+  const hasActiveStores = stores.some(store => store.isActive)
 
   const refreshStores = async () => {
     try {
@@ -89,18 +89,18 @@ export function ShopifyStoreProvider({ children }: ShopifyStoreProviderProps) {
       
       // Auto-select primary store if no store is selected
       if (!selectedStore && fetchedStores.length > 0) {
-        const primary = fetchedStores.find((store: ShopifyStore) => store.is_primary)
-        const firstActive = fetchedStores.find((store: ShopifyStore) => store.is_active)
+        const primary = fetchedStores.find((store: ShopifyStore) => store.isPrimary)
+        const firstActive = fetchedStores.find((store: ShopifyStore) => store.isActive)
         setSelectedStore(primary || firstActive || fetchedStores[0])
       }
-      
+
       // Update selected store if it's no longer in the list
       if (selectedStore && !fetchedStores.find((store: ShopifyStore) => store.id === selectedStore.id)) {
-        const primary = fetchedStores.find((store: ShopifyStore) => store.is_primary)
-        const firstActive = fetchedStores.find((store: ShopifyStore) => store.is_active)
+        const primary = fetchedStores.find((store: ShopifyStore) => store.isPrimary)
+        const firstActive = fetchedStores.find((store: ShopifyStore) => store.isActive)
         setSelectedStore(primary || firstActive || fetchedStores[0] || null)
       }
-      
+
     } catch (err) {
       console.error('Error fetching stores:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch stores')
@@ -116,8 +116,8 @@ export function ShopifyStoreProvider({ children }: ShopifyStoreProviderProps) {
   // Auto-select primary store when stores change
   useEffect(() => {
     if (stores.length > 0 && !selectedStore) {
-      const primary = stores.find(store => store.is_primary)
-      const firstActive = stores.find(store => store.is_active)
+      const primary = stores.find(store => store.isPrimary)
+      const firstActive = stores.find(store => store.isActive)
       setSelectedStore(primary || firstActive || stores[0])
     }
   }, [stores, selectedStore])
@@ -161,17 +161,17 @@ export function useStoreAgentContext(agentId: string) {
     }
   }
   
-  const agentAccess = selectedStore.agent_access[agentId]
-  
+  const agentAccess = selectedStore.agentAccess?.[agentId]
+
   return {
     hasAccess: agentAccess?.enabled || false,
     permissions: agentAccess?.permissions || [],
     storeInfo: {
       id: selectedStore.id,
-      name: selectedStore.store_name,
-      domain: selectedStore.shop_domain,
+      name: selectedStore.storeName,
+      domain: selectedStore.shopDomain,
       currency: selectedStore.currency,
-      plan: selectedStore.plan_name,
+      plan: selectedStore.planName,
       permissions: selectedStore.permissions,
       metadata: selectedStore.metadata
     }

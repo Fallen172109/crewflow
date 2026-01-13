@@ -360,7 +360,7 @@ export class PredictiveResponseChecker {
    */
   private getAgentColor(agentId: string): string {
     const agentColors: Record<string, string> = {
-      'anchor': '#FF6A3D',
+      'anchor': '#5BBF46',
       'sage': '#4A90E2',
       'helm': '#7ED321',
       'ledger': '#F5A623',
@@ -371,7 +371,7 @@ export class PredictiveResponseChecker {
       'splash': '#E91E63',
       'drake': '#795548'
     }
-    return agentColors[agentId] || '#FF6A3D'
+    return agentColors[agentId] || '#5BBF46'
   }
 
   /**

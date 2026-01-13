@@ -266,7 +266,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
     const tierColors = {
       starter: 'bg-blue-50 text-blue-700 border-blue-200',
       professional: 'bg-purple-50 text-purple-700 border-purple-200',
-      enterprise: 'bg-orange-50 text-orange-700 border-orange-200'
+      enterprise: 'bg-green-50 text-green-700 border-green-200'
     }
 
     const statusColors = {
@@ -505,7 +505,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                             updateUserRole(user.id, 'admin')
                           }
                         }}
-                        className="text-xs text-orange-600 hover:text-orange-700"
+                        className="text-xs text-green-600 hover:text-green-700"
                       >
                         Promote
                       </button>
@@ -537,7 +537,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                   <div className="flex justify-end space-x-2">
                     <Link
                       href={`/admin/users/${user.id}`}
-                      className="text-orange-600 hover:text-orange-700"
+                      className="text-green-600 hover:text-green-700"
                     >
                       View
                     </Link>
@@ -584,7 +584,7 @@ export function AdminUsersTable({ users: propUsers, adminUser }: AdminUsersTable
                 setSearchTerm('')
                 setRoleFilter('all')
               }}
-              className="mt-2 text-sm text-orange-600 hover:text-orange-700"
+              className="mt-2 text-sm text-green-600 hover:text-green-700"
             >
               Clear filters
             </button>

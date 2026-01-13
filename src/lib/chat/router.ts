@@ -1,10 +1,10 @@
 // Unified Chat Router
 // Central routing system for all chat interactions
 
-import { 
-  UnifiedChatRequest, 
-  UnifiedChatResponse, 
-  ChatHandler, 
+import {
+  UnifiedChatRequest,
+  UnifiedChatResponse,
+  ChatHandler,
   ChatType,
   ChatValidationError,
   ChatHandlerError,
@@ -20,6 +20,9 @@ import {
   detectChatType
 } from './utils/validation'
 import { predictiveResponseChecker } from '@/lib/ai/predictive-response-checker'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('ChatRouter')
 
 export class ChatRouter {
   private handlers: Map<ChatType, ChatHandler> = new Map()
@@ -33,26 +36,18 @@ export class ChatRouter {
 
   private async initializeHandlers() {
     try {
-      console.log('🔀 CHAT ROUTER: Initializing handlers...')
+      log.debug('Initializing handlers...')
 
-      // Lazy load handlers to avoid circular dependencies
-      const { GeneralAgentHandler } = await import('./handlers/general-agent')
+      // Lazy load Shopify-focused handlers only
       const { ShopifyAIHandler } = await import('./handlers/shopify-ai')
       const { AIStoreManagerHandler } = await import('./handlers/ai-store-manager')
 
-      // Temporarily disable meal planning handler due to module loading issue
-      // const { MealPlanningHandler } = await import('./handlers/meal-planning')
-
-      this.handlers.set('agent', new GeneralAgentHandler())
       this.handlers.set('shopify-ai', new ShopifyAIHandler())
       this.handlers.set('ai-store-manager', new AIStoreManagerHandler())
 
-      // Temporarily disabled
-      // this.handlers.set('meal-planning', new MealPlanningHandler())
-
-      console.log('🔀 CHAT ROUTER: Handlers initialized:', Array.from(this.handlers.keys()))
+      log.debug('Handlers initialized:', Array.from(this.handlers.keys()))
     } catch (error) {
-      console.error('🔀 CHAT ROUTER: Error initializing handlers:', error)
+      log.error('Error initializing handlers:', error)
       throw error
     }
   }
@@ -90,31 +85,25 @@ export class ChatRouter {
 
       // Detect chat type if not explicitly provided
       const chatType = (request.chatType || detectChatType(request)) as ChatType
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Chat type detected:`, chatType)
+      log.debug(`[${requestId}] Chat type detected: ${chatType}`)
 
       // Get appropriate handler
       const handler = this.handlers.get(chatType)
       if (!handler) {
         throw new ChatHandlerError(`No handler available for chat type: ${chatType}`)
       }
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler found:`, handler.constructor.name)
+      log.debug(`[${requestId}] Handler found: ${handler.constructor.name}`)
 
       // Verify handler can process this request
       if (!handler.canHandle(request)) {
         throw new ChatHandlerError(`Handler cannot process this request type`)
       }
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler can process request`)
 
-      // TEMPORARILY DISABLE predictive response checker to debug
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Skipping predictive response checker (debug mode)`)
-
-      // Process the chat request normally
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Calling handler.process()`)
+      // Process the chat request
       const response = await handler.process(request, user)
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler response received:`, {
+      log.debug(`[${requestId}] Handler response received`, {
         success: response.success,
-        responseLength: response.response?.length || 0,
-        hasProductPreview: !!response.productPreview
+        responseLength: response.response?.length || 0
       })
 
       // Record analytics
@@ -189,7 +178,7 @@ export class ChatRouter {
       }
 
       // Generic error handling
-      console.error('Unexpected chat router error:', error)
+      log.error('Unexpected chat router error:', error)
       return {
         response: '',
         success: false,
@@ -211,55 +200,46 @@ export class ChatRouter {
     try {
       // Ensure handlers are initialized
       await this.ensureInitialized()
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Starting streaming validation`)
 
       // Normalize the request format
       const request = normalizeRequest(rawRequest)
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Request normalized`)
 
       // Validate the request
       const validation = validateChatRequest(request)
       if (!validation.isValid) {
-        console.error(`🔀 CHAT ROUTER [${requestId}]: Request validation failed:`, validation.errors)
+        log.warn(`[${requestId}] Request validation failed:`, validation.errors)
         throw createValidationError(validation.errors)
       }
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Request validation passed`)
 
       // Security validation
       const securityValidation = validateSecurityConstraints(request, user)
       if (!securityValidation.isValid) {
-        console.error(`🔀 CHAT ROUTER [${requestId}]: Security validation failed:`, securityValidation.errors)
+        log.warn(`[${requestId}] Security validation failed`)
         throw new ChatAuthenticationError(securityValidation.errors.join(', '))
       }
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Security validation passed`)
 
       // Rate limiting
       if (!this.checkRateLimit(user.id)) {
-        console.error(`🔀 CHAT ROUTER [${requestId}]: Rate limit exceeded for user:`, user.id)
+        log.warn(`[${requestId}] Rate limit exceeded for user`)
         throw new ChatRateLimitError('Rate limit exceeded. Please try again later.')
       }
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Rate limit check passed`)
 
       // Detect chat type if not explicitly provided
       const chatType = (request.chatType || detectChatType(request)) as ChatType
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Chat type detected:`, chatType)
+      log.debug(`[${requestId}] Chat type: ${chatType}`)
 
       // Get appropriate handler
       const handler = this.handlers.get(chatType)
       if (!handler) {
-        console.error(`🔀 CHAT ROUTER [${requestId}]: No handler found for chat type:`, chatType)
         throw new ChatHandlerError(`No handler available for chat type: ${chatType}`)
       }
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler found for ${chatType}`)
 
       // Verify handler can process this request
       if (!handler.canHandle(request)) {
-        console.error(`🔀 CHAT ROUTER [${requestId}]: Handler cannot process request`)
         throw new ChatHandlerError(`Handler cannot process this request type`)
       }
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Handler can process request`)
 
-      console.log(`🔀 CHAT ROUTER [${requestId}]: Processing streaming request for ${chatType}`)
+      log.debug(`[${requestId}] Processing streaming request for ${chatType}`)
 
       // Check if handler supports streaming
       let response: UnifiedChatResponse
@@ -268,7 +248,7 @@ export class ChatRouter {
         response = await (handler as any).processStreaming(request, user, onChunk)
       } else {
         // Fallback to regular processing for handlers that don't support streaming
-        console.log(`🔀 CHAT ROUTER [${requestId}]: Handler doesn't support streaming, using regular processing`)
+        log.debug(`[${requestId}] Handler doesn't support streaming, using regular processing`)
         response = await handler.process(request, user)
 
         // Simulate streaming by sending the complete response as a single chunk
@@ -295,7 +275,12 @@ export class ChatRouter {
 
       return {
         ...response,
-        success: true
+        success: true,
+        // Pass through any extra metadata (like product previews) so the
+        // streaming API can expose it to the client.
+        metadata: (response as any).productPreview
+          ? { ...(response as any).metadata, productPreview: (response as any).productPreview }
+          : (response as any).metadata
       }
 
     } catch (error) {
@@ -353,7 +338,7 @@ export class ChatRouter {
       }
 
       // Generic error handling
-      console.error('Unexpected streaming chat router error:', error)
+      log.error('Unexpected streaming chat router error:', error)
       return {
         response: '',
         success: false,
@@ -395,14 +380,14 @@ export class ChatRouter {
 
   private recordAnalytics(analytics: ChatAnalytics): void {
     this.analytics.push(analytics)
-    
+
     // Keep only last 1000 analytics entries in memory
     if (this.analytics.length > 1000) {
       this.analytics = this.analytics.slice(-1000)
     }
 
-    // In a real implementation, this would be sent to a proper analytics service
-    console.log('Chat Analytics:', {
+    // Log analytics in development only
+    log.debug('Chat Analytics:', {
       requestId: analytics.requestId,
       chatType: analytics.chatType,
       latency: analytics.latency,

@@ -186,10 +186,10 @@ export default function AICacheMonitor() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Cache Misses</CardTitle>
-              <Clock className="h-4 w-4 text-orange-600" />
+              <Clock className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.misses}</div>
+              <div className="text-2xl font-bold text-green-600">{stats.misses}</div>
               <p className="text-xs text-muted-foreground">
                 Requests that hit AI APIs
               </p>

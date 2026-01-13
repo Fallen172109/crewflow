@@ -1,9 +1,10 @@
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { upsertInstall, logOAuth } from '@/lib/shopify/install'
+import { logOAuth } from '@/lib/shopify/install'
 import { normalizeShopDomain } from '@/lib/shopify/constants'
 import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
+import { addStore } from '@/lib/shopify/multi-store-manager'
 
 function timingSafeEqual(a: string, b: string) {
   const aBuf = Buffer.from(a)
@@ -17,8 +18,9 @@ export async function GET(req: Request) {
   const supabase = await createSupabaseServerClientWithCookies()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Allow OAuth callback to proceed even without logged-in user initially
-  // We'll handle user association after validating the OAuth response
+  // This callback expects the user to already be logged in when returning
+  // from Shopify OAuth. If no user is found, we redirect to login without
+  // persisting any Shopify tokens.
 
   const url = new URL(req.url)
   const shop = normalizeShopDomain(url.searchParams.get('shop') || '')
@@ -26,16 +28,20 @@ export async function GET(req: Request) {
   const state = url.searchParams.get('state') || ''
   const hmac = url.searchParams.get('hmac') || ''
 
+  // Use the actual request origin here so dev (localhost) and prod (crewflow.ai)
+  // both keep the OAuth round-trip on the same host as where it started.
+  const baseUrl = url.origin
+
   // 1) Validate state
   const stateCookie = cookieStore.get('shopify_oauth_state')?.value || ''
   const storedShop = cookieStore.get('shopify_oauth_shop')?.value || ''
   if (!state || !stateCookie || !timingSafeEqual(state, stateCookie)) {
     logOAuth('callback.state_fail', { state, stateCookie })
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations/shopify/error?reason=state`)
+    return NextResponse.redirect(`${baseUrl}/integrations/shopify/error?reason=state`)
   }
   if (storedShop && storedShop !== shop) {
     logOAuth('callback.shop_mismatch', { shop, storedShop })
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations/shopify/error?reason=shop_mismatch`)
+    return NextResponse.redirect(`${baseUrl}/integrations/shopify/error?reason=shop_mismatch`)
   }
 
   // 2) Validate HMAC (basic implementation)
@@ -48,7 +54,7 @@ export async function GET(req: Request) {
   const computed = crypto.createHmac('sha256', secret).update(params).digest('hex')
   if (!timingSafeEqual(computed, hmac)) {
     logOAuth('callback.hmac_fail', { shop })
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations/shopify/error?reason=hmac`)
+    return NextResponse.redirect(`${baseUrl}/integrations/shopify/error?reason=hmac`)
   }
 
   // 3) Exchange code for token
@@ -64,58 +70,41 @@ export async function GET(req: Request) {
   if (!resp.ok) {
     const body = await resp.text()
     logOAuth('callback.token_fail', { shop, status: resp.status, body })
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations/shopify/error?reason=token`)
+    return NextResponse.redirect(`${baseUrl}/integrations/shopify/error?reason=token`)
   }
   const data = await resp.json() as { access_token: string; scope: string }
 
-  // 4) Handle user authentication and token persistence
+  // 4) Require authenticated user before completing install
   if (!user) {
-    // User not logged in - store token temporarily and redirect to login
+    // Enforce "login-first" rule for connecting stores
     logOAuth('callback.no_user', { shop })
-
-    // Store OAuth result temporarily in cookies for post-login processing
-    const res = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?oauth_pending=shopify&shop=${encodeURIComponent(shop)}`)
-    res.cookies.set('shopify_oauth_token', data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 10 * 60, // 10 minutes
-      path: '/'
-    })
-    res.cookies.set('shopify_oauth_scope', data.scope, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 10 * 60, // 10 minutes
-      path: '/'
-    })
-    res.cookies.set('shopify_oauth_shop_final', shop, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 10 * 60, // 10 minutes
-      path: '/'
-    })
-    // Clear OAuth state cookies
-    res.cookies.set('shopify_oauth_state','', { maxAge: 0, path: '/' })
-    res.cookies.set('shopify_oauth_shop','', { maxAge: 0, path: '/' })
-    return res
+    return NextResponse.redirect(`${baseUrl}/login`)
   }
 
-  // User is logged in - persist token immediately
-  await upsertInstall({
-    user_id: user.id,
-    shop_domain: shop,
-    access_token: data.access_token,
-    scope: data.scope,
-    status: 'connected'
-  })
+  // User is logged in - complete installation immediately
+  logOAuth('callback.userLoggedIn', { shop, userId: user.id })
 
-  // 5) Clear install cookies and redirect to dashboard
-  const res = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard?connected=shopify&shop=${encodeURIComponent(shop)}`)
+  // Add store to user's account (creates shopify_stores row and saves encrypted token)
+  // Pass the authenticated Supabase client so RLS and user context work correctly
+  const addStoreResult = await addStore(user.id, data.access_token, shop, supabase)
+
+  if (!addStoreResult.success) {
+    console.error('❌ Shopify callback: Failed to add store after OAuth:', addStoreResult.error)
+    const errorRes = NextResponse.redirect(
+      `${baseUrl}/dashboard/shopify?error=store_connection_failed&store=${encodeURIComponent(shop)}`
+    )
+    errorRes.cookies.set('shopify_oauth_state','', { maxAge: 0, path: '/' })
+    errorRes.cookies.set('shopify_oauth_shop','', { maxAge: 0, path: '/' })
+    return errorRes
+  }
+
+  // 5) Clear install cookies and redirect to Shopify dashboard
+  const res = NextResponse.redirect(
+    `${baseUrl}/dashboard/shopify?success=store_connected&store=${encodeURIComponent(shop)}`
+  )
   res.cookies.set('shopify_oauth_state','', { maxAge: 0, path: '/' })
   res.cookies.set('shopify_oauth_shop','', { maxAge: 0, path: '/' })
-  logOAuth('callback.success', { shop })
+  logOAuth('callback.success', { shop, userId: user.id })
   return res
 }
 

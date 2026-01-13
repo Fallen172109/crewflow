@@ -147,7 +147,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
               onClick={() => handleDatePresetChange(preset.value)}
               className={`px-3 py-1 text-sm rounded-lg border ${
                 selectedDatePreset === preset.value
-                  ? 'bg-orange-50 border-orange-200 text-orange-700'
+                  ? 'bg-green-50 border-green-200 text-green-700'
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -168,7 +168,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
               type="date"
               value={filters.startDate || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
           <div>
@@ -179,7 +179,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
               type="date"
               value={filters.endDate || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
         </div>
@@ -196,7 +196,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
             placeholder="user@example.com"
             value={filters.userId || ''}
             onChange={(e) => setFilters(prev => ({ ...prev, userId: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
         </div>
 
@@ -209,7 +209,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
             placeholder="anchor, pearl, etc."
             value={filters.agentId || ''}
             onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
         </div>
 
@@ -220,7 +220,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
           <select
             value={filters.framework || ''}
             onChange={(e) => setFilters(prev => ({ ...prev, framework: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
             <option value="">All Frameworks</option>
             {frameworks.map((framework) => (
@@ -238,7 +238,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
           <select
             value={filters.provider || ''}
             onChange={(e) => setFilters(prev => ({ ...prev, provider: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
             <option value="">All Providers</option>
             {providers.map((provider) => (
@@ -258,7 +258,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
           <select
             value={filters.messageType || ''}
             onChange={(e) => setFilters(prev => ({ ...prev, messageType: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
             <option value="">All Types</option>
             {messageTypes.map((type) => (
@@ -276,7 +276,7 @@ export function UsageAnalyticsFilters({ currentFilters }: UsageAnalyticsFiltersP
           <button
             onClick={applyFilters}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Applying...' : '🔍 Apply Filters'}
           </button>

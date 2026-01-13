@@ -52,7 +52,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
       const cleanDomain = storeDomain.replace(/^https?:\/\//, '')
       
       // Redirect to OAuth flow
-      const oauthUrl = `/api/auth/shopify/authorize?shop=${encodeURIComponent(cleanDomain)}`
+      const oauthUrl = `/api/auth/shopify/authorize?shop=${encodeURIComponent(cleanDomain)}&force=true`
       window.location.href = oauthUrl
       
     } catch (error) {
@@ -82,7 +82,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
               <Ship className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">Connect Shopify Store</h2>
@@ -145,7 +145,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
                   onChange={(e) => handleDomainChange(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="your-store.myshopify.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   disabled={isConnecting}
                 />
                 {storeDomain && !storeDomain.includes('.myshopify.com') && (
@@ -174,7 +174,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
               <button
                 onClick={handleConnect}
                 disabled={isConnecting || !storeDomain.trim()}
-                className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 <Ship className="w-4 h-4" />
                 <span>Connect Store</span>
@@ -185,17 +185,17 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
 
         {step === 'connecting' && (
           <div className="text-center py-8">
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Ship className="w-8 h-8 text-orange-600 animate-pulse" />
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Ship className="w-8 h-8 text-green-600 animate-pulse" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Connecting to Shopify</h3>
             <p className="text-gray-600 mb-4">
               You'll be redirected to Shopify to authorize CrewFlow...
             </p>
             <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
-              <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             </div>
           </div>
         )}
@@ -211,7 +211,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
             </p>
             <button
               onClick={onClose}
-              className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
             >
               Continue to Dashboard
             </button>
@@ -225,7 +225,7 @@ export default function ConnectStoreModal({ isOpen, onClose, onSuccess }: Connec
             <a
               href="/help/shopify-connection"
               target="_blank"
-              className="text-orange-600 hover:text-orange-700 inline-flex items-center space-x-1"
+              className="text-green-600 hover:text-green-700 inline-flex items-center space-x-1"
             >
               <span>connection guide</span>
               <ExternalLink className="w-3 h-3" />

@@ -89,14 +89,14 @@ export default function UsageTrackingWidget({
 
   const getUsageColor = (percentage: number) => {
     if (percentage >= 90) return 'text-red-600 bg-red-50 border-red-200'
-    if (percentage >= 75) return 'text-orange-600 bg-orange-50 border-orange-200'
+    if (percentage >= 75) return 'text-green-600 bg-green-50 border-green-200'
     if (percentage >= 50) return 'text-yellow-600 bg-yellow-50 border-yellow-200'
     return 'text-green-600 bg-green-50 border-green-200'
   }
 
   const getProgressBarColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-red-500'
-    if (percentage >= 75) return 'bg-orange-500'
+    if (percentage >= 75) return 'bg-green-500'
     if (percentage >= 50) return 'bg-yellow-500'
     return 'bg-green-500'
   }
@@ -111,7 +111,7 @@ export default function UsageTrackingWidget({
     const colors = { 
       starter: 'text-blue-600', 
       professional: 'text-purple-600', 
-      enterprise: 'text-orange-600' 
+      enterprise: 'text-green-600' 
     }
     
     return {
@@ -175,7 +175,7 @@ export default function UsageTrackingWidget({
         </div>
 
         {isNearLimit && showUpgradePrompt && (
-          <div className="mt-2 text-xs text-orange-600">
+          <div className="mt-2 text-xs text-green-600">
             {isOverLimit ? 'Limit exceeded!' : 'Approaching limit'}
           </div>
         )}
@@ -305,8 +305,8 @@ export default function UsageTrackingWidget({
         </div>
 
         <div className="text-center">
-          <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full mx-auto mb-2">
-            <Zap className="w-4 h-4 text-orange-600" />
+          <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full mx-auto mb-2">
+            <Zap className="w-4 h-4 text-green-600" />
           </div>
           <div className="text-lg font-semibold text-gray-900">
             {usageData.monthlyStats.averageResponseTime.toFixed(0)}ms
@@ -334,27 +334,27 @@ export default function UsageTrackingWidget({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4"
+          className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-4"
         >
           <div className="flex items-start space-x-3">
-            <div className="p-1 bg-orange-200 rounded-full">
-              <Crown className="w-4 h-4 text-orange-600" />
+            <div className="p-1 bg-green-200 rounded-full">
+              <Crown className="w-4 h-4 text-green-600" />
             </div>
             <div className="flex-1">
-              <h4 className="text-sm font-medium text-orange-900">
+              <h4 className="text-sm font-medium text-green-900">
                 {isOverLimit ? 'Usage Limit Exceeded' : 'Approaching Usage Limit'}
               </h4>
-              <p className="text-xs text-orange-700 mt-1">
+              <p className="text-xs text-green-700 mt-1">
                 {isOverLimit 
                   ? 'Upgrade now to avoid service interruption and additional overage charges.'
                   : 'Upgrade to get more requests and unlock additional features.'
                 }
               </p>
               <div className="flex items-center space-x-2 mt-3">
-                <button className="text-xs bg-orange-600 text-white px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
+                <button className="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors">
                   Upgrade Plan
                 </button>
-                <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                <button className="text-xs text-green-600 hover:text-green-700 font-medium">
                   View Plans
                 </button>
               </div>

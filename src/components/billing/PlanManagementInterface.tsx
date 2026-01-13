@@ -142,8 +142,8 @@ export default function PlanManagementInterface({
       <div className="border-b border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Crown className="w-6 h-6 text-orange-600" />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Crown className="w-6 h-6 text-green-600" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Plan Management</h2>
@@ -170,7 +170,7 @@ export default function PlanManagementInterface({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center space-x-2 py-4 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
-                    ? 'border-orange-500 text-orange-600'
+                    ? 'border-green-500 text-green-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -377,13 +377,13 @@ export default function PlanManagementInterface({
                     whileHover={{ scale: 1.02 }}
                     className={`relative border-2 rounded-lg p-6 ${
                       isCurrentTier
-                        ? 'border-orange-500 bg-orange-50'
+                        ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     {tier === 'professional' && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <div className="bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                        <div className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
                           <Star className="w-3 h-3" />
                           <span>Most Popular</span>
                         </div>
@@ -429,7 +429,7 @@ export default function PlanManagementInterface({
                       <button
                         onClick={() => handleUpgrade(tier)}
                         disabled={isUpgrading}
-                        className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors font-medium disabled:opacity-50"
+                        className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
                       >
                         {isUpgrading ? 'Processing...' : `Upgrade to ${config.name}`}
                       </button>

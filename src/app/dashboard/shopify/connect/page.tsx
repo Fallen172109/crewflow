@@ -56,8 +56,8 @@ export default function ShopifyConnectPage() {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Store className="w-8 h-8 text-orange-600" />
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Store className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Connect Your Shopify Store</h1>
           <p className="text-gray-600">
@@ -79,7 +79,7 @@ export default function ShopifyConnectPage() {
                 onChange={(e) => setShopDomain(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="your-store.myshopify.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 disabled={isConnecting}
               />
               <div className="flex items-center justify-between mt-1">
@@ -100,7 +100,7 @@ export default function ShopifyConnectPage() {
             <button
               onClick={handleConnect}
               disabled={isConnecting || !shopDomain.trim()}
-              className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
             >
               {isConnecting ? (
                 <>
@@ -124,7 +124,7 @@ export default function ShopifyConnectPage() {
           </p>
           <button
             onClick={() => router.push('/dashboard/shopify')}
-            className="text-orange-600 hover:text-orange-700 text-sm font-medium mt-2"
+            className="text-green-600 hover:text-green-700 text-sm font-medium mt-2"
           >
             ← Back to Shopify Dashboard
           </button>

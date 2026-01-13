@@ -736,7 +736,7 @@ export default function CrewAbilityInputModal({
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
                   placeholder={field.placeholder}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required={field.required}
                 />
               )}
@@ -747,7 +747,7 @@ export default function CrewAbilityInputModal({
                   value={formData[field.id] || ''}
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required={field.required}
                 />
               )}
@@ -759,7 +759,7 @@ export default function CrewAbilityInputModal({
                   onChange={(e) => handleInputChange(field.id, parseInt(e.target.value) || '')}
                   placeholder={field.placeholder}
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required={field.required}
                 />
               )}
@@ -768,7 +768,7 @@ export default function CrewAbilityInputModal({
                 <select
                   value={formData[field.id] || ''}
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required={field.required}
                 >
                   <option value="">Select an option...</option>
@@ -793,7 +793,7 @@ export default function CrewAbilityInputModal({
                             handleInputChange(field.id, currentValues.filter((v: string) => v !== option))
                           }
                         }}
-                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                       />
                       <span className="text-sm text-gray-700">{option}</span>
                     </label>
@@ -815,7 +815,7 @@ export default function CrewAbilityInputModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
             >
               {loading ? (
                 <>

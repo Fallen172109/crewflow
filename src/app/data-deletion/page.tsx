@@ -26,7 +26,7 @@ export default function DataDeletionPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">Method 1: Through Your Dashboard</h2>
             <ol className="list-decimal pl-6 text-gray-700 mb-4">
-              <li>Log into your CrewFlow account at <a href="https://crewflow.dev/auth/login" className="text-orange-600 hover:text-orange-700">crewflow.dev</a></li>
+              <li>Log into your CrewFlow account at <a href="https://crewflow.dev/auth/login" className="text-green-600 hover:text-green-700">crewflow.dev</a></li>
               <li>Navigate to your Dashboard</li>
               <li>Go to "Settings" in the navigation menu</li>
               <li>Scroll down to the "Account Management" section</li>

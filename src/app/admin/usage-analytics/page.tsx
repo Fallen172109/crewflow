@@ -63,7 +63,7 @@ export default async function UsageAnalyticsPage({ searchParams }: Props) {
             <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
               📊 Generate Report
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600">
+            <button className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600">
               📥 Export CSV
             </button>
           </div>
@@ -148,7 +148,7 @@ export default async function UsageAnalyticsPage({ searchParams }: Props) {
                 .map(([provider, cost]) => (
                   <div key={provider} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
                       <span className="text-sm font-medium text-gray-900 capitalize">
                         {provider}
                       </span>
@@ -227,8 +227,8 @@ export default async function UsageAnalyticsPage({ searchParams }: Props) {
                 <tr key={user.userId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                        <span className="text-orange-600 text-sm font-semibold">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-sm font-semibold">
                           {index + 1}
                         </span>
                       </div>

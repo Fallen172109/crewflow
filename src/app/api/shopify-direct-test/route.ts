@@ -35,15 +35,16 @@ export async function POST(request: NextRequest) {
       storeName: stores.store_name
     })
     
-    // Step 2: Get the API connection directly
+    // Step 2: Get the API connection for this store's domain
     const { data: connection, error: connectionError } = await supabase
       .from('api_connections')
       .select('*')
       .eq('user_id', user.id)
       .eq('integration_id', 'shopify')
       .eq('status', 'connected')
-      .single()
-    
+      .eq('shop_domain', stores.shop_domain)
+      .maybeSingle()
+
     console.log('🎯 DIRECT SHOPIFY TEST: Connection query result:', {
       connection: !!connection,
       error: connectionError,
@@ -57,17 +58,18 @@ export async function POST(request: NextRequest) {
     })
     
     if (connectionError || !connection) {
-      console.error('❌ No API connection found:', connectionError)
+      console.error('❌ No API connection found for store domain:', stores.shop_domain, connectionError)
       return NextResponse.json({
         success: false,
-        error: 'No API connection found',
+        error: 'No API connection found for this Shopify store. Please reconnect in CrewFlow.',
         debug: {
           connectionError,
-          userId: user.id
+          userId: user.id,
+          shopDomain: stores.shop_domain
         }
       }, { status: 404 })
     }
-    
+
     // Step 3: Decrypt the access token
     const securityManager = new OAuthSecurityManager()
     const encryptedToken = connection.api_key_encrypted || connection.access_token

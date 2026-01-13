@@ -248,7 +248,7 @@ export default function StoreChatPanel({
       {/* Header */}
       <div className="border-b border-slate-200 p-4 bg-white">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
             <Bot className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -262,7 +262,7 @@ export default function StoreChatPanel({
       <div className="flex-1 cf-scroll p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bot className="w-8 h-8 text-white" />
             </div>
             <h3 className="font-semibold text-slate-800 mb-2">Welcome to your AI Store Assistant</h3>
@@ -279,7 +279,7 @@ export default function StoreChatPanel({
             className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {message.type !== 'user' && (
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <Bot className="w-4 h-4 text-white" />
               </div>
             )}
@@ -287,7 +287,7 @@ export default function StoreChatPanel({
             <div
               className={`max-w-[80%] rounded-lg px-4 py-2 ${
                 message.type === 'user'
-                  ? 'bg-orange-500 text-white'
+                  ? 'bg-green-500 text-white'
                   : message.type === 'system'
                   ? 'bg-red-50 text-red-700 border border-red-200'
                   : 'bg-slate-100 text-slate-800'
@@ -327,7 +327,7 @@ export default function StoreChatPanel({
 
         {isLoading && (
           <div className="flex gap-3 justify-start">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
               <Bot className="w-4 h-4 text-white" />
             </div>
             <div className="bg-slate-100 rounded-lg px-4 py-2">
@@ -349,7 +349,7 @@ export default function StoreChatPanel({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-slate-200 bg-orange-50"
+            className="border-t border-slate-200 bg-green-50"
           >
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
@@ -441,7 +441,7 @@ export default function StoreChatPanel({
               onClick={() => setShowImageUpload(!showImageUpload)}
               className={`p-2 transition-colors relative ${
                 showImageUpload || uploadedImages.length > 0
-                  ? 'text-orange-600 bg-orange-50'
+                  ? 'text-green-600 bg-green-50'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
               disabled={isLoading}
@@ -449,7 +449,7 @@ export default function StoreChatPanel({
             >
               <ImageIcon className="w-5 h-5" />
               {uploadedImages.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {uploadedImages.length}
                 </span>
               )}
@@ -470,7 +470,7 @@ export default function StoreChatPanel({
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder="Ask me to create products, manage inventory, or analyze your store..."
-                className="w-full resize-none border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full resize-none border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 rows={1}
                 disabled={isLoading}
               />
@@ -479,7 +479,7 @@ export default function StoreChatPanel({
             <button
               onClick={handleSendMessage}
               disabled={(!inputMessage.trim() && uploadedImages.length === 0) || isLoading}
-              className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -509,7 +509,7 @@ export default function StoreChatPanel({
               <div>
                 <h4 className="font-medium text-gray-900">{currentPreview.title}</h4>
                 {currentPreview.price && (
-                  <p className="text-2xl font-bold text-orange-600">${currentPreview.price}</p>
+                  <p className="text-2xl font-bold text-green-600">${currentPreview.price}</p>
                 )}
               </div>
 
@@ -538,7 +538,7 @@ export default function StoreChatPanel({
                     {currentPreview.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm"
+                        className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm"
                       >
                         {tag}
                       </span>
@@ -615,7 +615,7 @@ export default function StoreChatPanel({
                     }
                   }
                 }}
-                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
               >
                 Create Product
               </button>

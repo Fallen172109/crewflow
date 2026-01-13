@@ -27,52 +27,37 @@ export interface ProviderPricing {
   }
 }
 
-// Current AI provider pricing (per 1,000 tokens in USD) - Updated December 2024
+// Current AI provider pricing (per 1,000 tokens in USD) - Updated January 2026
 export const AI_PROVIDER_PRICING: ProviderPricing[] = [
   {
     provider: 'openai',
     models: {
-      // Latest GPT-4.1 models (December 2024)
+      // GPT-5 - Primary model
+      'gpt-5': {
+        inputCostPer1kTokens: 0.02,
+        outputCostPer1kTokens: 0.06,
+        description: 'GPT-5 (Primary)'
+      },
+      // Legacy models for fallback
       'gpt-4.1': {
         inputCostPer1kTokens: 0.002,
         outputCostPer1kTokens: 0.008,
-        description: 'GPT-4.1 (Latest)'
+        description: 'GPT-4.1 (Legacy)'
       },
-      'gpt-4.1-mini': {
-        inputCostPer1kTokens: 0.0004,
-        outputCostPer1kTokens: 0.0016,
-        description: 'GPT-4.1 Mini'
-      },
-      'gpt-4.1-nano': {
-        inputCostPer1kTokens: 0.0001,
-        outputCostPer1kTokens: 0.0004,
-        description: 'GPT-4.1 Nano'
-      },
-      // Legacy models still available
       'gpt-4o': {
         inputCostPer1kTokens: 0.005,
         outputCostPer1kTokens: 0.02,
         description: 'GPT-4o (Legacy)'
       },
-      'gpt-4o-mini': {
-        inputCostPer1kTokens: 0.0006,
-        outputCostPer1kTokens: 0.0024,
-        description: 'GPT-4o Mini (Legacy)'
-      },
       'gpt-4-turbo': {
         inputCostPer1kTokens: 0.01,
         outputCostPer1kTokens: 0.03,
-        description: 'GPT-4 Turbo'
+        description: 'GPT-4 Turbo (Legacy)'
       },
       'gpt-4-turbo-preview': {
         inputCostPer1kTokens: 0.01,
         outputCostPer1kTokens: 0.03,
-        description: 'GPT-4 Turbo Preview'
-      },
-      'gpt-3.5-turbo': {
-        inputCostPer1kTokens: 0.0005,
-        outputCostPer1kTokens: 0.0015,
-        description: 'GPT-3.5 Turbo'
+        description: 'GPT-4 Turbo Preview (Legacy)'
       },
       'text-embedding-3-small': {
         inputCostPer1kTokens: 0.00002,
@@ -160,9 +145,9 @@ export const AI_PROVIDER_PRICING: ProviderPricing[] = [
 
 // Default model mappings for each provider (matching your .env configuration)
 export const DEFAULT_MODELS: Record<string, string> = {
-  openai: 'gpt-4-turbo-preview', // From your OPENAI_MODEL env var
-  anthropic: 'claude-3.5-sonnet-20241022', // From your ANTHROPIC_MODEL env var
-  perplexity: 'llama-3.1-sonar-large-128k-online', // From your PERPLEXITY_MODEL env var
+  openai: 'gpt-5', // Primary model for all AI features
+  anthropic: 'claude-3.5-sonnet-20241022', // Fallback
+  perplexity: 'llama-3.1-sonar-large-128k-online', // Web search
   google: 'gemini-1.5-flash'
 }
 

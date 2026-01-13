@@ -3,8 +3,7 @@
 
 import OpenAI from 'openai'
 import { getAIConfig, AI_ERROR_CONFIG } from './config'
-import { withAICache } from './response-cache'
-import type { Agent } from '../agents'
+import { withAICache, Agent } from './response-cache'
 
 export interface AutoGenResponse {
   response: string
@@ -63,7 +62,7 @@ export class AutoGenAgent {
           agent: this.config.agent,
           systemPrompt: this.config.systemPrompt,
           modelConfig: {
-            model: this.config.model || 'gpt-4-turbo-preview',
+            model: this.config.model || 'gpt-5',
             temperature: this.config.temperature,
             maxTokens: this.config.maxTokens,
             maxRounds: this.config.maxRounds
@@ -80,7 +79,7 @@ export class AutoGenAgent {
             response,
             tokensUsed: this.calculateTokenUsage(),
             latency: Date.now() - startTime,
-            model: this.config.model || 'gpt-4-turbo-preview',
+            model: this.config.model || 'gpt-5',
             success: true,
             agentSteps: this.agentSteps,
             framework: 'autogen'
@@ -163,7 +162,7 @@ Create a step-by-step plan to address this request. Consider:
 Provide a clear, actionable plan:`
 
     const response = await this.openai.chat.completions.create({
-      model: this.config.model || 'gpt-4-turbo-preview',
+      model: this.config.model || 'gpt-5',
       messages: [{ role: 'user', content: prompt }],
       temperature: this.config.temperature || 0.7,
       max_tokens: this.config.maxTokens || 4000
@@ -192,7 +191,7 @@ Execute the planned tasks step by step. For each task:
 Focus on ${agent.category}-specific expertise and provide practical, implementable solutions:`
 
     const response = await this.openai.chat.completions.create({
-      model: this.config.model || 'gpt-4-turbo-preview',
+      model: this.config.model || 'gpt-5',
       messages: [{ role: 'user', content: prompt }],
       temperature: this.config.temperature || 0.7,
       max_tokens: this.config.maxTokens || 4000
@@ -219,7 +218,7 @@ Review the execution against the plan and original request:
 Provide a quality review with specific feedback and recommendations:`
 
     const response = await this.openai.chat.completions.create({
-      model: this.config.model || 'gpt-4-turbo-preview',
+      model: this.config.model || 'gpt-5',
       messages: [{ role: 'user', content: prompt }],
       temperature: this.config.temperature || 0.7,
       max_tokens: this.config.maxTokens || 4000
@@ -266,7 +265,7 @@ Communication Protocol:
 Deliver the final response as ${agent.name}:`
 
     const response = await this.openai.chat.completions.create({
-      model: this.config.model || 'gpt-4-turbo-preview',
+      model: this.config.model || 'gpt-5',
       messages: [{ role: 'user', content: prompt }],
       temperature: this.config.temperature || 0.7,
       max_tokens: this.config.maxTokens || 4000

@@ -107,7 +107,7 @@ const nodeTypes = {
   },
   agent: {
     icon: Users,
-    color: 'bg-orange-500',
+    color: 'bg-green-500',
     category: 'Agents',
     items: [
       { id: 'anchor', title: 'Anchor', description: 'Shopify management', icon: Users },

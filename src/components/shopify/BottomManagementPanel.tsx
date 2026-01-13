@@ -46,7 +46,7 @@ interface EssentialAction {
   label: string
   description: string
   icon: React.ComponentType<any>
-  color: 'orange' | 'blue' | 'green' | 'purple' | 'red'
+  color: 'green' | 'blue' | 'purple' | 'red'
   status: 'pending' | 'in-progress' | 'completed'
   priority: 'high' | 'medium' | 'low'
   actions: Array<{
@@ -104,7 +104,7 @@ export default function BottomManagementPanel({
       label: 'Product Creation',
       description: 'Create and manage product listings',
       icon: Plus,
-      color: 'orange',
+      color: 'green',
       status: 'pending',
       priority: 'high',
       actions: [
@@ -176,7 +176,7 @@ export default function BottomManagementPanel({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'text-green-600'
-      case 'in-progress': return 'text-orange-600'
+      case 'in-progress': return 'text-green-600'
       case 'pending': return 'text-gray-600'
       default: return 'text-gray-600'
     }
@@ -196,7 +196,7 @@ export default function BottomManagementPanel({
       <div className={`p-6 bg-gray-50 ${className}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-8">
-            <AlertCircle className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+            <AlertCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
             <h3 className="text-gray-900 text-lg font-semibold mb-2">No Store Connected</h3>
             <p className="text-gray-600">Connect your Shopify store to see management tools</p>
           </div>
@@ -254,7 +254,7 @@ export default function BottomManagementPanel({
                 className="h-full"
               >
                 <div className={`w-full h-80 cursor-pointer transition-all duration-200 hover:scale-[1.02] rounded-2xl border border-gray-200 bg-white shadow-lg hover:shadow-xl relative overflow-hidden group ${
-                  action.color === 'orange' ? 'hover:border-orange-300 hover:shadow-orange-100' :
+                  action.color === 'green' ? 'hover:border-green-300 hover:shadow-green-100' :
                   action.color === 'blue' ? 'hover:border-blue-300 hover:shadow-blue-100' :
                   action.color === 'green' ? 'hover:border-green-300 hover:shadow-green-100' :
                   action.color === 'purple' ? 'hover:border-purple-300 hover:shadow-purple-100' :
@@ -265,7 +265,7 @@ export default function BottomManagementPanel({
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-2">
                         <Icon className={`w-5 h-5 ${
-                          action.color === 'orange' ? 'text-orange-600' :
+                          action.color === 'green' ? 'text-green-600' :
                           action.color === 'blue' ? 'text-blue-600' :
                           action.color === 'green' ? 'text-green-600' :
                           action.color === 'purple' ? 'text-purple-600' :
@@ -308,7 +308,7 @@ export default function BottomManagementPanel({
                               onClick={() => handleQuickAction(actionItem.label, actionItem.message)}
                               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-sm border ${
                                 actionItem.primary
-                                  ? 'bg-orange-600 hover:bg-orange-700 text-white border-orange-600'
+                                  ? 'bg-green-600 hover:bg-green-700 text-white border-green-600'
                                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 border-gray-200'
                               }`}
                             >
@@ -333,7 +333,7 @@ export default function BottomManagementPanel({
             {agentSuggestions.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Zap className="w-5 h-5 text-orange-600 mr-2" />
+                  <Zap className="w-5 h-5 text-green-600 mr-2" />
                   Maritime Agent Suggestions
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -343,7 +343,7 @@ export default function BottomManagementPanel({
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-4 bg-white border border-gray-200 rounded-lg hover:border-orange-300 hover:shadow-md transition-all cursor-pointer"
+                      className="p-4 bg-white border border-gray-200 rounded-lg hover:border-green-300 hover:shadow-md transition-all cursor-pointer"
                       onClick={() => handleAgentAction(suggestion.id, suggestion.parameters)}
                     >
                       <div className="flex items-start justify-between">
@@ -401,7 +401,7 @@ export default function BottomManagementPanel({
                   <div key={action.label} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       action.status === 'completed' ? 'bg-green-100' :
-                      action.status === 'in-progress' ? 'bg-orange-100' :
+                      action.status === 'in-progress' ? 'bg-green-100' :
                       'bg-gray-100'
                     }`}>
                       <StatusIcon className={`w-4 h-4 ${getStatusColor(action.status)}`} />

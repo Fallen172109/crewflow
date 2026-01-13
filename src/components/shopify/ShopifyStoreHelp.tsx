@@ -160,15 +160,15 @@ export default function ShopifyStoreHelp() {
           </div>
 
           {/* Quick Test */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <h3 className="font-semibold text-orange-900 mb-3">🧪 Quick Test</h3>
-            <p className="text-sm text-orange-800 mb-3">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+            <h3 className="font-semibold text-emerald-900 mb-3">🧪 Quick Test</h3>
+            <p className="text-sm text-emerald-800 mb-3">
               You can test if your store URL is correct by visiting it directly:
             </p>
             <div className="bg-white p-3 rounded border">
               <code className="text-sm">https://your-store-name.myshopify.com</code>
             </div>
-            <p className="text-xs text-orange-700 mt-2">
+            <p className="text-xs text-emerald-700 mt-2">
               If it loads your store, the URL is correct!
             </p>
           </div>
@@ -182,7 +182,7 @@ export default function ShopifyStoreHelp() {
             </p>
             <button
               onClick={() => setIsOpen(false)}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             >
               Got it!
             </button>

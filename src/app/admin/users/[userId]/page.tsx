@@ -42,7 +42,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
             <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
               Send Email
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600">
+            <button className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600">
               Edit User
             </button>
           </div>
@@ -89,10 +89,10 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              user.suspended ? 'bg-red-100' : 'bg-orange-100'
+              user.suspended ? 'bg-red-100' : 'bg-green-100'
             }`}>
               <span className={`text-sm ${
-                user.suspended ? 'text-red-600' : 'text-orange-600'
+                user.suspended ? 'text-red-600' : 'text-green-600'
               }`}>
                 {user.suspended ? '🚫' : '🔧'}
               </span>

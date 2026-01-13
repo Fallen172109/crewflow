@@ -110,7 +110,7 @@ const ImageMessageDisplay: React.FC<ImageMessageDisplayProps> = ({
                   </p>
                   <button
                     onClick={() => handleViewFullSize(image)}
-                    className="text-xs text-orange-600 hover:text-orange-700 underline mt-1"
+                    className="text-xs text-green-600 hover:text-green-700 underline mt-1"
                   >
                     Try opening in new tab
                   </button>

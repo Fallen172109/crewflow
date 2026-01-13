@@ -4,7 +4,13 @@
 import crypto from 'crypto'
 import { cache } from '@/lib/performance/optimization-system'
 import { getCacheTTL, isCacheEnabled, getCacheTags, AI_CACHE_CONFIG } from './cache-config'
-import type { Agent } from '@/lib/agents'
+
+// Minimal Agent interface for caching purposes
+export interface Agent {
+  id: string
+  name?: string
+  framework?: string
+}
 
 export interface AICacheConfig {
   // Cache TTL settings (in milliseconds)

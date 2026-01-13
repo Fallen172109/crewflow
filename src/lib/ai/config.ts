@@ -34,9 +34,9 @@ export interface AIConfig {
 export const defaultAIConfig: AIConfig = {
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-5',
     temperature: 0.7,
-    maxTokens: 4000
+    maxTokens: 8000
   },
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -107,7 +107,7 @@ export function getAIConfig(): AIConfig {
 // Framework-specific model configurations
 export const FRAMEWORK_MODELS = {
   langchain: {
-    openai: ['gpt-4-turbo-preview', 'gpt-4', 'gpt-3.5-turbo'],
+    openai: ['gpt-5', 'gpt-4-turbo-preview', 'gpt-4'],
     anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-haiku-20240307']
   },
   perplexity: {
@@ -119,7 +119,7 @@ export const FRAMEWORK_MODELS = {
     ]
   },
   autogen: {
-    supportedModels: ['gpt-4-turbo-preview', 'gpt-4', 'claude-3-5-sonnet-20241022']
+    supportedModels: ['gpt-5', 'gpt-4-turbo-preview', 'claude-3-5-sonnet-20241022']
   }
 } as const
 

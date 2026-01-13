@@ -159,7 +159,7 @@ export default function BusinessIntelligenceDashboard() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <BarChart3 className="w-12 h-12 text-orange-600 animate-pulse mx-auto mb-4" />
+          <BarChart3 className="w-12 h-12 text-green-600 animate-pulse mx-auto mb-4" />
           <p className="text-gray-600">Loading business intelligence...</p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function BusinessIntelligenceDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-            <BarChart3 className="w-8 h-8 text-orange-600" />
+            <BarChart3 className="w-8 h-8 text-green-600" />
             <span>Business Intelligence Dashboard</span>
           </h2>
           <p className="text-gray-600 mt-1">Strategic insights and forecasting for your maritime business</p>
@@ -227,7 +227,7 @@ export default function BusinessIntelligenceDashboard() {
               {kpi.target && (
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-orange-600 h-2 rounded-full" 
+                    className="bg-green-600 h-2 rounded-full" 
                     style={{ width: `${Math.min((kpi.value / kpi.target) * 100, 100)}%` }}
                   ></div>
                 </div>
@@ -263,7 +263,7 @@ export default function BusinessIntelligenceDashboard() {
                   </div>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full">
-                  <div className="h-2 bg-gradient-to-r from-orange-400 to-green-500 rounded-full w-3/4"></div>
+                  <div className="h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full w-3/4"></div>
                 </div>
               </div>
             ))}
@@ -302,7 +302,7 @@ export default function BusinessIntelligenceDashboard() {
                           ))}
                         </ul>
                         {insight.recommendations.length > 2 && (
-                          <button className="text-xs text-orange-600 hover:text-orange-700">
+                          <button className="text-xs text-green-600 hover:text-green-700">
                             View all {insight.recommendations.length} recommendations
                           </button>
                         )}
@@ -320,10 +320,10 @@ export default function BusinessIntelligenceDashboard() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">AI Agent Recommendations</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Anchor className="w-4 h-4 text-orange-600" />
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <Anchor className="w-4 h-4 text-green-600" />
               </div>
               <div>
                 <h4 className="font-medium text-gray-900">Anchor</h4>

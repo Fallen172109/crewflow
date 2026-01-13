@@ -92,9 +92,9 @@ NEXT_PUBLIC_APP_URL=https://crewflow.ai
 
 ### 4. OAuth Provider Configurations
 
-#### 4.1 Facebook OAuth (App ID: 1077201217686511)
+#### 4.1 Facebook OAuth (App ID: YOUR_FACEBOOK_APP_ID)
 1. **Go to Facebook Developers**: https://developers.facebook.com
-2. **Select your app** (App ID: 1077201217686511)
+2. **Select your app** (App ID: YOUR_FACEBOOK_APP_ID)
 3. **Navigate to**: Facebook Login → Settings
 4. **Update Valid OAuth Redirect URIs**:
    - Add: `https://crewflow.ai/auth/callback`

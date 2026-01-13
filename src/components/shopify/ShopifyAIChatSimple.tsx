@@ -132,9 +132,9 @@ ${result.error.includes('Invalid API key') ?
   return (
     <div className={`flex flex-col h-full bg-white rounded-lg border border-gray-200 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-orange-100">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
             <Ship className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -154,7 +154,7 @@ ${result.error.includes('Invalid API key') ?
             <div
               className={`max-w-[80%] rounded-lg p-3 ${
                 message.type === 'user'
-                  ? 'bg-orange-600 text-white'
+                  ? 'bg-green-600 text-white'
                   : message.type === 'system'
                   ? 'bg-blue-50 text-blue-900 border border-blue-200'
                   : 'bg-gray-100 text-gray-900'
@@ -171,7 +171,7 @@ ${result.error.includes('Invalid API key') ?
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-100 rounded-lg p-3 flex items-center space-x-2">
-              <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
               <span className="text-sm text-gray-600">Processing your request...</span>
             </div>
           </div>
@@ -192,13 +192,13 @@ ${result.error.includes('Invalid API key') ?
               }
             }}
             placeholder="Ask me to create products, manage inventory, or help with your store..."
-            className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             disabled={isLoading}
           />
           <button
             onClick={handleSendMessage}
             disabled={isLoading || !inputValue.trim()}
-            className="p-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-5 h-5" />
           </button>

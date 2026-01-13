@@ -217,7 +217,7 @@ export default function ActionHistory() {
     switch (riskLevel) {
       case 'low': return 'text-green-600'
       case 'medium': return 'text-yellow-600'
-      case 'high': return 'text-orange-600'
+      case 'high': return 'text-green-600'
       case 'critical': return 'text-red-600'
       default: return 'text-gray-600'
     }
@@ -260,7 +260,7 @@ export default function ActionHistory() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <History className="w-12 h-12 text-orange-600 animate-pulse mx-auto mb-4" />
+          <History className="w-12 h-12 text-green-600 animate-pulse mx-auto mb-4" />
           <p className="text-gray-600">Loading action history...</p>
         </div>
       </div>
@@ -273,7 +273,7 @@ export default function ActionHistory() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-            <History className="w-8 h-8 text-orange-600" />
+            <History className="w-8 h-8 text-green-600" />
             <span>Action History & Audit Log</span>
           </h2>
           <p className="text-gray-600 mt-1">Complete history of all agent actions and system events</p>
@@ -303,13 +303,13 @@ export default function ActionHistory() {
               placeholder="Search actions, agents, or descriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-              showFilters ? 'bg-orange-50 border-orange-200 text-orange-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              showFilters ? 'bg-green-50 border-green-200 text-green-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -429,8 +429,8 @@ export default function ActionHistory() {
                         </div>
                         {action.approvalRequired && (
                           <div className="flex items-center space-x-1 mt-1">
-                            <Shield className="w-3 h-3 text-orange-600" />
-                            <span className="text-xs text-orange-600">
+                            <Shield className="w-3 h-3 text-green-600" />
+                            <span className="text-xs text-green-600">
                               Approval {action.approvalStatus || 'required'}
                             </span>
                           </div>

@@ -47,7 +47,7 @@ export class ChatClient {
   }
 
   /**
-   * Send message to a general agent
+   * Send message to Shopify AI agent
    */
   async sendAgentMessage(
     agentId: string,
@@ -61,7 +61,7 @@ export class ChatClient {
     return this.sendMessage({
       message,
       agentId,
-      chatType: 'agent',
+      chatType: 'shopify-ai',
       taskType: options.taskType,
       threadId: options.threadId || `temp-${Date.now()}`,
       attachments: options.attachments
@@ -243,24 +243,6 @@ export class ChatClient {
   }
 
   /**
-   * Send message to meal planning assistant
-   */
-  async sendMealPlanningMessage(
-    message: string,
-    options: {
-      threadId?: string
-      mealPlanningContext?: any
-    } = {}
-  ): Promise<UnifiedChatResponse> {
-    return this.sendMessage({
-      message,
-      chatType: 'meal-planning',
-      threadId: options.threadId || 'meal-planning-session',
-      mealPlanningContext: options.mealPlanningContext
-    })
-  }
-
-  /**
    * Get chat API health status
    */
   async getHealthStatus(): Promise<any> {
@@ -285,16 +267,16 @@ export class ChatClient {
         ...options,
         signal: controller.signal
       })
-      
+
       clearTimeout(timeoutId)
       return response
     } catch (error) {
       clearTimeout(timeoutId)
-      
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw new ChatError('Request timeout', 408)
       }
-      
+
       throw error
     }
   }
@@ -323,31 +305,6 @@ export function getChatClient(): ChatClient {
 
 // Legacy compatibility helpers
 export namespace LegacyCompat {
-  /**
-   * Helper to migrate from legacy agent chat API calls
-   */
-  export async function sendAgentChatMessage(
-    agentId: string,
-    message: string,
-    taskType?: string,
-    threadId?: string,
-    userId?: string
-  ): Promise<any> {
-    const client = getChatClient()
-    const response = await client.sendAgentMessage(agentId, message, {
-      taskType,
-      threadId
-    })
-
-    // Transform to legacy response format
-    return {
-      response: response.response,
-      usage: response.usage,
-      limit: response.limit,
-      agent: response.agent
-    }
-  }
-
   /**
    * Helper to migrate from legacy Shopify AI API calls
    */
@@ -393,26 +350,6 @@ export namespace LegacyCompat {
       threadId: response.threadId,
       messageId: response.messageId,
       usage: response.usage
-    }
-  }
-
-  /**
-   * Helper to migrate from legacy meal planning API calls
-   */
-  export async function sendMealPlanningMessage(
-    message: string,
-    context: any = {}
-  ): Promise<any> {
-    const client = getChatClient()
-    const response = await client.sendMealPlanningMessage(message, {
-      mealPlanningContext: context
-    })
-
-    // Transform to legacy response format
-    return {
-      response: response.response,
-      meal_plan: response.meal_plan,
-      context_used: response.context_used
     }
   }
 }

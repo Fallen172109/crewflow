@@ -128,13 +128,13 @@ export default function PredictiveResponseStats() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-orange-500" />
+            <Brain className="h-5 w-5 text-green-500" />
             Predictive Response Analytics
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-orange-500" />
+            <RefreshCw className="h-6 w-6 animate-spin text-green-500" />
             <span className="ml-2">Loading analytics...</span>
           </div>
         </CardContent>
@@ -147,7 +147,7 @@ export default function PredictiveResponseStats() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-orange-500" />
+            <Brain className="h-5 w-5 text-green-500" />
             Predictive Response Analytics
           </CardTitle>
         </CardHeader>
@@ -172,7 +172,7 @@ export default function PredictiveResponseStats() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Brain className="h-6 w-6 text-orange-500" />
+            <Brain className="h-6 w-6 text-green-500" />
             Predictive Response Analytics 🔮
           </h2>
           <p className="text-gray-600">Performance metrics for AI response pre-loading</p>

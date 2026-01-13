@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClientWithCookies } from '@/lib/supabase/server'
 import { createShopifyAPI } from '@/lib/integrations/shopify-admin-api'
 
 // Helper function to validate store permissions
@@ -9,7 +9,7 @@ async function withStorePermission(
   permission: string,
   agentId?: string
 ) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClientWithCookies()
   
   const { data: storeData, error } = await supabase
     .from('shopify_stores')
@@ -48,11 +48,14 @@ export async function GET(
     const { storeId } = params
     const { searchParams } = new URL(request.url)
     const agentId = searchParams.get('agentId')
-    const limit = parseInt(searchParams.get('limit') || '50')
     const status = searchParams.get('status') || 'any'
 
+    // Validate and clamp pagination bounds (Shopify max is 250)
+    const requestedLimit = parseInt(searchParams.get('limit') || '50')
+    const limit = Math.max(1, Math.min(250, isNaN(requestedLimit) ? 50 : requestedLimit))
+
     // Get authenticated user
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClientWithCookies()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -75,8 +78,8 @@ export async function GET(
 
     console.log('✅ Permission validated for orders read access')
 
-    // Fetch orders from Shopify using the Admin API
-    const shopifyAPI = await createShopifyAPI(userId)
+    // Fetch orders from Shopify using the Admin API with specific shop domain for multi-store support
+    const shopifyAPI = await createShopifyAPI(userId, undefined, storeData.shop_domain)
     if (!shopifyAPI) {
       return NextResponse.json(
         { 

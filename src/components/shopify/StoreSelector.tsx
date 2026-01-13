@@ -74,7 +74,7 @@ export default function StoreSelector({
       case 'advanced':
         return <Star className="w-3 h-3 text-blue-600" />
       case 'shopify':
-        return <Zap className="w-3 h-3 text-orange-600" />
+        return <Zap className="w-3 h-3 text-green-600" />
       default:
         return <Store className="w-3 h-3 text-gray-600" />
     }
@@ -103,7 +103,7 @@ export default function StoreSelector({
         {showAddButton && onConnect && (
           <button
             onClick={onConnect}
-            className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 text-sm"
+            className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Connect Store</span>
@@ -131,7 +131,7 @@ export default function StoreSelector({
               <div className="flex items-center space-x-1">
                 {getSyncStatusIcon(selectedStore.syncStatus)}
                 {selectedStore.isPrimary && (
-                  <span className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                  <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full font-medium">
                     Primary
                   </span>
                 )}
@@ -167,7 +167,7 @@ export default function StoreSelector({
                   key={store.id}
                   onClick={() => handleStoreSelect(store)}
                   className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                    selectedStore?.id === store.id ? 'bg-orange-50 border-r-2 border-orange-500' : ''
+                    selectedStore?.id === store.id ? 'bg-green-50 border-r-2 border-green-500' : ''
                   } ${!store.isActive ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-center justify-between">
@@ -180,7 +180,7 @@ export default function StoreSelector({
                       <div className="flex items-center space-x-1">
                         {getSyncStatusIcon(store.syncStatus)}
                         {store.isPrimary && (
-                          <span className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                          <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full font-medium">
                             Primary
                           </span>
                         )}
@@ -193,7 +193,7 @@ export default function StoreSelector({
                     </div>
                     
                     {selectedStore?.id === store.id && (
-                      <CheckCircle className="w-4 h-4 text-orange-600" />
+                      <CheckCircle className="w-4 h-4 text-green-600" />
                     )}
                   </div>
                   
@@ -229,7 +229,7 @@ export default function StoreSelector({
                     onConnect()
                     setIsOpen(false)
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 transition-colors flex items-center space-x-2"
+                  className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 transition-colors flex items-center space-x-2"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Connect New Store</span>

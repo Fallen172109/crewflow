@@ -5,6 +5,9 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createShopifyAPI } from '@/lib/integrations/shopify-admin-api'
 import { OAuthSecurityManager } from '@/lib/integrations/security'
 import crypto from 'crypto'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('MultiStoreManager')
 
 export interface ShopifyStore {
   id: string
@@ -88,7 +91,7 @@ export async function getStoreAccessToken(userId: string, shopDomain: string): P
       .single()
 
     if (error || !data) {
-      console.log('No access token found for user:', userId)
+      log.debug('No access token found for user:', userId)
       return null
     }
 
@@ -100,7 +103,7 @@ export async function getStoreAccessToken(userId: string, shopDomain: string): P
 
     return securityManager.decrypt(encryptedToken)
   } catch (error) {
-    console.error('Error retrieving access token:', error)
+    log.error('Error retrieving access token:', error)
     return null
   }
 }
@@ -113,11 +116,11 @@ export async function getUserStores(userId: string, supabaseClient?: any): Promi
   try {
     // Check if supabase client was created successfully
     if (!supabase) {
-      console.error('Supabase client not available in getUserStores')
+      log.error('Supabase client not available in getUserStores')
       return []
     }
 
-    console.log('🔍 getUserStores Debug - User ID:', userId)
+    log.debug('🔍 getUserStores Debug - User ID:', userId)
 
     const { data, error } = await supabase
       .from('shopify_stores')
@@ -126,10 +129,10 @@ export async function getUserStores(userId: string, supabaseClient?: any): Promi
       .order('is_primary', { ascending: false })
       .order('connected_at', { ascending: false })
 
-    console.log('🔍 getUserStores Debug - Query result:', { data, error })
+    log.debug('🔍 getUserStores Debug - Query result:', { data, error })
 
     if (error) {
-      console.error('Database error in getUserStores:', error)
+      log.error('Database error in getUserStores:', error)
       throw error
     }
     
@@ -153,7 +156,7 @@ export async function getUserStores(userId: string, supabaseClient?: any): Promi
       agentAccess: record.agent_access || {}
     }))
   } catch (error) {
-    console.error('Error getting user stores:', error)
+    log.error('Error getting user stores:', error)
     return []
   }
 }
@@ -164,7 +167,7 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
   const securityManager = new OAuthSecurityManager()
 
   try {
-    console.log('🔄 Starting addStore process:', { userId, shopDomain, accessTokenLength: accessToken?.length || 0 })
+    log.debug('🔄 Starting addStore process:', { userId, shopDomain, accessTokenLength: accessToken?.length || 0 })
 
     // Check if store already exists for this user
     const { data: existingStoreData, error: checkError } = await supabase
@@ -175,7 +178,7 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
       .single()
 
     if (existingStoreData && !checkError) {
-      console.log('🔄 Store already exists, updating access token:', { storeId: existingStoreData.id, storeName: existingStoreData.store_name })
+      log.debug('🔄 Store already exists, updating access token:', { storeId: existingStoreData.id, storeName: existingStoreData.store_name })
 
       // Update the existing store's access token
       const encryptedToken = securityManager.encrypt(accessToken)
@@ -195,9 +198,9 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
         })
 
       if (updateError) {
-        console.error('❌ Failed to update access token:', updateError)
+        log.error('❌ Failed to update access token:', updateError)
       } else {
-        console.log('✅ Access token updated successfully')
+        log.debug('✅ Access token updated successfully')
       }
 
       return {
@@ -223,18 +226,18 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
     }
 
     // Create Shopify API client with the new token
-    console.log('🔄 Creating Shopify API client...')
+    log.debug('🔄 Creating Shopify API client...')
     const shopifyAPI = await createShopifyAPI(userId, accessToken, shopDomain)
     if (!shopifyAPI) {
-      console.error('❌ Failed to create Shopify API client')
+      log.error('❌ Failed to create Shopify API client')
       throw new Error('Failed to create Shopify API client')
     }
-    console.log('✅ Shopify API client created successfully')
+    log.debug('✅ Shopify API client created successfully')
 
     // Get shop information
-    console.log('🔄 Fetching shop information...')
+    log.debug('🔄 Fetching shop information...')
     const shopInfo = await shopifyAPI.getShop()
-    console.log('✅ Shop information retrieved:', { name: shopInfo.name, id: shopInfo.id, domain: shopInfo.myshopify_domain })
+    log.debug('✅ Shop information retrieved:', { name: shopInfo.name, id: shopInfo.id, domain: shopInfo.myshopify_domain })
     
     // Check if store already exists (this should not happen due to earlier check, but keeping as safety)
     const allUserStores = await getUserStores(userId)
@@ -280,7 +283,7 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
     }
     
     // Store in database
-    console.log('🔄 Inserting store into database:', { storeId: store.id, storeName: store.storeName, isPrimary })
+    log.debug('🔄 Inserting store into database:', { storeId: store.id, storeName: store.storeName, isPrimary })
     const { error } = await supabase.from('shopify_stores').insert({
       id: store.id,
       user_id: userId,
@@ -300,13 +303,13 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
     })
 
     if (error) {
-      console.error('❌ Database error inserting store:', error)
+      log.error('❌ Database error inserting store:', error)
       throw error
     }
-    console.log('✅ Store inserted into database successfully')
+    log.debug('✅ Store inserted into database successfully')
 
     // Store access token securely with encryption
-    console.log('🔄 Storing access token in api_connections...')
+    log.debug('🔄 Storing access token in api_connections...')
     const encryptedToken = securityManager.encrypt(accessToken)
 
     const { error: tokenError } = await supabase.from('api_connections').insert({
@@ -322,30 +325,30 @@ export async function addStore(userId: string, accessToken: string, shopDomain: 
     })
 
     if (tokenError) {
-      console.error('❌ Database error storing access token:', tokenError)
+      log.error('❌ Database error storing access token:', tokenError)
       // Don't throw error - store creation should still succeed
-      console.warn('⚠️ Continuing without storing access token...')
+      log.warn('⚠️ Continuing without storing access token...')
     } else {
-      console.log('✅ Access token stored successfully')
+      log.debug('✅ Access token stored successfully')
     }
     
     // Trigger initial sync
-    console.log('🔄 Triggering initial sync...')
+    log.debug('🔄 Triggering initial sync...')
     try {
       await syncStoreData(store.id, userId)
-      console.log('✅ Initial sync completed successfully')
+      log.debug('✅ Initial sync completed successfully')
     } catch (syncError) {
-      console.warn('⚠️ Initial sync failed, but store was created:', syncError)
+      log.warn('⚠️ Initial sync failed, but store was created:', syncError)
       // Don't fail the entire process if sync fails
     }
 
-    console.log('✅ Store addition process completed successfully')
+    log.debug('✅ Store addition process completed successfully')
     return {
       success: true,
       store
     }
   } catch (error) {
-    console.error('❌ Error in addStore process:', {
+    log.error('❌ Error in addStore process:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       userId,
@@ -363,7 +366,7 @@ export async function removeStore(userId: string, storeId: string, supabaseClien
   const supabase = supabaseClient || createSupabaseServerClient()
 
   try {
-    console.log('🗑️ removeStore Debug - Starting removal:', { userId, storeId })
+    log.debug('🗑️ removeStore Debug - Starting removal:', { userId, storeId })
 
     // First, check if the store exists in the database directly
     const { data: storeData, error: storeError } = await supabase
@@ -373,10 +376,10 @@ export async function removeStore(userId: string, storeId: string, supabaseClien
       .eq('user_id', userId)
       .single()
 
-    console.log('🗑️ removeStore Debug - Store query result:', { storeData, storeError })
+    log.debug('🗑️ removeStore Debug - Store query result:', { storeData, storeError })
 
     if (storeError || !storeData) {
-      console.log('🗑️ removeStore Debug - Store not found or access denied')
+      log.debug('🗑️ removeStore Debug - Store not found or access denied')
       return {
         success: false,
         error: 'Store not found or access denied'
@@ -392,10 +395,10 @@ export async function removeStore(userId: string, storeId: string, supabaseClien
         .neq('id', storeId)
         .limit(1)
 
-      console.log('🗑️ removeStore Debug - Other stores check:', { otherStores, otherStoresError })
+      log.debug('🗑️ removeStore Debug - Other stores check:', { otherStores, otherStoresError })
 
       if (otherStores && otherStores.length > 0) {
-        console.log('🗑️ removeStore Debug - Setting new primary store:', otherStores[0].id)
+        log.debug('🗑️ removeStore Debug - Setting new primary store:', otherStores[0].id)
         await supabase
           .from('shopify_stores')
           .update({ is_primary: true })
@@ -403,7 +406,27 @@ export async function removeStore(userId: string, storeId: string, supabaseClien
       }
     }
 
-    console.log('🗑️ removeStore Debug - Starting deletion of related data')
+    // Best-effort: revoke Shopify access token for this store before removing DB records
+    try {
+      log.debug('🗑️ removeStore Debug - Attempting to revoke Shopify access token')
+      const accessToken = await getStoreAccessToken(userId, storeData.shop_domain)
+      if (accessToken) {
+        const revokeResponse = await fetch(`https://${storeData.shop_domain}/admin/api_permissions/current.json`, {
+          method: 'DELETE',
+          headers: {
+            'X-Shopify-Access-Token': accessToken,
+            'Content-Type': 'application/json'
+          }
+        })
+        log.debug('  removeStore Debug - Token revoke status:', revokeResponse.status)
+      } else {
+        log.debug('  removeStore Debug - No access token found to revoke')
+      }
+    } catch (revokeError) {
+      log.warn('  removeStore Debug - Failed to revoke Shopify token (continuing with removal):', revokeError)
+    }
+
+    log.debug('  removeStore Debug - Starting deletion of related data')
 
     // Remove store and related data
     const deletionResults = await Promise.allSettled([
@@ -413,12 +436,12 @@ export async function removeStore(userId: string, storeId: string, supabaseClien
       supabase.from('webhook_events').delete().eq('store_id', storeId)
     ])
 
-    console.log('🗑️ removeStore Debug - Deletion results:', deletionResults)
+    log.debug('🗑️ removeStore Debug - Deletion results:', deletionResults)
 
     // Check if the main store deletion was successful
     const storeDeleteResult = deletionResults[0]
     if (storeDeleteResult.status === 'rejected') {
-      console.error('🗑️ removeStore Debug - Store deletion failed:', storeDeleteResult.reason)
+      log.error('🗑️ removeStore Debug - Store deletion failed:', storeDeleteResult.reason)
       throw new Error('Failed to delete store from database')
     }
 
@@ -430,10 +453,10 @@ export async function removeStore(userId: string, storeId: string, supabaseClien
       }
     })
 
-    console.log('🗑️ removeStore Debug - Store removal completed successfully')
+    log.debug('🗑️ removeStore Debug - Store removal completed successfully')
     return { success: true }
   } catch (error) {
-    console.error('🗑️ removeStore Debug - Error removing store:', error)
+    log.error('🗑️ removeStore Debug - Error removing store:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -473,7 +496,7 @@ export async function setPrimaryStore(userId: string, storeId: string): Promise<
     
     return { success: true }
   } catch (error) {
-    console.error('Error setting primary store:', error)
+    log.error('Error setting primary store:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -536,7 +559,7 @@ export async function syncStoreData(storeId: string, userId: string): Promise<{ 
     
     return { success: true }
   } catch (error) {
-    console.error('Error syncing store data:', error)
+    log.error('Error syncing store data:', error)
     
     // Update error status
     await supabase
@@ -719,7 +742,7 @@ export async function updateStorePermissions(
     
     return { success: true }
   } catch (error) {
-    console.error('Error updating store permissions:', error)
+    log.error('Error updating store permissions:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -748,7 +771,7 @@ export async function updateStoreAgentAccess(
     
     return { success: true }
   } catch (error) {
-    console.error('Error updating store agent access:', error)
+    log.error('Error updating store agent access:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

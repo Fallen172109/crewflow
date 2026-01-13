@@ -145,7 +145,7 @@ export default function RealTimeMetrics({ userId, refreshInterval = 30000 }: Rea
       <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
         <div className="flex items-center justify-center h-32">
           <div className="text-center">
-            <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <p className="text-gray-600 text-sm">Loading real-time metrics...</p>
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function RealTimeMetrics({ userId, refreshInterval = 30000 }: Rea
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
-          <Activity className="w-5 h-5 text-orange-600" />
+          <Activity className="w-5 h-5 text-green-600" />
           <h3 className="text-lg font-semibold text-gray-900">Real-Time Metrics</h3>
         </div>
         <div className="flex items-center space-x-2">
@@ -230,7 +230,7 @@ export default function RealTimeMetrics({ userId, refreshInterval = 30000 }: Rea
           {metrics.activeAgents.map((agent) => (
             <span
               key={agent}
-              className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm border border-orange-200"
+              className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm border border-green-200"
             >
               {agent}
             </span>

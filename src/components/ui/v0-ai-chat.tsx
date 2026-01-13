@@ -171,7 +171,7 @@ export function ShopifyAIChat({ className, onSendMessage }: ShopifyAIChatProps) 
                                 className={cn(
                                     "px-1.5 py-1.5 rounded-lg text-sm transition-colors border border-white/30 hover:border-white/50 hover:bg-white/10 flex items-center justify-between gap-1",
                                     value.trim()
-                                        ? "bg-orange-500 text-white border-orange-500 hover:bg-orange-600"
+                                        ? "bg-green-500 text-white border-green-500 hover:bg-green-600"
                                         : "text-white/60"
                                 )}
                             >

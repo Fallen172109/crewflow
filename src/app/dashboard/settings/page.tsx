@@ -1,18 +1,16 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
-import { Loader2 } from 'lucide-react'
-import AgentPermissionsSettings from '@/components/settings/AgentPermissionsSettings'
 
 export default function SettingsPage() {
-  const { user, userProfile, updatePassword, refreshProfile } = useAuth()
+  const { user, userProfile, updatePassword } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  
+
   // Password change form
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -71,8 +69,6 @@ export default function SettingsPage() {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       setLoading(true)
       try {
-        // Note: Account deletion would typically be handled by a server-side function
-        // For now, we'll just show a message
         setError('Account deletion is not yet implemented. Please contact support.')
       } catch (err) {
         setError('An error occurred while deleting your account')
@@ -84,7 +80,6 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'profile', name: 'Profile', icon: '👤' },
-    { id: 'agent-permissions', name: 'Agent Permissions', icon: '🛡️' },
     { id: 'security', name: 'Security', icon: '🔒' },
     { id: 'billing', name: 'Billing', icon: '💳' },
     { id: 'danger', name: 'Danger Zone', icon: '⚠️' },
@@ -94,14 +89,14 @@ export default function SettingsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Account Settings</h1>
-        <p className="text-secondary-300 mt-1">
+        <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
+        <p className="text-gray-600 mt-1">
           Manage your account preferences and security settings
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-secondary-700">
+      <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           {tabs.map((tab) => (
             <button
@@ -109,8 +104,8 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
-                  ? 'border-primary-500 text-primary-400'
-                  : 'border-transparent text-secondary-400 hover:text-secondary-300 hover:border-secondary-300'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               <span className="mr-2">{tab.icon}</span>
@@ -121,85 +116,63 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-secondary-800 rounded-lg p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-white">Profile Information</h2>
-            
+            <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-secondary-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
                 </label>
                 <input
                   type="email"
                   value={user?.email || ''}
                   disabled
-                  className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-secondary-300 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-secondary-400 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   Email cannot be changed. Contact support if needed.
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Account Created
                 </label>
                 <input
                   type="text"
                   value={userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}
                   disabled
-                  className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-secondary-300 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Subscription Tier
                 </label>
                 <input
                   type="text"
-                  value={userProfile?.subscription_tier ? userProfile.subscription_tier.charAt(0).toUpperCase() + userProfile.subscription_tier.slice(1) : 'None'}
+                  value={userProfile?.subscription_tier ? userProfile.subscription_tier.charAt(0).toUpperCase() + userProfile.subscription_tier.slice(1) : 'Free'}
                   disabled
-                  className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-secondary-300 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Subscription Status
                 </label>
                 <input
                   type="text"
-                  value={userProfile?.subscription_status ? userProfile.subscription_status.charAt(0).toUpperCase() + userProfile.subscription_status.slice(1) : 'Inactive'}
+                  value={userProfile?.subscription_status ? userProfile.subscription_status.charAt(0).toUpperCase() + userProfile.subscription_status.slice(1) : 'Active'}
                   disabled
-                  className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-secondary-300 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed"
                 />
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Agent Permissions Tab */}
-        {activeTab === 'agent-permissions' && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-white">Agent Permissions</h2>
-            <div className="bg-secondary-900 rounded-lg p-6">
-              <Suspense fallback={
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
-                  <span className="ml-2 text-secondary-300">Loading agent permissions...</span>
-                </div>
-              }>
-                <AgentPermissionsSettings
-                  userId={userProfile?.id || ''}
-                  onSave={async (settings) => {
-                    console.log('Settings saved:', settings)
-                  }}
-                />
-              </Suspense>
             </div>
           </div>
         )}
@@ -207,25 +180,25 @@ export default function SettingsPage() {
         {/* Security Tab */}
         {activeTab === 'security' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-white">Security Settings</h2>
-            
+            <h2 className="text-xl font-semibold text-gray-900">Security Settings</h2>
+
             {message && (
-              <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3">
-                <p className="text-green-200 text-sm">{message}</p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-green-700 text-sm">{message}</p>
               </div>
             )}
 
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
-                <p className="text-red-200 text-sm">{error}</p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
 
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <h3 className="text-lg font-medium text-white">Change Password</h3>
-              
+              <h3 className="text-lg font-medium text-gray-900">Change Password</h3>
+
               <div>
-                <label className="block text-sm font-medium text-secondary-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Password
                 </label>
                 <input
@@ -233,13 +206,13 @@ export default function SettingsPage() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Enter current password"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   New Password
                 </label>
                 <input
@@ -247,13 +220,13 @@ export default function SettingsPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Enter new password"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm New Password
                 </label>
                 <input
@@ -261,7 +234,7 @@ export default function SettingsPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-secondary-700 border border-secondary-600 rounded-lg text-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Confirm new password"
                 />
               </div>
@@ -269,7 +242,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+                className="bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
               >
                 {loading ? 'Updating...' : 'Update Password'}
               </button>
@@ -280,12 +253,12 @@ export default function SettingsPage() {
         {/* Billing Tab */}
         {activeTab === 'billing' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-white">Billing & Subscription</h2>
-            <p className="text-secondary-300">
+            <h2 className="text-xl font-semibold text-gray-900">Billing & Subscription</h2>
+            <p className="text-gray-600">
               Manage your subscription and billing information.
             </p>
-            <div className="bg-secondary-700 rounded-lg p-4">
-              <p className="text-secondary-300">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <p className="text-gray-600">
                 Billing management is coming soon. For now, please contact support for billing inquiries.
               </p>
             </div>
@@ -295,14 +268,14 @@ export default function SettingsPage() {
         {/* Danger Zone Tab */}
         {activeTab === 'danger' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-red-400">Danger Zone</h2>
-            <p className="text-secondary-300">
+            <h2 className="text-xl font-semibold text-red-600">Danger Zone</h2>
+            <p className="text-gray-600">
               These actions are irreversible. Please proceed with caution.
             </p>
-            
-            <div className="border border-red-500/50 rounded-lg p-6 bg-red-500/10">
-              <h3 className="text-lg font-medium text-red-400 mb-2">Delete Account</h3>
-              <p className="text-secondary-300 mb-4">
+
+            <div className="border border-red-200 rounded-lg p-6 bg-red-50">
+              <h3 className="text-lg font-medium text-red-600 mb-2">Delete Account</h3>
+              <p className="text-gray-600 mb-4">
                 Once you delete your account, there is no going back. Please be certain.
               </p>
               <button

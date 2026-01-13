@@ -147,7 +147,7 @@ export default function AnalyticsDashboard() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <BarChart3 className="w-12 h-12 text-orange-600 animate-pulse mx-auto mb-4" />
+          <BarChart3 className="w-12 h-12 text-green-600 animate-pulse mx-auto mb-4" />
           <p className="text-gray-600">Charting navigation data...</p>
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function AnalyticsDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-            <Compass className="w-8 h-8 text-orange-600" />
+            <Compass className="w-8 h-8 text-green-600" />
             <span>Navigation Charts</span>
           </h2>
           <p className="text-gray-600 mt-1">Track your maritime commerce performance</p>
@@ -280,8 +280,8 @@ export default function AnalyticsDashboard() {
               <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
               <p className="text-2xl font-bold text-gray-900">{analytics.conversion_rate.current}%</p>
             </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Target className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Target className="w-6 h-6 text-green-600" />
             </div>
           </div>
           <div className="mt-4 flex items-center">
@@ -329,7 +329,7 @@ export default function AnalyticsDashboard() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Top Performing Cargo</h3>
-            <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">
+            <button className="text-green-600 hover:text-green-700 text-sm font-medium">
               View All
             </button>
           </div>
@@ -337,8 +337,8 @@ export default function AnalyticsDashboard() {
             {analytics.top_products.map((product, index) => (
               <div key={product.id} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-medium text-orange-600">#{index + 1}</span>
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span className="text-sm font-medium text-green-600">#{index + 1}</span>
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">{product.name}</div>
@@ -360,7 +360,7 @@ export default function AnalyticsDashboard() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Crew Segments</h3>
-            <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">
+            <button className="text-green-600 hover:text-green-700 text-sm font-medium">
               View Details
             </button>
           </div>
@@ -373,7 +373,7 @@ export default function AnalyticsDashboard() {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-orange-600 h-2 rounded-full" 
+                    className="bg-green-600 h-2 rounded-full" 
                     style={{ width: `${segment.percentage}%` }}
                   ></div>
                 </div>
@@ -390,7 +390,7 @@ export default function AnalyticsDashboard() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Traffic Sources</h3>
-            <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">
+            <button className="text-green-600 hover:text-green-700 text-sm font-medium">
               View Report
             </button>
           </div>
@@ -428,10 +428,10 @@ export default function AnalyticsDashboard() {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Sales Trend</h3>
             <div className="flex items-center space-x-2">
-              <button className={`px-3 py-1 text-sm rounded-lg ${selectedMetric === 'revenue' ? 'bg-orange-100 text-orange-700' : 'text-gray-600 hover:bg-gray-100'}`}>
+              <button className={`px-3 py-1 text-sm rounded-lg ${selectedMetric === 'revenue' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                 Revenue
               </button>
-              <button className={`px-3 py-1 text-sm rounded-lg ${selectedMetric === 'orders' ? 'bg-orange-100 text-orange-700' : 'text-gray-600 hover:bg-gray-100'}`}>
+              <button className={`px-3 py-1 text-sm rounded-lg ${selectedMetric === 'orders' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                 Orders
               </button>
             </div>
@@ -451,7 +451,7 @@ export default function AnalyticsDashboard() {
                   </div>
                   <div className="w-24 bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-orange-600 h-2 rounded-full" 
+                      className="bg-green-600 h-2 rounded-full" 
                       style={{ 
                         width: selectedMetric === 'revenue' 
                           ? `${(day.revenue / Math.max(...analytics.sales_by_day.map(d => d.revenue))) * 100}%`
